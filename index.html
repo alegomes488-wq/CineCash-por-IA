@@ -1,0 +1,1409 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineCash IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;min-height:100vh}
+input,button,select,textarea{font-family:'Sora',sans-serif}
+
+/* ── AUTH PAGES ── */
+.auth-bg{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 40%,#0ea5e9 100%);
+}
+.auth-card{
+  background:#fff;border-radius:24px;padding:40px 36px;width:100%;max-width:440px;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
+.auth-logo-icon{color:#7c3aed;font-size:28px}
+.auth-logo h1{font-size:26px;font-weight:700;color:#111}
+.auth-subtitle{text-align:center;color:#6b7280;font-size:14px;margin-bottom:28px}
+.field-label{font-size:13px;font-weight:600;color:#111;margin-bottom:6px;display:block}
+.field-hint{font-size:12px;color:#9ca3af;margin-top:4px;margin-bottom:12px}
+.input-wrap{position:relative;margin-bottom:4px}
+.auth-input{
+  width:100%;padding:13px 16px;border:none;border-radius:12px;
+  background:#f3f4f6;font-size:14px;color:#111;outline:none;transition:.2s;
+}
+.auth-input:focus{background:#e9ebf0;box-shadow:0 0 0 2px #7c3aed33}
+.input-eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:4px;
+}
+.auth-btn{
+  width:100%;padding:14px;border:none;border-radius:12px;
+  background:#111;color:#fff;font-size:15px;font-weight:600;cursor:pointer;
+  margin-top:20px;transition:.15s;
+}
+.auth-btn:hover{background:#222;transform:translateY(-1px)}
+.auth-btn:active{transform:scale(.99)}
+.auth-btn.red{background:#dc2626}
+.auth-btn.red:hover{background:#b91c1c}
+.auth-footer{text-align:center;font-size:13px;color:#6b7280;margin-top:20px}
+.auth-footer a{color:#7c3aed;font-weight:500;cursor:pointer;text-decoration:none}
+.auth-footer a:hover{text-decoration:underline}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#9ca3af;font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#e5e7eb}
+.google-btn{
+  width:100%;padding:13px;border:1.5px solid #e5e7eb;border-radius:12px;
+  background:#fff;color:#111;font-size:14px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s;
+}
+.google-btn:hover{background:#f9fafb;border-color:#d1d5db}
+.google-g{font-size:16px;font-weight:700;font-family:Arial,sans-serif}
+.field-group{margin-bottom:12px}
+.admin-link{text-align:center;font-size:12px;color:#9ca3af;margin-top:14px;cursor:pointer}
+.admin-link:hover{color:#6b7280;text-decoration:underline}
+
+/* Admin login dark card */
+.admin-auth-bg{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:#0d1117;
+}
+.admin-auth-card{
+  background:#161b27;border:1px solid #2a2f3e;border-radius:20px;
+  padding:40px 36px;width:100%;max-width:420px;
+}
+.admin-auth-card .auth-logo-icon{color:#dc2626}
+.admin-auth-card .auth-logo h1{color:#fff}
+.admin-auth-card .auth-subtitle{color:#6b7280}
+.admin-auth-card .field-label{color:#d1d5db}
+.admin-auth-card .auth-input{background:#0d1117;border:1px solid #2a2f3e;color:#fff}
+.admin-auth-card .auth-input::placeholder{color:#4b5563}
+.admin-auth-card .auth-input:focus{background:#0d1117;box-shadow:0 0 0 2px #dc262633;border-color:#dc2626}
+.admin-auth-card .auth-footer{color:#6b7280}
+.admin-auth-card .auth-footer a{color:#6b7280;font-weight:400}
+.admin-auth-card .auth-footer a:hover{color:#9ca3af}
+
+/* ── ADMIN DASHBOARD ── */
+.admin-layout{min-height:100vh;background:#0d1117;color:#fff;display:flex;flex-direction:column}
+.admin-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 28px;background:#111827;border-bottom:1px solid #1f2937;
+  position:sticky;top:0;z-index:100;
+}
+.admin-header-left{display:flex;align-items:center;gap:12px}
+.admin-shield{font-size:22px;color:#dc2626}
+.admin-header-title{font-size:20px;font-weight:700;color:#fff}
+.admin-header-sub{font-size:12px;color:#6b7280;margin-top:1px}
+.admin-logout{
+  display:flex;align-items:center;gap:6px;padding:8px 16px;
+  border:1.5px solid #374151;border-radius:10px;background:transparent;
+  color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;
+  font-family:'Sora',sans-serif;transition:.15s;
+}
+.admin-logout:hover{background:#1f2937;border-color:#4b5563}
+.admin-body{padding:28px;flex:1}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{
+  background:#161b27;border:1px solid #1f2937;border-radius:16px;
+  padding:20px 22px;display:flex;align-items:center;justify-content:space-between;
+}
+.stat-label{font-size:12px;color:#9ca3af;margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:700}
+.stat-icon{font-size:32px;opacity:.8}
+.c-blue{color:#60a5fa}.c-green{color:#34d399}.c-purple{color:#a78bfa}.c-amber{color:#fbbf24}
+
+/* Tabs */
+.admin-tabs{
+  display:flex;align-items:center;gap:4px;margin-bottom:24px;
+  background:#111827;border:1px solid #1f2937;border-radius:12px;padding:6px;
+}
+.tab-btn{
+  display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;
+  font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;
+  color:#6b7280;font-family:'Sora',sans-serif;transition:.15s;flex:1;justify-content:center;
+}
+.tab-btn:hover{color:#d1d5db;background:#1f2937}
+.tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
+
+/* Tab panels */
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Table */
+.panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
+.panel-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:18px}
+.search-input-wrap{position:relative;margin-bottom:20px}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:14px}
+.search-input{
+  width:100%;padding:11px 16px 11px 38px;background:#0d1117;
+  border:1px solid #1f2937;border-radius:10px;color:#fff;font-size:13px;
+  font-family:'Sora',sans-serif;outline:none;transition:.15s;
+}
+.search-input:focus{border-color:#374151;box-shadow:0 0 0 2px #374151}
+.search-input::placeholder{color:#4b5563}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{
+  text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;
+  border-bottom:1px solid #1f2937;font-size:12px;
+}
+.data-table td{padding:12px 14px;border-bottom:1px solid #111827;color:#d1d5db;vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:#111827}
+.badge-active{
+  display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
+  background:#052e16;color:#34d399;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid #166534;
+}
+.badge-inactive{
+  display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
+  background:#1c0000;color:#f87171;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid #7f1d1d;
+}
+.table-footer{font-size:12px;color:#6b7280;margin-top:14px}
+.user-names .name{font-weight:600;color:#fff}
+.user-names .display{font-size:11px;color:#6b7280}
+.action-btn{
+  padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;
+  cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:.15s;
+}
+.action-edit{background:#1e3a5f;color:#60a5fa}
+.action-edit:hover{background:#1d4ed8}
+.action-del{background:#3b1212;color:#f87171;margin-left:4px}
+.action-del:hover{background:#7f1d1d}
+
+/* Videos tab */
+.vid-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.vid-form-full{grid-column:1/-1}
+.dark-input{
+  width:100%;padding:11px 14px;background:#0d1117;border:1px solid #1f2937;
+  border-radius:10px;color:#fff;font-size:13px;font-family:'Sora',sans-serif;
+  outline:none;transition:.15s;
+}
+.dark-input:focus{border-color:#4b5563}
+.dark-input::placeholder{color:#4b5563}
+.dark-label{font-size:12px;color:#9ca3af;margin-bottom:4px;display:block;font-weight:500}
+.add-vid-btn{
+  padding:11px 22px;background:#7c3aed;color:#fff;border:none;border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;
+  transition:.15s;align-self:end;
+}
+.add-vid-btn:hover{background:#6d28d9}
+
+/* Growth tab */
+.growth-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px}
+.chart-card h3{font-size:14px;font-weight:600;color:#fff;margin-bottom:16px}
+
+/* Security tab */
+.security-banner{
+  border-radius:16px;padding:24px 28px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.security-banner.safe{background:linear-gradient(135deg,#064e3b,#065f46)}
+.security-banner.danger{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
+.security-banner-left{display:flex;align-items:center;gap:16px}
+.security-banner-icon{font-size:40px}
+.security-banner-title{font-size:22px;font-weight:700;color:#fff}
+.security-banner-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
+.security-banner-right{text-align:right}
+.security-banner-count-label{font-size:12px;color:rgba(255,255,255,.7)}
+.security-banner-count{font-size:36px;font-weight:700;color:#fff}
+.priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.security-features{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sec-feature{
+  display:flex;align-items:flex-start;gap:12px;padding:16px 18px;
+  background:#0d1117;border:1px solid #1f2937;border-radius:12px;
+}
+.sec-feature-icon{font-size:18px;color:#34d399;margin-top:1px;flex-shrink:0}
+.sec-feature-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+.sec-feature-sub{font-size:12px;color:#6b7280}
+.threat-list{background:#0d1117;border:1px solid #1f2937;border-radius:12px;padding:40px;text-align:center}
+.threat-list-icon{font-size:48px;color:#34d399;margin-bottom:12px}
+.threat-list h3{font-size:15px;color:#d1d5db;margin-bottom:4px}
+.threat-list p{font-size:13px;color:#6b7280}
+
+/* Profits tab */
+.profit-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.profit-card{border-radius:16px;padding:22px 20px;color:#fff;display:flex;align-items:flex-start;justify-content:space-between}
+.pc-green{background:linear-gradient(135deg,#16a34a,#15803d)}
+.pc-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
+.pc-orange{background:linear-gradient(135deg,#ea580c,#c2410c)}
+.pc-purple{background:linear-gradient(135deg,#9333ea,#7c3aed)}
+.profit-card-label{font-size:12px;font-weight:500;opacity:.85;margin-bottom:8px}
+.profit-card-value{font-size:26px;font-weight:700}
+.profit-card-icon{font-size:28px;opacity:.7}
+.profits-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.converter-label{font-size:13px;font-weight:600;color:#9ca3af;margin-bottom:6px;margin-top:14px;display:flex;align-items:center;gap:6px}
+.converter-btn{
+  width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;
+  margin-top:14px;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.converter-btn:hover{background:#15803d}
+.analysis-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #1f2937;font-size:13px}
+.analysis-row:last-of-type{border-bottom:none}
+.analysis-label{color:#9ca3af}
+.analysis-value{font-weight:600;color:#d1d5db}
+.analysis-value.red{color:#f87171}
+.analysis-total{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#052e16;border:1px solid #166534;border-radius:10px;
+  padding:14px 16px;margin-top:12px;font-size:14px;font-weight:700;
+}
+.analysis-total .label{color:#34d399}
+.analysis-total .value{color:#34d399}
+.insights-box{
+  background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;
+  padding:14px 16px;margin-top:12px;
+}
+.insights-title{font-size:13px;font-weight:600;color:#93c5fd;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.insights-item{font-size:12px;color:#bfdbfe;margin-bottom:4px}
+.fontes-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#0d1117;border:1px solid #1f2937;border-radius:10px;padding:14px 16px;
+}
+.fontes-icon{
+  width:36px;height:36px;background:#111827;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#a78bfa;
+  margin-right:12px;flex-shrink:0;
+}
+.fontes-info .name{font-size:13px;font-weight:600;color:#fff}
+.fontes-info .sub{font-size:11px;color:#6b7280;margin-top:2px}
+.fontes-value{text-align:right}
+.fontes-value .amount{font-size:14px;font-weight:700;color:#34d399}
+.fontes-value .count{font-size:11px;color:#6b7280;margin-top:2px}
+
+/* Modal */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:999;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:#161b27;border:1px solid #2a2f3e;border-radius:20px;
+  padding:32px;width:100%;max-width:480px;position:relative;
+}
+.modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:20px}
+.modal-close{
+  position:absolute;top:16px;right:16px;background:none;border:none;
+  color:#6b7280;font-size:20px;cursor:pointer;line-height:1;
+}
+.modal-close:hover{color:#d1d5db}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.modal-cancel{
+  padding:9px 20px;background:transparent;border:1px solid #374151;border-radius:9px;
+  color:#9ca3af;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;
+}
+.modal-cancel:hover{background:#1f2937}
+.modal-save{
+  padding:9px 20px;background:#7c3aed;border:none;border-radius:9px;
+  color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;
+}
+.modal-save:hover{background:#6d28d9}
+.modal-delete{
+  padding:9px 20px;background:#dc2626;border:none;border-radius:9px;
+  color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;
+}
+.modal-delete:hover{background:#b91c1c}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:28px;right:28px;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:600;color:#fff;z-index:9999;opacity:0;
+  transform:translateY(10px);transition:.3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#065f46;border:1px solid #34d399}
+.toast.error{background:#7f1d1d;border:1px solid #f87171}
+.toast.info{background:#1e3a8a;border:1px solid #60a5fa}
+
+/* Responsive */
+@media(max-width:900px){
+  .stat-grid,.profit-cards{grid-template-columns:1fr 1fr}
+  .charts-grid,.profits-grid,.security-features{grid-template-columns:1fr}
+  .priority-grid,.growth-stats{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stat-grid,.profit-cards{grid-template-columns:1fr}
+  .admin-tabs{flex-wrap:wrap}
+  .tab-btn{flex:auto;font-size:12px;padding:8px 10px}
+  .vid-form{grid-template-columns:1fr}
+}
+
+/* Page visibility */
+.page{display:none}
+.page.active{display:block}
+.admin-page{display:none}
+.admin-page.active{display:flex;flex-direction:column;min-height:100vh}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: LOGIN
+═══════════════════════════════════════════ -->
+<div id="page-login" class="page active">
+<div class="auth-bg">
+<div class="auth-card">
+  <div class="auth-logo">
+    <span class="auth-logo-icon">📹</span>
+    <h1>CineCash IA</h1>
+  </div>
+  <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
+
+  <div class="field-group">
+    <label class="field-label">Email</label>
+    <input id="login-email" class="auth-input" type="email" placeholder="seu@email.com">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Senha</label>
+    <div class="input-wrap">
+      <input id="login-password" class="auth-input" type="password" placeholder="••••••••">
+      <button class="input-eye" onclick="togglePwd('login-password',this)">👁</button>
+    </div>
+  </div>
+  <button class="auth-btn" onclick="doLogin()">Entrar</button>
+  <div class="divider">OU</div>
+  <button class="google-btn" onclick="doGoogleLogin()">
+    <span class="google-g">G</span> Continuar com Google
+  </button>
+  <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
+  <p class="admin-link" onclick="showPage('admin-login')">Acesso Admin</p>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: REGISTER
+═══════════════════════════════════════════ -->
+<div id="page-register" class="page">
+<div class="auth-bg">
+<div class="auth-card">
+  <div class="auth-logo">
+    <span class="auth-logo-icon">📹</span>
+    <h1>CineCash IA</h1>
+  </div>
+  <p class="auth-subtitle">Crie sua conta e comece a ganhar dinheiro!</p>
+
+  <div class="field-group">
+    <label class="field-label">Nome Completo</label>
+    <input id="reg-fullname" class="auth-input" type="text" placeholder="João da Silva">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Nome de Exibição</label>
+    <input id="reg-display" class="auth-input" type="text" placeholder="João">
+    <span class="field-hint">Este nome aparecerá na página inicial</span>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Email</label>
+    <input id="reg-email" class="auth-input" type="email" placeholder="seu@email.com">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Senha</label>
+    <div class="input-wrap">
+      <input id="reg-password" class="auth-input" type="password" placeholder="Mínimo 8 caracteres">
+      <button class="input-eye" onclick="togglePwd('reg-password',this)">👁</button>
+    </div>
+    <span class="field-hint">Mínimo 8 caracteres, primeira letra maiúscula</span>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Confirmar Senha</label>
+    <div class="input-wrap">
+      <input id="reg-confirm" class="auth-input" type="password" placeholder="Digite a senha novamente">
+      <button class="input-eye" onclick="togglePwd('reg-confirm',this)">👁</button>
+    </div>
+  </div>
+  <button class="auth-btn" onclick="doRegister()">Criar Conta</button>
+  <p class="auth-footer">Já tem uma conta? <a onclick="showPage('login')">Faça login</a></p>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: ADMIN LOGIN
+═══════════════════════════════════════════ -->
+<div id="page-admin-login" class="page">
+<div class="admin-auth-bg">
+<div class="admin-auth-card auth-card">
+  <div class="auth-logo">
+    <span class="auth-logo-icon">🛡</span>
+    <h1>CineCash IA</h1>
+  </div>
+  <p class="auth-subtitle">Painel Administrativo</p>
+
+  <div class="field-group">
+    <label class="field-label">Usuário</label>
+    <input id="admin-user" class="auth-input" type="text" placeholder="admin16">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Senha</label>
+    <div class="input-wrap">
+      <input id="admin-pwd" class="auth-input" type="password" placeholder="••••••••">
+      <button class="input-eye" onclick="togglePwd('admin-pwd',this)">👁</button>
+    </div>
+  </div>
+  <button class="auth-btn red" onclick="doAdminLogin()">🛡 Entrar como Admin</button>
+  <p class="auth-footer"><a onclick="showPage('login')">← Voltar para login de usuários</a></p>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: ADMIN DASHBOARD
+═══════════════════════════════════════════ -->
+<div id="page-admin-dashboard" class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <span class="admin-shield">🛡</span>
+      <div>
+        <div class="admin-header-title">Painel Administrativo</div>
+        <div class="admin-header-sub">CineCash IA — Admin16</div>
+      </div>
+    </div>
+    <button class="admin-logout" onclick="doAdminLogout()">↩ Sair</button>
+  </header>
+
+  <div class="admin-body">
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Total de Usuários</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <span class="stat-icon c-blue">👥</span>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Usuários Ativos</div>
+          <div class="stat-value c-green" id="stat-active">0</div>
+        </div>
+        <span class="stat-icon c-green">📈</span>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Vídeos Assistidos</div>
+          <div class="stat-value c-purple" id="stat-videos">0</div>
+        </div>
+        <span class="stat-icon c-purple">📹</span>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Total de Saques</div>
+          <div class="stat-value c-amber" id="stat-saques">0</div>
+        </div>
+        <span class="stat-icon c-amber">$</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('usuarios',this)">👥 Usuários</button>
+      <button class="tab-btn" onclick="switchTab('videos',this)">📹 Vídeos</button>
+      <button class="tab-btn" onclick="switchTab('crescimento',this)">📈 Crescimento</button>
+      <button class="tab-btn" onclick="switchTab('seguranca',this)">🛡 Segurança</button>
+      <button class="tab-btn" onclick="switchTab('lucros',this)">$ Lucros</button>
+    </div>
+
+    <!-- TAB: USUÁRIOS -->
+    <div id="tab-usuarios" class="tab-panel active">
+      <div class="panel-card">
+        <div class="panel-title">Gerenciamento de Usuários</div>
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()">
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Único</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Vídeos</th>
+                <th>Saldo</th>
+                <th>Cadastro</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="users-footer">Mostrando 0 usuários</div>
+      </div>
+    </div>
+
+    <!-- TAB: VÍDEOS -->
+    <div id="tab-videos" class="tab-panel">
+      <div class="panel-card" style="margin-bottom:16px">
+        <div class="panel-title">Adicionar Novo Vídeo</div>
+        <div class="vid-form">
+          <div>
+            <label class="dark-label">Título do Vídeo</label>
+            <input id="vid-title" class="dark-input" type="text" placeholder="Ex: Aprenda Python em 10 min">
+          </div>
+          <div>
+            <label class="dark-label">Recompensa (R$)</label>
+            <input id="vid-reward" class="dark-input" type="number" step="0.01" placeholder="0.10">
+          </div>
+          <div class="vid-form-full">
+            <label class="dark-label">URL do Vídeo (YouTube, etc.)</label>
+            <input id="vid-url" class="dark-input" type="text" placeholder="https://youtube.com/watch?v=...">
+          </div>
+        </div>
+        <button class="add-vid-btn" onclick="addVideo()">+ Adicionar Vídeo</button>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Vídeos Cadastrados</div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>URL</th>
+                <th>Recompensa</th>
+                <th>Data</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="videos-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="videos-footer">Nenhum vídeo cadastrado</div>
+      </div>
+    </div>
+
+    <!-- TAB: CRESCIMENTO -->
+    <div id="tab-crescimento" class="tab-panel">
+      <div class="growth-stats">
+        <div class="stat-card">
+          <div>
+            <div class="stat-label">Total de Usuários</div>
+            <div class="stat-value c-blue" id="g-total">0</div>
+          </div>
+          <span class="stat-icon c-blue">👥</span>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-label">Novos Este Mês</div>
+            <div class="stat-value c-green" id="g-month">0</div>
+          </div>
+          <span class="stat-icon c-green">📅</span>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-label">Taxa de Crescimento</div>
+            <div class="stat-value c-purple" id="g-rate">0.0%</div>
+          </div>
+          <span class="stat-icon c-purple">📈</span>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Crescimento Mensal de Usuários</h3>
+          <canvas id="chart-growth" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Atividade Semanal (Vídeos)</h3>
+          <canvas id="chart-weekly" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SEGURANÇA -->
+    <div id="tab-seguranca" class="tab-panel">
+      <div id="sec-banner" class="security-banner safe">
+        <div class="security-banner-left">
+          <span class="security-banner-icon">✅</span>
+          <div>
+            <div class="security-banner-title">Sistema Seguro</div>
+            <div class="security-banner-sub">Nenhuma ameaça detectada. Sistema operando normalmente.</div>
+          </div>
+        </div>
+        <div class="security-banner-right">
+          <div class="security-banner-count-label">Ameaças Detectadas</div>
+          <div class="security-banner-count">0</div>
+        </div>
+      </div>
+      <div class="priority-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div><div class="stat-label">Alta Prioridade</div><div class="stat-value" style="color:#f87171">0</div></div>
+          <span style="font-size:28px">⚠️</span>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-label">Média Prioridade</div><div class="stat-value c-amber">0</div></div>
+          <span style="font-size:28px">📊</span>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-label">Baixa Prioridade</div><div class="stat-value c-blue">0</div></div>
+          <span style="font-size:28px">🛡</span>
+        </div>
+      </div>
+      <div class="panel-card" style="margin-bottom:16px">
+        <div class="panel-title">⚠️ Ameaças Detectadas pela IA</div>
+        <div class="threat-list">
+          <div class="threat-list-icon">✅</div>
+          <h3>Nenhuma ameaça detectada</h3>
+          <p>O sistema está operando com segurança</p>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Recursos de Segurança Ativos</div>
+        <div class="security-features">
+          <div class="sec-feature">
+            <span class="sec-feature-icon">✅</span>
+            <div>
+              <div class="sec-feature-title">Monitoramento em Tempo Real</div>
+              <div class="sec-feature-sub">Sistema de IA analisando atividades 24/7</div>
+            </div>
+          </div>
+          <div class="sec-feature">
+            <span class="sec-feature-icon">✅</span>
+            <div>
+              <div class="sec-feature-title">Detecção de Padrões Anormais</div>
+              <div class="sec-feature-sub">Algoritmos detectam comportamentos suspeitos</div>
+            </div>
+          </div>
+          <div class="sec-feature">
+            <span class="sec-feature-icon">✅</span>
+            <div>
+              <div class="sec-feature-title">Proteção Anti-Fraude</div>
+              <div class="sec-feature-sub">Validação de transações e saques</div>
+            </div>
+          </div>
+          <div class="sec-feature">
+            <span class="sec-feature-icon">✅</span>
+            <div>
+              <div class="sec-feature-title">Logs de Auditoria</div>
+              <div class="sec-feature-sub">Registro completo de todas as atividades</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: LUCROS -->
+    <div id="tab-lucros" class="tab-panel">
+      <div class="profit-cards">
+        <div class="profit-card pc-green">
+          <div>
+            <div class="profit-card-label">Receita Total (USD)</div>
+            <div class="profit-card-value" id="p-usd">$0.00</div>
+          </div>
+          <span class="profit-card-icon">$</span>
+        </div>
+        <div class="profit-card pc-blue">
+          <div>
+            <div class="profit-card-label">Receita Total (BRL)</div>
+            <div class="profit-card-value" id="p-brl">R$ 0.00</div>
+          </div>
+          <span class="profit-card-icon">📈</span>
+        </div>
+        <div class="profit-card pc-orange">
+          <div>
+            <div class="profit-card-label">Pagamentos Realizados</div>
+            <div class="profit-card-value" id="p-pag">R$ 0.00</div>
+          </div>
+          <span class="profit-card-icon">💳</span>
+        </div>
+        <div class="profit-card pc-purple">
+          <div>
+            <div class="profit-card-label">Lucro Líquido</div>
+            <div class="profit-card-value" id="p-lucro">R$ 0.00</div>
+          </div>
+          <span class="profit-card-icon">📈</span>
+        </div>
+      </div>
+      <div class="profits-grid">
+        <div class="panel-card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="color:#34d399;font-size:16px">$</span>
+            <span style="font-size:14px;font-weight:600;color:#fff">Conversor USD → BRL</span>
+          </div>
+          <label class="dark-label">Taxa de Câmbio (1 USD = ? BRL)</label>
+          <input id="conv-taxa" class="dark-input" type="number" value="5.25" step="0.01" oninput="updateConversion()">
+          <label class="dark-label" style="margin-top:12px">Valor em Dólares (USD)</label>
+          <input id="conv-valor" class="dark-input" type="number" value="" placeholder="$ 0.00" oninput="updateConversion()">
+          <button class="converter-btn" onclick="doConversion()">💳 Converter e Transferir para Minha Conta</button>
+        </div>
+        <div class="panel-card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="color:#60a5fa;font-size:16px">📈</span>
+            <span style="font-size:14px;font-weight:600;color:#fff">Análise de Lucros</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Receita Bruta:</span>
+            <span class="analysis-value" id="an-bruta">R$ 0.00</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Pagamentos Realizados:</span>
+            <span class="analysis-value red" id="an-pag">- R$ 0.00</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Saldo Pendente:</span>
+            <span class="analysis-value red" id="an-pend">- R$ 0.00</span>
+          </div>
+          <div class="analysis-total">
+            <span class="label">Lucro Líquido:</span>
+            <span class="value" id="an-liquido">R$ 0.00</span>
+          </div>
+          <div class="insights-box">
+            <div class="insights-title">💡 Insights</div>
+            <div class="insights-item" id="ins-margem">• Margem de lucro: 0%</div>
+            <div class="insights-item" id="ins-pervideo">• Receita por vídeo: R$0.00</div>
+            <div class="insights-item" id="ins-totalvid">• Total de vídeos: 0</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-card" style="margin-top:16px">
+        <div class="panel-title">Fontes de Receita</div>
+        <div class="fontes-item">
+          <div style="display:flex;align-items:center">
+            <div class="fontes-icon">📹</div>
+            <div class="fontes-info">
+              <div class="name">Monetização de Vídeos</div>
+              <div class="sub">Receita principal do site</div>
+            </div>
+          </div>
+          <div class="fontes-value">
+            <div class="amount" id="fontes-amount">R$ 0.00</div>
+            <div class="count" id="fontes-count">0 vídeos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar usuário -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
+    <div class="modal-title">Editar Usuário</div>
+    <input type="hidden" id="edit-user-id">
+    <div style="margin-bottom:12px">
+      <label class="dark-label">Nome Completo</label>
+      <input id="edit-fullname" class="dark-input" type="text">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="dark-label">Nome de Exibição</label>
+      <input id="edit-display" class="dark-input" type="text">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="dark-label">Email</label>
+      <input id="edit-email" class="dark-input" type="email">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="dark-label">Status</label>
+      <select id="edit-status" class="dark-input">
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="modal-save" onclick="saveEditUser()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar deletar -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('modal-delete')">✕</button>
+    <div class="modal-title">Remover Usuário</div>
+    <p style="font-size:13px;color:#9ca3af">Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.</p>
+    <input type="hidden" id="delete-user-id">
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('modal-delete')">Cancelar</button>
+      <button class="modal-delete" onclick="confirmDelete()">Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════
+//  FIREBASE SETUP
+// ═══════════════════════════════════════════════════════════
+import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import {
+  getAuth, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, GoogleAuthProvider,
+  signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getDatabase, ref, set, get, update, remove,
+  onValue, push, off
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
+  authDomain:        "playearn-b001b.firebaseapp.com",
+  databaseURL:       "https://playearn-b001b-default-rtdb.firebaseio.com",
+  projectId:         "playearn-b001b",
+  storageBucket:     "playearn-b001b.firebasestorage.app",
+  messagingSenderId: "563829659490",
+  appId:             "1:563829659490:web:88e1f869db48b1df41fe3b",
+  measurementId:     "G-YDPS46ZDEZ"
+};
+
+const app       = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth      = getAuth(app);
+const db        = getDatabase(app);
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const ADMIN_CREDS = { user: 'admin16', pass: 'admin123' };
+let _cachedUsers  = [];
+let _cachedVideos = [];
+let _unsubUsers   = null;
+let _unsubVideos  = null;
+let chartGrowth   = null;
+let chartWeekly   = null;
+let toastTimer;
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('pt-BR') }
+function fmt(v){ return 'R$ '+Number(v||0).toFixed(2) }
+function fmtU(v){ return '$'+Number(v||0).toFixed(2) }
+
+function setLoading(btnId, loading, label){
+  const b = document.getElementById(btnId)
+  if(!b) return
+  b.disabled = loading
+  b.textContent = loading ? '⏳ Aguarde...' : label
+}
+
+function showToast(msg, type='info'){
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast '+type+' show'
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800)
+}
+
+function showPage(name){
+  document.querySelectorAll('.page,.admin-page').forEach(p=>p.classList.remove('active'))
+  const el = document.getElementById('page-'+name)
+  if(el) el.classList.add('active')
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+
+function togglePwd(id, btn){
+  const inp = document.getElementById(id)
+  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈' }
+  else { inp.type='password'; btn.textContent='👁' }
+}
+
+// Firebase error messages in Portuguese
+function fbError(err){
+  const map = {
+    'auth/email-already-in-use':    'Este email já está cadastrado!',
+    'auth/invalid-email':           'Email inválido!',
+    'auth/weak-password':           'Senha fraca. Use pelo menos 6 caracteres.',
+    'auth/user-not-found':          'Email ou senha incorretos!',
+    'auth/wrong-password':          'Email ou senha incorretos!',
+    'auth/invalid-credential':      'Email ou senha incorretos!',
+    'auth/too-many-requests':       'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/popup-closed-by-user':    'Login com Google cancelado.',
+    'auth/network-request-failed':  'Sem conexão. Verifique sua internet.',
+  }
+  return map[err.code] || ('Erro: '+err.message)
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTH STATE — redireciona usuário comum ao fazer login
+// ═══════════════════════════════════════════════════════════
+onAuthStateChanged(auth, async user => {
+  if(user){
+    // Usuário comum logado — busca perfil no DB
+    const snap = await get(ref(db, 'users/'+user.uid))
+    if(snap.exists()){
+      const profile = snap.val()
+      if(profile.status === 'inativo'){
+        showToast('Conta inativa. Contate o suporte.','error')
+        await signOut(auth)
+        return
+      }
+      showToast('Bem-vindo de volta, '+profile.display+'! ✅','success')
+      // Aqui você pode redirecionar para a dashboard do usuário se tiver uma
+    }
+  }
+})
+
+// ═══════════════════════════════════════════════════════════
+//  REGISTER
+// ═══════════════════════════════════════════════════════════
+async function doRegister(){
+  const fullname = document.getElementById('reg-fullname').value.trim()
+  const display  = document.getElementById('reg-display').value.trim()
+  const email    = document.getElementById('reg-email').value.trim()
+  const pass     = document.getElementById('reg-password').value
+  const confirm  = document.getElementById('reg-confirm').value
+
+  if(!fullname||!display||!email||!pass||!confirm)
+    return showToast('Preencha todos os campos!','error')
+  if(pass.length < 8)
+    return showToast('A senha deve ter no mínimo 8 caracteres!','error')
+  if(pass[0] !== pass[0].toUpperCase())
+    return showToast('A senha deve começar com letra maiúscula!','error')
+  if(pass !== confirm)
+    return showToast('As senhas não coincidem!','error')
+
+  setLoading('reg-btn', true, 'Criar Conta')
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass)
+    await set(ref(db, 'users/'+cred.user.uid), {
+      fullname, display, email,
+      createdAt: Date.now(),
+      status: 'ativo',
+      balance: 0,
+      videosWatched: 0
+    })
+    showToast('Conta criada com sucesso! ✅','success')
+    setTimeout(()=>showPage('login'), 1000)
+  } catch(err){
+    showToast(fbError(err),'error')
+  } finally {
+    setLoading('reg-btn', false, 'Criar Conta')
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim()
+  const pass  = document.getElementById('login-password').value
+  if(!email||!pass) return showToast('Preencha email e senha!','error')
+
+  setLoading('login-btn', true, 'Entrar')
+  try {
+    await signInWithEmailAndPassword(auth, email, pass)
+    // onAuthStateChanged cuida do redirecionamento
+  } catch(err){
+    showToast(fbError(err),'error')
+  } finally {
+    setLoading('login-btn', false, 'Entrar')
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE LOGIN
+// ═══════════════════════════════════════════════════════════
+async function doGoogleLogin(){
+  const provider = new GoogleAuthProvider()
+  try {
+    const result = await signInWithPopup(auth, provider)
+    const user   = result.user
+    // Cria perfil no DB se for o primeiro login
+    const snap = await get(ref(db, 'users/'+user.uid))
+    if(!snap.exists()){
+      await set(ref(db, 'users/'+user.uid), {
+        fullname: user.displayName || 'Usuário Google',
+        display:  (user.displayName||'').split(' ')[0] || 'Usuário',
+        email:    user.email,
+        createdAt: Date.now(),
+        status: 'ativo',
+        balance: 0,
+        videosWatched: 0
+      })
+    }
+    showToast('Login com Google realizado! ✅','success')
+  } catch(err){
+    showToast(fbError(err),'error')
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ADMIN LOGIN (credenciais fixas — não usa Firebase Auth)
+// ═══════════════════════════════════════════════════════════
+async function doAdminLogin(){
+  const u = document.getElementById('admin-user').value.trim()
+  const p = document.getElementById('admin-pwd').value
+  if(!u||!p) return showToast('Preencha usuário e senha!','error')
+  if(u !== ADMIN_CREDS.user || p !== ADMIN_CREDS.pass)
+    return showToast('Credenciais inválidas!','error')
+
+  setLoading('admin-btn', true, '🛡 Entrar como Admin')
+  showToast('Conectando ao Firebase...','info')
+
+  try {
+    showPage('admin-dashboard')
+    attachRealtimeListeners()
+    setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
+    showToast('Painel carregado! ✅','success')
+  } catch(err){
+    showToast('Erro ao carregar painel: '+err.message,'error')
+    showPage('admin-login')
+  } finally {
+    setLoading('admin-btn', false, '🛡 Entrar como Admin')
+  }
+}
+
+function doAdminLogout(){
+  // Desanexa listeners do Firebase ao sair
+  if(_unsubUsers)  { off(ref(db,'users'));  _unsubUsers=null }
+  if(_unsubVideos) { off(ref(db,'videos')); _unsubVideos=null }
+  _cachedUsers=[]
+  _cachedVideos=[]
+  showPage('login')
+  document.getElementById('admin-user').value=''
+  document.getElementById('admin-pwd').value=''
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REALTIME LISTENERS — atualiza UI automaticamente
+// ═══════════════════════════════════════════════════════════
+function attachRealtimeListeners(){
+  // Escuta /users em tempo real
+  _unsubUsers = onValue(ref(db,'users'), snap => {
+    if(snap.exists()){
+      _cachedUsers = Object.entries(snap.val()).map(([uid,u])=>({...u, uid}))
+    } else {
+      _cachedUsers = []
+    }
+    updateStats()
+    renderUsersTable()
+    updateLucros()
+  })
+
+  // Escuta /videos em tempo real
+  _unsubVideos = onValue(ref(db,'videos'), snap => {
+    if(snap.exists()){
+      _cachedVideos = Object.entries(snap.val()).map(([id,v])=>({...v, id}))
+    } else {
+      _cachedVideos = []
+    }
+    renderVideosTable()
+    updateLucros()
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+function switchTab(name, btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'))
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById('tab-'+name).classList.add('active')
+  btn.classList.add('active')
+  if(name==='crescimento') setTimeout(renderCharts,50)
+  if(name==='lucros') updateLucros()
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════════
+function updateStats(){
+  const users = _cachedUsers
+  const totalVid = users.reduce((a,u)=>a+(u.videosWatched||0),0)
+  document.getElementById('stat-total').textContent  = users.length
+  document.getElementById('stat-active').textContent = users.filter(u=>u.status==='ativo').length
+  document.getElementById('stat-videos').textContent = totalVid
+  document.getElementById('stat-saques').textContent = 0
+
+  document.getElementById('g-total').textContent = users.length
+  const now=new Date(), m=now.getMonth(), y=now.getFullYear()
+  const newM = users.filter(u=>{ const d=new Date(u.createdAt); return d.getMonth()===m&&d.getFullYear()===y }).length
+  document.getElementById('g-month').textContent = newM
+  const prev = users.length - newM
+  document.getElementById('g-rate').textContent = (prev===0?'0.0':((newM/prev)*100).toFixed(1))+'%'
+}
+
+// ═══════════════════════════════════════════════════════════
+//  USERS TABLE
+// ═══════════════════════════════════════════════════════════
+function renderUsersTable(){
+  const query = (document.getElementById('user-search')||{}).value||''
+  const all   = _cachedUsers
+  const users = all.filter(u=>{
+    if(!query) return true
+    const q=query.toLowerCase()
+    return (u.fullname||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)||(u.uid||'').toLowerCase().includes(q)
+  })
+  const tbody = document.getElementById('users-tbody')
+  if(!tbody) return
+
+  if(!users.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>'
+    document.getElementById('users-footer').textContent='Nenhum usuário encontrado'
+    return
+  }
+
+  tbody.innerHTML = users.map(u=>`
+    <tr>
+      <td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td>
+      <td><div class="user-names"><div class="name">${u.fullname||'-'}</div><div class="display">${u.display||''}</div></div></td>
+      <td>${u.email||'-'}</td>
+      <td style="color:#a78bfa">${u.videosWatched||0}</td>
+      <td style="color:#34d399">R$ ${Number(u.balance||0).toFixed(2)}</td>
+      <td>${fmtDate(u.createdAt)}</td>
+      <td>${u.status==='ativo'?'<span class="badge-active">✓ Ativo</span>':'<span class="badge-inactive">✗ Inativo</span>'}</td>
+      <td>
+        <button class="action-btn action-edit" onclick="window.openEditModal('${u.uid}')">Editar</button>
+        <button class="action-btn action-del"  onclick="window.openDeleteModal('${u.uid}')">Remover</button>
+      </td>
+    </tr>
+  `).join('')
+  document.getElementById('users-footer').textContent =
+    'Mostrando '+users.length+' de '+all.length+' usuário'+(all.length!==1?'s':'')
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EDIT USER (Firebase update)
+// ═══════════════════════════════════════════════════════════
+function openEditModal(uid){
+  const user = _cachedUsers.find(u=>u.uid===uid)
+  if(!user) return
+  document.getElementById('edit-user-id').value    = uid
+  document.getElementById('edit-fullname').value   = user.fullname||''
+  document.getElementById('edit-display').value    = user.display||''
+  document.getElementById('edit-email').value      = user.email||''
+  document.getElementById('edit-status').value     = user.status||'ativo'
+  document.getElementById('modal-edit').classList.add('open')
+}
+
+async function saveEditUser(){
+  const uid = document.getElementById('edit-user-id').value
+  try {
+    await update(ref(db,'users/'+uid), {
+      fullname: document.getElementById('edit-fullname').value.trim(),
+      display:  document.getElementById('edit-display').value.trim(),
+      email:    document.getElementById('edit-email').value.trim(),
+      status:   document.getElementById('edit-status').value
+    })
+    closeModal('modal-edit')
+    showToast('Usuário atualizado! ✅','success')
+  } catch(err){
+    showToast('Erro ao atualizar: '+err.message,'error')
+  }
+}
+
+function openDeleteModal(uid){
+  document.getElementById('delete-user-id').value = uid
+  document.getElementById('modal-delete').classList.add('open')
+}
+
+async function confirmDelete(){
+  const uid = document.getElementById('delete-user-id').value
+  try {
+    await remove(ref(db,'users/'+uid))
+    closeModal('modal-delete')
+    showToast('Usuário removido!','success')
+  } catch(err){
+    showToast('Erro ao remover: '+err.message,'error')
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VIDEOS (Firebase push / remove)
+// ═══════════════════════════════════════════════════════════
+async function addVideo(){
+  const title  = document.getElementById('vid-title').value.trim()
+  const url    = document.getElementById('vid-url').value.trim()
+  const reward = parseFloat(document.getElementById('vid-reward').value)||0
+  if(!title||!url) return showToast('Preencha título e URL!','error')
+  try {
+    await push(ref(db,'videos'), { title, url, reward, createdAt: Date.now() })
+    document.getElementById('vid-title').value=''
+    document.getElementById('vid-url').value=''
+    document.getElementById('vid-reward').value=''
+    showToast('Vídeo adicionado! ✅','success')
+  } catch(err){
+    showToast('Erro ao adicionar: '+err.message,'error')
+  }
+}
+
+function renderVideosTable(){
+  const videos = _cachedVideos
+  const tbody  = document.getElementById('videos-tbody')
+  if(!tbody) return
+  if(!videos.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:24px">Nenhum vídeo cadastrado</td></tr>'
+    document.getElementById('videos-footer').textContent='Nenhum vídeo cadastrado'
+    return
+  }
+  tbody.innerHTML = videos.map(v=>`
+    <tr>
+      <td style="font-size:11px;color:#6b7280;font-family:monospace">${v.id.substring(0,12)}...</td>
+      <td style="color:#fff;font-weight:500">${v.title}</td>
+      <td><a href="${v.url}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${v.url.substring(0,38)}${v.url.length>38?'...':''}</a></td>
+      <td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td>
+      <td>${fmtDate(v.createdAt)}</td>
+      <td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td>
+    </tr>
+  `).join('')
+  document.getElementById('videos-footer').textContent =
+    videos.length+' vídeo'+(videos.length!==1?'s':'')+' cadastrado'+(videos.length!==1?'s':'')
+}
+
+async function deleteVideo(id){
+  try {
+    await remove(ref(db,'videos/'+id))
+    showToast('Vídeo removido!','success')
+  } catch(err){
+    showToast('Erro ao remover: '+err.message,'error')
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════
+function renderCharts(){
+  const users  = _cachedUsers
+  const months = [], counts = []
+  for(let i=5;i>=0;i--){
+    const d=new Date(); d.setMonth(d.getMonth()-i)
+    months.push(d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}))
+    counts.push(users.filter(u=>{ const ud=new Date(u.createdAt); return ud.getMonth()===d.getMonth()&&ud.getFullYear()===d.getFullYear() }).length)
+  }
+
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+  const weekCounts = days.map((_,i)=>{
+    const dayMs=24*60*60*1000
+    const target=new Date(); target.setDate(target.getDate()-(target.getDay()-i+7)%7)
+    return _cachedVideos.filter(v=>{ const d=new Date(v.createdAt); return d.toDateString()===target.toDateString() }).length
+  })
+
+  const opts={
+    responsive:true, plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{color:'#1f2937'},ticks:{color:'#6b7280',font:{size:11}}},
+      y:{grid:{color:'#1f2937'},ticks:{color:'#6b7280',font:{size:11}},beginAtZero:true}
+    }
+  }
+
+  const c1=document.getElementById('chart-growth')
+  if(chartGrowth) chartGrowth.destroy()
+  chartGrowth=new Chart(c1,{type:'line',data:{labels:months,datasets:[{data:counts,borderColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.1)',tension:.4,pointBackgroundColor:'#60a5fa',pointRadius:4,fill:true}]},options:opts})
+
+  const c2=document.getElementById('chart-weekly')
+  if(chartWeekly) chartWeekly.destroy()
+  chartWeekly=new Chart(c2,{type:'line',data:{labels:days,datasets:[{data:weekCounts,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',tension:.4,pointBackgroundColor:'#a78bfa',pointRadius:4,fill:true}]},options:opts})
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LUCROS
+// ═══════════════════════════════════════════════════════════
+function updateLucros(){
+  const users    = _cachedUsers
+  const totalVid = users.reduce((a,u)=>a+(u.videosWatched||0),0)
+  const totalBal = users.reduce((a,u)=>a+Number(u.balance||0),0)
+  const taxa     = parseFloat(document.getElementById('conv-taxa')?.value)||5.25
+  const bruto=totalBal, pag=0, pend=totalBal, lucro=bruto-pag-pend
+
+  document.getElementById('p-usd').textContent   = fmtU(bruto/taxa)
+  document.getElementById('p-brl').textContent   = fmt(bruto)
+  document.getElementById('p-pag').textContent   = fmt(pag)
+  document.getElementById('p-lucro').textContent = fmt(lucro)
+  document.getElementById('an-bruta').textContent   = fmt(bruto)
+  document.getElementById('an-pag').textContent     = '- '+fmt(pag)
+  document.getElementById('an-pend').textContent    = '- '+fmt(pend)
+  document.getElementById('an-liquido').textContent = fmt(lucro)
+
+  const margem=(bruto===0?0:((lucro/bruto)*100)).toFixed(1)
+  document.getElementById('ins-margem').textContent   = '• Margem de lucro: '+margem+'%'
+  document.getElementById('ins-pervideo').textContent = '• Receita por vídeo: R$'+(totalVid===0?'0.000':(bruto/totalVid).toFixed(3))
+  document.getElementById('ins-totalvid').textContent = '• Total de vídeos: '+totalVid
+  document.getElementById('fontes-amount').textContent = fmt(bruto)
+  document.getElementById('fontes-count').textContent  = totalVid+' vídeos'
+}
+
+function doConversion(){
+  const taxa  = parseFloat(document.getElementById('conv-taxa').value)||5.25
+  const valor = parseFloat(document.getElementById('conv-valor').value)||0
+  if(!valor) return showToast('Digite um valor para converter!','error')
+  showToast(fmtU(valor)+' = '+fmt(valor*taxa)+' registrado!','success')
+  document.getElementById('conv-valor').value=''
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPÕE FUNÇÕES PARA os onclick do HTML (módulos ES são isolados)
+// ═══════════════════════════════════════════════════════════
+window.showPage        = showPage
+window.togglePwd       = togglePwd
+window.doLogin         = doLogin
+window.doRegister      = doRegister
+window.doGoogleLogin   = doGoogleLogin
+window.doAdminLogin    = doAdminLogin
+window.doAdminLogout   = doAdminLogout
+window.switchTab       = switchTab
+window.openEditModal   = openEditModal
+window.saveEditUser    = saveEditUser
+window.openDeleteModal = openDeleteModal
+window.confirmDelete   = confirmDelete
+window.closeModal      = closeModal
+window.addVideo        = addVideo
+window.deleteVideo     = deleteVideo
+window.doConversion    = doConversion
+window.renderUsersTable = renderUsersTable
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open') })
+})
+
+// Atualiza IDs dos botões de submit no HTML para permitir setLoading
+document.querySelector('#page-login .auth-btn')?.setAttribute('id','login-btn')
+document.querySelector('#page-register .auth-btn')?.setAttribute('id','reg-btn')
+document.querySelector('#page-admin-login .auth-btn')?.setAttribute('id','admin-btn')
+
+async function handleLogin() {
+  const passwordInput = document.querySelector('input[type="password"]');
+  const btn = document.querySelector('.auth-btn');
+  const originalText = btn.innerText;
+
+  if (!passwordInput.value) return alert("Digite a senha!");
+
+  // Feedback visual de carregamento
+  btn.innerText = "Verificando...";
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      body: JSON.stringify({ password: passwordInput.value })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Salva que o usuário está logado e redireciona
+      localStorage.setItem('admin_auth', data.token);
+      window.location.href = "/admin-dashboard.html"; // Altere para sua página de admin
+    } else {
+      alert("Acesso negado: " + data.message);
+    }
+  } catch (error) {
+    console.error("Erro na autenticação:", error);
+    alert("Erro ao conectar com o servidor.");
+  } finally {
+    btn.innerText = originalText;
+    btn.disabled = false;
+  }
+}
+
+// Vincula a função ao botão do seu formulário
+document.querySelector('.auth-btn').addEventListener('click', (e) => {
+  e.preventDefault();
+  handleLogin();
+});
+</script>
+</body>
+</html>
