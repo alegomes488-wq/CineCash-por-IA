@@ -161,11 +161,119 @@
     .toast.info{background:#1e3a8a;border:1px solid #60a5fa}
     @media(max-width:900px){.stat-grid,.profit-cards{grid-template-columns:1fr 1fr}.charts-grid,.profits-grid,.security-features{grid-template-columns:1fr}.priority-grid,.growth-stats{grid-template-columns:1fr}}
     @media(max-width:600px){.stat-grid,.profit-cards{grid-template-columns:1fr}.admin-tabs{flex-wrap:wrap}.tab-btn{flex:auto;font-size:12px;padding:8px 10px}.vid-form{grid-template-columns:1fr}}
+
+    /* ── USER DASHBOARD ── */
+    .dash-bg{min-height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#fff}
+    .dash-header{background:rgba(255,255,255,.07);backdrop-filter:blur(10px);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:100}
+    .dash-logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:#fff}
+    .dash-user-info{display:flex;align-items:center;gap:12px}
+    .dash-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+    .dash-username{font-size:13px;font-weight:600;color:#fff}
+    .dash-logout-btn{padding:7px 14px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:transparent;color:#d1d5db;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .dash-logout-btn:hover{background:rgba(255,255,255,.1)}
+    .dash-body{padding:24px;max-width:900px;margin:0 auto}
+    /* Balance bar */
+    .balance-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .balance-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px 20px;text-align:center}
+    .balance-card-label{font-size:11px;color:rgba(255,255,255,.6);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+    .balance-card-value{font-size:24px;font-weight:700;color:#fff}
+    .balance-card-value.green{color:#34d399}
+    .balance-card-value.amber{color:#fbbf24}
+    .balance-card-value.purple{color:#a78bfa}
+    /* Check-in */
+    .checkin-card{background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(14,165,233,.3));border:1px solid rgba(124,58,237,.4);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+    .checkin-info h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+    .checkin-info p{font-size:12px;color:rgba(255,255,255,.7)}
+    .checkin-btn{padding:11px 24px;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s;white-space:nowrap}
+    .checkin-btn:disabled{opacity:.5;cursor:not-allowed}
+    .checkin-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px rgba(124,58,237,.4)}
+    .streak-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);border-radius:20px;font-size:11px;color:#fbbf24;font-weight:600;margin-top:6px}
+    /* Videos section */
+    .section-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px}
+    .video-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;transition:.2s}
+    .video-card:hover{transform:translateY(-2px);border-color:rgba(124,58,237,.5)}
+    .video-thumb{width:100%;height:140px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+    .video-reward-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+    .video-info{padding:14px}
+    .video-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px;line-height:1.4}
+    .watch-btn{width:100%;padding:9px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .watch-btn:hover{opacity:.9}
+    .watch-btn.watched{background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:#34d399;cursor:default}
+    .no-videos{text-align:center;padding:40px;color:rgba(255,255,255,.4);font-size:14px}
+    /* Withdrawal */
+    .withdraw-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px;margin-bottom:20px}
+    .withdraw-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .withdraw-input{width:100%;padding:11px 14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:13px;font-family:'Sora',sans-serif;outline:none;margin-bottom:10px}
+    .withdraw-input::placeholder{color:rgba(255,255,255,.3)}
+    .withdraw-input:focus{border-color:rgba(124,58,237,.6)}
+    .withdraw-btn{width:100%;padding:12px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .withdraw-btn:hover{opacity:.9;transform:translateY(-1px)}
+    .withdraw-btn:disabled{opacity:.4;cursor:not-allowed}
+    .withdraw-history-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
+    .wh-amount{font-weight:700;color:#34d399}
+    .wh-status-pending{color:#fbbf24;background:rgba(251,191,36,.1);padding:3px 8px;border-radius:20px;font-size:11px}
+    .wh-status-approved{color:#34d399;background:rgba(52,211,153,.1);padding:3px 8px;border-radius:20px;font-size:11px}
+    .wh-status-denied{color:#f87171;background:rgba(248,113,113,.1);padding:3px 8px;border-radius:20px;font-size:11px}
+    /* Video watch modal */
+    .watch-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;align-items:center;justify-content:center}
+    .watch-modal-overlay.open{display:flex}
+    .watch-modal{background:#0f0c29;border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:28px;width:100%;max-width:520px;text-align:center}
+    .watch-modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+    .watch-modal-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px}
+    .watch-timer{font-size:48px;font-weight:700;color:#7c3aed;margin:20px 0}
+    .watch-progress{width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:20px;overflow:hidden}
+    .watch-progress-fill{height:100%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border-radius:3px;transition:width .5s}
+    .watch-open-btn{padding:11px 28px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);border-radius:10px;color:#a78bfa;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:12px;transition:.15s}
+    .watch-open-btn:hover{background:rgba(124,58,237,.3)}
+    .watch-cancel-btn{padding:9px 20px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif}
+    /* Admin saques tab */
+    .saque-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:#0d1117;border:1px solid #1f2937;border-radius:10px;margin-bottom:10px}
+    .saque-info .name{font-weight:600;color:#fff;font-size:13px}
+    .saque-info .detail{font-size:11px;color:#6b7280;margin-top:2px}
+    .saque-amount{font-size:16px;font-weight:700;color:#34d399;margin:0 16px}
+    .saque-actions{display:flex;gap:8px}
+    .btn-approve{padding:7px 14px;background:#052e16;color:#34d399;border:1px solid #166534;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .btn-approve:hover{background:#166534}
+    .btn-deny{padding:7px 14px;background:#1c0000;color:#f87171;border:1px solid #7f1d1d;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .btn-deny:hover{background:#7f1d1d}
+    .saques-toggle{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#161b27;border:1px solid #1f2937;border-radius:12px;margin-bottom:20px}
+    .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;inset:0;background:#374151;border-radius:12px;transition:.3s}
+    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-switch input:checked+.toggle-slider{background:#16a34a}
+    .toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px)}
+    @media(max-width:600px){.balance-bar{grid-template-columns:1fr}.checkin-card{flex-direction:column;gap:14px;text-align:center}.video-grid{grid-template-columns:1fr}}
+
+
+    .dash-nav-btn{padding:9px 16px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:transparent;color:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .dash-nav-btn.active{background:rgba(124,58,237,.3);border-color:rgba(124,58,237,.5);color:#fff}
+    .dash-nav-btn:hover{background:rgba(255,255,255,.08)}
+    .dash-tab-panel{display:none}.dash-tab-panel.active{display:block}
+    .reward-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;transition:.2s}
+    .reward-row.unlocked{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06)}
+    .reward-row.claimed{opacity:.5}
+    .rr-left{display:flex;align-items:center;gap:12px}
+    .rr-coins{font-size:13px;font-weight:700;color:#fbbf24}
+    .rr-arrow{font-size:16px;color:rgba(255,255,255,.3)}
+    .rr-reward{font-size:15px;font-weight:700;color:#34d399}
+    .rr-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:.15s}
+    .rr-btn.locked{background:rgba(255,255,255,.08);color:rgba(255,255,255,.3);cursor:not-allowed}
+    .rr-btn.ready{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;cursor:pointer;animation:pulse .8s infinite alternate}
+    .rr-btn.claimed{background:rgba(52,211,153,.1);color:#34d399;cursor:not-allowed}
+    @keyframes pulse{from{box-shadow:0 0 0 0 rgba(52,211,153,.4)}to{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
     .page{display:none}.page.active{display:block}
     .admin-page{display:none}.admin-page.active{display:flex;flex-direction:column;min-height:100vh}
   </style>
 </head>
 <body>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{})
+}
+</script>
+
 
 <!-- LOGIN -->
 <div id="page-login" class="page active">
@@ -231,6 +339,7 @@
       <button class="tab-btn" onclick="switchTab('crescimento',this)">📈 Crescimento</button>
       <button class="tab-btn" onclick="switchTab('seguranca',this)">🛡 Segurança</button>
       <button class="tab-btn" onclick="switchTab('lucros',this)">$ Lucros</button>
+      <button class="tab-btn" onclick="switchTab('saques',this)">💸 Saques</button>
     </div>
     <div id="tab-usuarios" class="tab-panel active">
       <div class="panel-card">
@@ -310,6 +419,153 @@
         <div class="fontes-item"><div style="display:flex;align-items:center"><div class="fontes-icon">📹</div><div class="fontes-info"><div class="name">Monetização de Vídeos</div><div class="sub">Receita principal do site</div></div></div><div class="fontes-value"><div class="amount" id="fontes-amount">R$ 0.00</div><div class="count" id="fontes-count">0 vídeos</div></div></div>
       </div>
     </div>
+
+    <div id="tab-saques" class="tab-panel">
+      <div class="saques-toggle">
+        <label class="toggle-switch"><input type="checkbox" id="withdrawals-toggle" onchange="toggleWithdrawals(this)"><span class="toggle-slider"></span></label>
+        <div><div style="font-size:13px;font-weight:600;color:#fff">Saques abertos para usuários</div><div style="font-size:11px;color:#6b7280">Quando desativado, usuários não podem solicitar saque</div></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">💸 Solicitações de Saque Pendentes</div>
+        <div id="saques-pending-list"><div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhuma solicitação pendente</div></div>
+      </div>
+      <div class="panel-card" style="margin-top:16px">
+        <div class="panel-title">📋 Histórico de Saques</div>
+        <div id="saques-history-list"><div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico ainda</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- USER DASHBOARD -->
+<div id="page-dashboard" class="page">
+<div class="dash-bg">
+  <header class="dash-header">
+    <div class="dash-logo">📹 CineCash IA</div>
+    <div class="dash-user-info">
+      <div class="dash-avatar" id="dash-avatar">?</div>
+      <span class="dash-username" id="dash-username">Usuário</span>
+      <button class="dash-logout-btn" onclick="doUserLogout()">Sair</button>
+    </div>
+  </header>
+  <div class="dash-body">
+    <!-- Nav tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="dash-nav-btn active" onclick="showDashTab('videos',this)">📹 Vídeos</button>
+      <button class="dash-nav-btn" onclick="showDashTab('moedas',this)">🪙 Minhas Moedas</button>
+      <button class="dash-nav-btn" onclick="showDashTab('saque',this)">💸 Sacar</button>
+      <button class="dash-nav-btn" onclick="showDashTab('indicacoes',this)">🔗 Indicações</button>
+    </div>
+
+    <!-- Balance cards -->
+    <div class="balance-bar">
+      <div class="balance-card"><div class="balance-card-label">Saldo disponível</div><div class="balance-card-value green" id="dash-balance">R$ 0,00</div></div>
+      <div class="balance-card"><div class="balance-card-label">🪙 Moedas</div><div class="balance-card-value amber" id="dash-coins">0</div></div>
+      <div class="balance-card"><div class="balance-card-label">Vídeos assistidos</div><div class="balance-card-value purple" id="dash-videos">0</div></div>
+    </div>
+
+    <!-- Check-in -->
+    <div class="checkin-card">
+      <div class="checkin-info">
+        <h3>Check-in diário</h3>
+        <p>Entre todo dia e ganhe recompensa!</p>
+        <div class="streak-badge" id="streak-badge">🔥 0 dias seguidos</div>
+      </div>
+      <button id="checkin-btn" class="checkin-btn" onclick="doCheckIn()">🎁 Fazer Check-in</button>
+    </div>
+
+    <!-- TAB: VÍDEOS -->
+    <div id="dash-tab-videos" class="dash-tab-panel active">
+      <div class="section-title">📹 Vídeos disponíveis</div>
+      <div class="video-grid" id="user-video-grid"><div class="no-videos">Carregando vídeos...</div></div>
+    </div>
+
+    <!-- TAB: MOEDAS -->
+    <div id="dash-tab-moedas" class="dash-tab-panel" style="display:none">
+      <div class="section-title">🪙 Minhas Moedas & Recompensas</div>
+      <div id="coins-progress-card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:15px;font-weight:700;color:#fff">🪙 <span id="coins-display">0</span> moedas</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5)">1 vídeo = 1 moeda</div>
+        </div>
+        <div id="next-reward-info" style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px">Próxima recompensa em breve...</div>
+        <div style="width:100%;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
+          <div id="coins-progress-bar" style="height:100%;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:4px;transition:width .5s;width:0%"></div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top:8px">🎁 Tabela de recompensas</div>
+      <div id="rewards-table" style="display:flex;flex-direction:column;gap:10px">
+        <div class="reward-row" data-vids="50" data-val="0.50"><div class="rr-left"><span class="rr-coins">🪙 50 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 0,50</span></div><div id="rr-btn-50" class="rr-btn locked">🔒</div></div>
+        <div class="reward-row" data-vids="100" data-val="1.00"><div class="rr-left"><span class="rr-coins">🪙 100 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 1,00</span></div><div id="rr-btn-100" class="rr-btn locked">🔒</div></div>
+        <div class="reward-row" data-vids="500" data-val="3.00"><div class="rr-left"><span class="rr-coins">🪙 500 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 3,00</span></div><div id="rr-btn-500" class="rr-btn locked">🔒</div></div>
+        <div class="reward-row" data-vids="1000" data-val="5.00"><div class="rr-left"><span class="rr-coins">🪙 1.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 5,00</span></div><div id="rr-btn-1000" class="rr-btn locked">🔒</div></div>
+        <div class="reward-row" data-vids="3000" data-val="10.00"><div class="rr-left"><span class="rr-coins">🪙 3.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 10,00</span></div><div id="rr-btn-3000" class="rr-btn locked">🔒</div></div>
+        <div class="reward-row" data-vids="9000" data-val="50.00"><div class="rr-left"><span class="rr-coins">🪙 9.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 50,00</span></div><div id="rr-btn-9000" class="rr-btn locked">🔒</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: SAQUE -->
+    <div id="dash-tab-saque" class="dash-tab-panel" style="display:none">
+      <div class="withdraw-card">
+        <div class="withdraw-title">💸 Solicitar Saque</div>
+        <div id="withdraw-closed-msg" style="display:none;padding:12px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;color:#f87171;font-size:13px;margin-bottom:12px">⚠️ Saques temporariamente fechados pelo administrador.</div>
+        <input id="withdraw-pix" class="withdraw-input" type="text" placeholder="Sua chave PIX (CPF, email, telefone ou aleatória)">
+        <input id="withdraw-amount" class="withdraw-input" type="number" step="0.01" placeholder="Valor a sacar (mínimo R$ 10,00)">
+        <button id="withdraw-btn" class="withdraw-btn" onclick="requestWithdrawal()">💸 Solicitar Saque</button>
+        <div style="margin-top:20px">
+          <div class="withdraw-title" style="margin-bottom:12px">📋 Meus saques</div>
+          <div id="user-withdrawals-list"><div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: INDICAÇÕES -->
+    <div id="dash-tab-indicacoes" class="dash-tab-panel" style="display:none">
+      <div style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(14,165,233,.25));border:1px solid rgba(124,58,237,.3);border-radius:16px;padding:22px 24px;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px">🔗 Programa de Indicações</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px;line-height:1.6">Indique amigos e <strong style="color:#34d399">ambos ganham R$ 1,00</strong> quando o indicado assistir 30 vídeos!</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:8px">Seu link de indicação:</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="referral-link-box" style="flex:1;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-size:12px;color:#a78bfa;word-break:break-all;font-family:monospace">Carregando...</div>
+          <button onclick="copyReferralLink()" style="padding:10px 16px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap">📋 Copiar</button>
+        </div>
+        <button onclick="shareReferral()" style="width:100%;margin-top:10px;padding:11px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📤 Compartilhar via WhatsApp</button>
+      </div>
+      <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px">📊 Minhas indicações</div>
+        <div class="balance-bar" style="margin-bottom:14px">
+          <div class="balance-card"><div class="balance-card-label">Total indicados</div><div class="balance-card-value purple" id="ref-total">0</div></div>
+          <div class="balance-card"><div class="balance-card-label">Indicações concluídas</div><div class="balance-card-value green" id="ref-completed">0</div></div>
+          <div class="balance-card"><div class="balance-card-label">Ganhos por indicação</div><div class="balance-card-value amber" id="ref-earned">R$ 0,00</div></div>
+        </div>
+        <div id="referral-list"><div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhuma indicação ainda</div></div>
+      </div>
+      <div style="margin-top:14px;padding:14px 18px;background:rgba(255,255,255,.05);border-radius:12px">
+        <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">📋 Como funciona:</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.8">
+          1. Compartilhe seu link único<br>
+          2. Amigo entra pelo link e se cadastra<br>
+          3. Amigo assiste 30 vídeos<br>
+          4. Ambos ganham R$ 1,00 automaticamente! 🎉
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Watch Video Modal -->
+<div class="watch-modal-overlay" id="modal-watch">
+  <div class="watch-modal">
+    <div class="watch-modal-title" id="watch-modal-title">Assistindo vídeo</div>
+    <div class="watch-modal-sub" id="watch-modal-sub">Assista pelo menos 30 segundos para ganhar</div>
+    <div class="watch-timer" id="watch-timer">30</div>
+    <div class="watch-progress"><div class="watch-progress-fill" id="watch-progress-fill" style="width:0%"></div></div>
+    <a id="watch-video-link" href="#" target="_blank" rel="noopener"><button class="watch-open-btn">▶ Abrir vídeo no YouTube</button></a>
+    <br>
+    <button class="watch-cancel-btn" onclick="cancelWatch()">Cancelar</button>
   </div>
 </div>
 
@@ -709,12 +965,595 @@ function antiFraud_checkVideoWatch(uid, videoId){
   return true
 }
 
+
+// ═══════════════════════════════════════════════════════════
+//  USER DASHBOARD
+// ═══════════════════════════════════════════════════════════
+let _currentUser = null
+let _watchTimer = null
+let _watchVideoId = null
+let _watchDuration = 30
+
+// Auth state - redirect to dashboard
+onAuthStateChanged(auth, async user => {
+  if(user){
+    const snap = await get(ref(db, 'users/'+user.uid))
+    if(snap.exists()){
+      const profile = snap.val()
+      if(profile.status === 'inativo'){
+        showToast('Conta inativa. Contate o suporte.','error')
+        await signOut(auth); return
+      }
+      _currentUser = { uid: user.uid, ...profile }
+      showToast('Bem-vindo, '+profile.display+'! ✅','success')
+      showPage('dashboard')
+      loadUserDashboard()
+    }
+  }
+})
+
+// Reward thresholds
+const REWARD_LEVELS = [
+  { vids:50,   val:0.50 },
+  { vids:100,  val:1.00 },
+  { vids:500,  val:3.00 },
+  { vids:1000, val:5.00 },
+  { vids:3000, val:10.00},
+  { vids:9000, val:50.00}
+]
+
+function showDashTab(name, btn){
+  document.querySelectorAll('.dash-tab-panel').forEach(p=>{ p.style.display='none'; p.classList.remove('active') })
+  document.querySelectorAll('.dash-nav-btn').forEach(b=>b.classList.remove('active'))
+  const el = document.getElementById('dash-tab-'+name)
+  if(el){ el.style.display='block'; el.classList.add('active') }
+  if(btn) btn.classList.add('active')
+  if(name==='indicacoes') loadReferralTab()
+}
+
+async function loadUserDashboard(){
+  if(!_currentUser) return
+  const snap = await get(ref(db,'users/'+_currentUser.uid))
+  if(!snap.exists()) return
+  const u = snap.val()
+  _currentUser = { ..._currentUser, ...u }
+
+  const avatar = document.getElementById('dash-avatar')
+  const username = document.getElementById('dash-username')
+  if(avatar) avatar.textContent = (u.display||'U')[0].toUpperCase()
+  if(username) username.textContent = u.display||'Usuário'
+
+  const bal = document.getElementById('dash-balance')
+  const coins = document.getElementById('dash-coins')
+  const vids = document.getElementById('dash-videos')
+  const streak = document.getElementById('dash-streak')
+  const streakBadge = document.getElementById('streak-badge')
+  const coinsDisp = document.getElementById('coins-display')
+
+  const totalVids = u.videosWatched||0
+  if(bal) bal.textContent = 'R$ '+Number(u.balance||0).toFixed(2).replace('.',',')
+  if(coins) coins.textContent = totalVids
+  if(coinsDisp) coinsDisp.textContent = totalVids
+  if(vids) vids.textContent = totalVids
+  if(streak) streak.textContent = (u.checkInStreak||0)+' 🔥'
+  if(streakBadge) streakBadge.textContent = '🔥 '+(u.checkInStreak||0)+' dias seguidos'
+
+  updateCheckInBtn(u)
+  updateRewardButtons(totalVids, u.claimedRewards||{})
+  loadUserVideos()
+  loadWithdrawalsConfig()
+  loadUserWithdrawals()
+  loadReferralStats()
+}
+
+function updateRewardButtons(totalVids, claimedRewards){
+  // Find next level
+  let nextLevel = null
+  for(const lvl of REWARD_LEVELS){
+    if(totalVids < lvl.vids){ nextLevel = lvl; break }
+  }
+  const pct = nextLevel ? Math.min((totalVids/nextLevel.vids)*100, 100) : 100
+  const bar = document.getElementById('coins-progress-bar')
+  const info = document.getElementById('next-reward-info')
+  if(bar) bar.style.width = pct+'%'
+  if(info && nextLevel) info.textContent = `Faltam ${nextLevel.vids - totalVids} vídeos para ganhar R$ ${nextLevel.val.toFixed(2)}!`
+  else if(info) info.textContent = '🏆 Você atingiu o nível máximo!'
+
+  for(const lvl of REWARD_LEVELS){
+    const btn = document.getElementById('rr-btn-'+lvl.vids)
+    const row = btn?.closest('.reward-row')
+    if(!btn) continue
+    const claimed = claimedRewards && claimedRewards[lvl.vids]
+    if(claimed){
+      btn.textContent='✅ Resgatado'; btn.className='rr-btn claimed'
+      row?.classList.add('claimed')
+    } else if(totalVids >= lvl.vids){
+      btn.textContent='🎁 Resgatar'; btn.className='rr-btn ready'
+      btn.onclick = ()=>claimReward(lvl.vids, lvl.val)
+      row?.classList.add('unlocked')
+    } else {
+      btn.textContent='🔒'; btn.className='rr-btn locked'
+    }
+  }
+}
+
+async function claimReward(vids, val){
+  if(!_currentUser) return
+  const snap = await get(ref(db,'users/'+_currentUser.uid))
+  const u = snap.val()
+  if(Number(u.videosWatched||0) < vids) return showToast('Assista mais vídeos!','error')
+  if(u.claimedRewards && u.claimedRewards[vids]) return showToast('Recompensa já resgatada!','error')
+
+  // Admin earns 10% of reward
+  const adminEarn = val * 0.10
+  const adminBal = Number((await get(ref(db,'config/adminBalance'))).val()||0)
+  await set(ref(db,'config/adminBalance'), adminBal + adminEarn)
+
+  await update(ref(db,'users/'+_currentUser.uid),{
+    balance: Number(u.balance||0)+val,
+    totalEarned: Number(u.totalEarned||0)+val,
+    ['claimedRewards/'+vids]: Date.now()
+  })
+  showToast('🎉 R$ '+val.toFixed(2)+' adicionado ao seu saldo!','success')
+  loadUserDashboard()
+}
+
+function updateCheckInBtn(u){
+  const btn = document.getElementById('checkin-btn')
+  if(!btn) return
+  const today = new Date().toDateString()
+  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
+  if(lastCI === today){
+    btn.disabled = true
+    btn.textContent = '✅ Check-in feito hoje!'
+  } else {
+    btn.disabled = false
+    btn.textContent = '🎁 Fazer Check-in'
+  }
+}
+
+async function doCheckIn(){
+  if(!_currentUser) return
+  const btn = document.getElementById('checkin-btn')
+  btn.disabled = true
+
+  const snap = await get(ref(db,'users/'+_currentUser.uid))
+  const u = snap.val()
+  const today = new Date().toDateString()
+  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
+
+  if(lastCI === today){ showToast('Você já fez check-in hoje!','error'); return }
+
+  // Calculate streak
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
+  const wasYesterday = lastCI === yesterday.toDateString()
+  const newStreak = wasYesterday ? (u.checkInStreak||0)+1 : 1
+
+  // Get config reward
+  const cfgSnap = await get(ref(db,'config/dailyCheckInReward'))
+  const reward = cfgSnap.exists() ? Number(cfgSnap.val()) : 0.05
+
+  await update(ref(db,'users/'+_currentUser.uid),{
+    balance: Number(u.balance||0)+reward,
+    lastCheckIn: Date.now(),
+    checkInStreak: newStreak,
+    totalEarned: Number(u.totalEarned||0)+reward
+  })
+  // Admin earns 10% of check-in reward
+  const adminBal2 = Number((await get(ref(db,'config/adminBalance'))).val()||0)
+  await set(ref(db,'config/adminBalance'), adminBal2 + reward*0.10)
+
+  showToast('🎁 Check-in feito! +R$'+reward.toFixed(2)+' • Sequência: '+newStreak+' dias 🔥','success')
+  loadUserDashboard()
+}
+
+async function loadUserVideos(){
+  const snap = await get(ref(db,'videos'))
+  const grid = document.getElementById('user-video-grid')
+  if(!grid) return
+
+  if(!snap.exists()){
+    grid.innerHTML='<div class="no-videos">📹 Nenhum vídeo disponível ainda. Volte em breve!</div>'
+    return
+  }
+
+  const videos = Object.entries(snap.val()).map(([id,v])=>({...v,id}))
+  const u = _currentUser
+  const watchedList = u.watchedVideos || {}
+
+  grid.innerHTML = videos.map(v=>{
+    const watched = watchedList[v.id]
+    return `<div class="video-card">
+      <div class="video-thumb">
+        📹
+        <span class="video-reward-badge">+R$ ${Number(v.reward||0).toFixed(2)}</span>
+      </div>
+      <div class="video-info">
+        <div class="video-title">${v.title}</div>
+        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}','${v.title}','${v.url}',${v.reward})" ${watched?'disabled':''}>
+          ${watched ? '✅ Já assistido' : '▶ Assistir e ganhar'}
+        </button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+async function startWatch(videoId, title, url, reward){
+  if(!antiFraud_checkVideoWatch(_currentUser.uid, videoId)) return
+
+  // Check if already watched in DB
+  const snap = await get(ref(db,'users/'+_currentUser.uid+'/watchedVideos/'+videoId))
+  if(snap.exists()){
+    showToast('Você já assistiu este vídeo!','error'); return
+  }
+
+  _watchVideoId = videoId
+  _watchDuration = 30
+  document.getElementById('watch-modal-title').textContent = title
+  document.getElementById('watch-modal-sub').textContent = 'Assista pelo menos 30 segundos para ganhar R$'+Number(reward).toFixed(2)
+  document.getElementById('watch-video-link').href = url
+  document.getElementById('watch-timer').textContent = _watchDuration
+  document.getElementById('watch-progress-fill').style.width = '0%'
+  document.getElementById('modal-watch').classList.add('open')
+
+  let elapsed = 0
+  _watchTimer = setInterval(async ()=>{
+    elapsed++
+    const remaining = _watchDuration - elapsed
+    const pct = (elapsed/_watchDuration)*100
+    document.getElementById('watch-timer').textContent = remaining > 0 ? remaining : '✅'
+    document.getElementById('watch-progress-fill').style.width = Math.min(pct,100)+'%'
+
+    if(elapsed >= _watchDuration){
+      clearInterval(_watchTimer)
+      _watchTimer = null
+      await creditVideoReward(videoId, reward)
+    }
+  }, 1000)
+}
+
+async function creditVideoReward(videoId, reward){
+  const u = _currentUser
+  const userSnap = await get(ref(db,'users/'+u.uid))
+  const userData = userSnap.val()
+  const newVidsWatched = Number(userData.videosWatched||0)+1
+
+  // Credit user
+  await update(ref(db,'users/'+u.uid),{
+    balance: Number(userData.balance||0)+Number(reward),
+    videosWatched: newVidsWatched,
+    totalEarned: Number(userData.totalEarned||0)+Number(reward),
+    ['watchedVideos/'+videoId]: Date.now()
+  })
+
+  // Admin earns per video (5%)
+  const adminEarn = Number(reward) * 0.05
+  const adminBal = Number((await get(ref(db,'config/adminBalance'))).val()||0)
+  await set(ref(db,'config/adminBalance'), adminBal + adminEarn)
+  await set(ref(db,'config/totalVideosWatched'), Number((await get(ref(db,'config/totalVideosWatched'))).val()||0)+1)
+
+  // Check referral completion (30 videos milestone)
+  if(newVidsWatched === 30 && userData.referredBy){
+    await completeReferral(userData.referredBy, u.uid)
+  }
+
+  document.getElementById('modal-watch').classList.remove('open')
+  showToast('🎉 +R$'+Number(reward).toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
+  loadUserDashboard()
+}
+
+async function completeReferral(referrerId, newUserId){
+  try {
+    // Give R$1.00 to referrer
+    const refSnap = await get(ref(db,'users/'+referrerId))
+    if(refSnap.exists()){
+      const rd = refSnap.val()
+      await update(ref(db,'users/'+referrerId),{
+        balance: Number(rd.balance||0)+1,
+        totalEarned: Number(rd.totalEarned||0)+1,
+        referralEarnings: Number(rd.referralEarnings||0)+1,
+        ['completedReferrals/'+newUserId]: Date.now()
+      })
+    }
+    // Give R$1.00 to new user
+    const nuSnap = await get(ref(db,'users/'+newUserId))
+    if(nuSnap.exists()){
+      const nu = nuSnap.val()
+      await update(ref(db,'users/'+newUserId),{
+        balance: Number(nu.balance||0)+1,
+        totalEarned: Number(nu.totalEarned||0)+1,
+        referralBonusReceived: true
+      })
+    }
+    // Mark referral as complete
+    await update(ref(db,'referrals/'+referrerId+'/'+newUserId),{ status:'completed', completedAt: Date.now() })
+    showToast('🎉 Bônus de R$ 1,00 de indicação adicionado!','success')
+  } catch(e){ console.error(e) }
+}
+
+function cancelWatch(){
+  if(_watchTimer){ clearInterval(_watchTimer); _watchTimer=null }
+  document.getElementById('modal-watch').classList.remove('open')
+  showToast('Vídeo cancelado. Assista completo para ganhar!','info')
+}
+
+async function loadWithdrawalsConfig(){
+  const snap = await get(ref(db,'config/withdrawalsOpen'))
+  const open = !snap.exists() || snap.val()===true
+  const msg = document.getElementById('withdraw-closed-msg')
+  const btn = document.getElementById('withdraw-btn')
+  if(msg) msg.style.display = open ? 'none' : 'block'
+  if(btn) btn.disabled = !open
+}
+
+async function requestWithdrawal(){
+  if(!_currentUser) return
+  const pix    = document.getElementById('withdraw-pix').value.trim()
+  const amount = parseFloat(document.getElementById('withdraw-amount').value)||0
+
+  if(!pix) return showToast('Digite sua chave PIX!','error')
+  if(amount < 10) return showToast('Valor mínimo de saque: R$ 10,00!','error')
+
+  const snap = await get(ref(db,'users/'+_currentUser.uid))
+  const u = snap.val()
+  if(Number(u.balance||0) < amount) return showToast('Saldo insuficiente!','error')
+
+  // Verify minimum videos watched
+  const minVidsSnap = await get(ref(db,'config/minVideosForWithdrawal'))
+  const minVids = minVidsSnap.exists() ? Number(minVidsSnap.val()) : 5
+  if(Number(u.videosWatched||0) < minVids){
+    return showToast('Você precisa assistir pelo menos '+minVids+' vídeos para sacar!','error')
+  }
+
+  // Create withdrawal request
+  const wRef = push(ref(db,'withdrawals'))
+  await set(wRef,{
+    uid: _currentUser.uid,
+    userName: u.fullname||u.display,
+    userEmail: u.email,
+    pixKey: pix,
+    amount: amount,
+    videosWatched: u.videosWatched||0,
+    balance: u.balance||0,
+    status: 'pending',
+    requestedAt: Date.now()
+  })
+
+  // Deduct from balance (hold)
+  await update(ref(db,'users/'+_currentUser.uid),{
+    balance: Number(u.balance||0)-amount
+  })
+
+  document.getElementById('withdraw-pix').value=''
+  document.getElementById('withdraw-amount').value=''
+  showToast('✅ Saque solicitado! O admin irá verificar e aprovar em breve.','success')
+  loadUserDashboard()
+}
+
+async function loadUserWithdrawals(){
+  const list = document.getElementById('user-withdrawals-list')
+  if(!list) return
+  const snap = await get(ref(db,'withdrawals'))
+  if(!snap.exists()){ list.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div>'; return }
+
+  const all = Object.entries(snap.val())
+    .filter(([,w])=>w.uid===_currentUser.uid)
+    .sort(([,a],[,b])=>b.requestedAt-a.requestedAt)
+
+  if(!all.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div>'; return }
+
+  list.innerHTML = all.map(([id,w])=>`
+    <div class="withdraw-history-item">
+      <div>
+        <div style="color:#fff;font-weight:600;font-size:12px">R$ ${Number(w.amount).toFixed(2)}</div>
+        <div style="color:rgba(255,255,255,.4);font-size:11px">${new Date(w.requestedAt).toLocaleDateString('pt-BR')} • PIX: ${w.pixKey}</div>
+      </div>
+      <span class="wh-status-${w.status}">${w.status==='pending'?'⏳ Pendente':w.status==='approved'?'✅ Aprovado':'❌ Negado'}</span>
+    </div>
+  `).join('')
+}
+
+async function doUserLogout(){
+  await signOut(auth)
+  _currentUser = null
+  showPage('login')
+  showToast('Até logo!','info')
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ADMIN — SAQUES
+// ═══════════════════════════════════════════════════════════
+async function loadSaquesTab(){
+  // Load pending
+  const snap = await get(ref(db,'withdrawals'))
+  const pendingList = document.getElementById('saques-pending-list')
+  const historyList = document.getElementById('saques-history-list')
+  if(!pendingList) return
+
+  if(!snap.exists()){
+    pendingList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhuma solicitação</div>'
+    historyList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico</div>'
+    return
+  }
+
+  const all = Object.entries(snap.val()).sort(([,a],[,b])=>b.requestedAt-a.requestedAt)
+  const pending = all.filter(([,w])=>w.status==='pending')
+  const history = all.filter(([,w])=>w.status!=='pending')
+
+  if(!pending.length){
+    pendingList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">✅ Nenhuma pendente</div>'
+  } else {
+    pendingList.innerHTML = pending.map(([id,w])=>`
+      <div class="saque-item">
+        <div class="saque-info">
+          <div class="name">${w.userName||'Usuário'}</div>
+          <div class="detail">${w.userEmail} • PIX: ${w.pixKey} • ${w.videosWatched} vídeos assistidos</div>
+          <div class="detail">${new Date(w.requestedAt).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <span class="saque-amount">R$ ${Number(w.amount).toFixed(2)}</span>
+        <div class="saque-actions">
+          <button class="btn-approve" onclick="approveWithdrawal('${id}','${w.uid}',${w.amount})">✅ Aprovar</button>
+          <button class="btn-deny" onclick="denyWithdrawal('${id}','${w.uid}',${w.amount})">❌ Negar</button>
+        </div>
+      </div>
+    `).join('')
+  }
+
+  if(!history.length){
+    historyList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico</div>'
+  } else {
+    historyList.innerHTML = history.map(([id,w])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0d1117;border-radius:8px;margin-bottom:8px;font-size:12px">
+        <div>
+          <span style="font-weight:600;color:#fff">${w.userName}</span>
+          <span style="color:#6b7280"> • R$ ${Number(w.amount).toFixed(2)} • ${w.pixKey}</span>
+        </div>
+        <span class="${w.status==='approved'?'badge-active':'badge-inactive'}">${w.status==='approved'?'✅ Aprovado':'❌ Negado'}</span>
+      </div>
+    `).join('')
+  }
+
+  // Load withdrawal toggle state
+  const cfgSnap = await get(ref(db,'config/withdrawalsOpen'))
+  const toggle = document.getElementById('withdrawals-toggle')
+  if(toggle) toggle.checked = !cfgSnap.exists() || cfgSnap.val()===true
+
+  // Load admin balance
+  document.getElementById('stat-saques').textContent = pending.length
+}
+
+async function approveWithdrawal(id, uid, amount){
+  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'?
+Lembre-se de enviar o PIX antes de aprovar!')) return
+  try {
+    await update(ref(db,'withdrawals/'+id),{ status:'approved', processedAt: Date.now() })
+    showToast('✅ Saque aprovado! Lembre-se de enviar o PIX.','success')
+    loadSaquesTab()
+  } catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+async function denyWithdrawal(id, uid, amount){
+  if(!confirm('Negar este saque? O valor será devolvido ao usuário.')) return
+  try {
+    await update(ref(db,'withdrawals/'+id),{ status:'denied', processedAt: Date.now() })
+    // Refund user
+    const snap = await get(ref(db,'users/'+uid))
+    if(snap.exists()){
+      await update(ref(db,'users/'+uid),{ balance: Number(snap.val().balance||0)+Number(amount) })
+    }
+    showToast('Saque negado. Saldo devolvido ao usuário.','info')
+    loadSaquesTab()
+  } catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+async function toggleWithdrawals(checkbox){
+  await set(ref(db,'config/withdrawalsOpen'), checkbox.checked)
+  showToast(checkbox.checked ? '✅ Saques abertos!' : '🔒 Saques fechados!', checkbox.checked?'success':'info')
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+//  REFERRAL SYSTEM
+// ═══════════════════════════════════════════════════════════
+function getReferralLink(){
+  const base = window.location.origin + window.location.pathname
+  return base + '?ref=' + (_currentUser?.uid||'').substring(0,8)
+}
+
+function copyReferralLink(){
+  const link = getReferralLink()
+  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success'))
+}
+
+function shareReferral(){
+  const link = getReferralLink()
+  const msg = encodeURIComponent('🎬 Assista vídeos e ganhe dinheiro real no CineCash IA!\n\nUse meu link e ganhe R$ 1,00 de bônus: '+link)
+  window.open('https://wa.me/?text='+msg,'_blank')
+}
+
+async function loadReferralTab(){
+  const box = document.getElementById('referral-link-box')
+  if(box) box.textContent = getReferralLink()
+  loadReferralStats()
+}
+
+async function loadReferralStats(){
+  if(!_currentUser) return
+  const snap = await get(ref(db,'referrals/'+_currentUser.uid))
+  const totalEl = document.getElementById('ref-total')
+  const compEl = document.getElementById('ref-completed')
+  const earnEl = document.getElementById('ref-earned')
+  const listEl = document.getElementById('referral-list')
+
+  if(!snap.exists()){
+    if(totalEl) totalEl.textContent='0'
+    if(compEl) compEl.textContent='0'
+    if(earnEl) earnEl.textContent='R$ 0,00'
+    if(listEl) listEl.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhuma indicação ainda</div>'
+    return
+  }
+
+  const refs = Object.entries(snap.val())
+  const total = refs.length
+  const completed = refs.filter(([,r])=>r.status==='completed').length
+  if(totalEl) totalEl.textContent = total
+  if(compEl) compEl.textContent = completed
+  if(earnEl) earnEl.textContent = 'R$ '+completed.toFixed(2).replace('.',',')
+
+  if(listEl) listEl.innerHTML = refs.map(([uid,r])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px">
+      <div style="color:rgba(255,255,255,.7)">${r.userName||'Usuário'}</div>
+      <span style="padding:3px 10px;border-radius:20px;font-size:11px;${r.status==='completed'?'background:rgba(52,211,153,.1);color:#34d399':'background:rgba(251,191,36,.1);color:#fbbf24'}">
+        ${r.status==='completed'?'✅ Concluído':'⏳ Assistindo vídeos ('+( r.videosWatched||0)+'/30)'}
+      </span>
+    </div>
+  `).join('')
+}
+
+// Check referral param on registration
+function checkReferralParam(){
+  const params = new URLSearchParams(window.location.search)
+  return params.get('ref') || null
+}
+
+async function registerReferral(newUid, newName, referrerId){
+  if(!referrerId) return
+  // Find full referrer UID from short ID
+  const usersSnap = await get(ref(db,'users'))
+  if(!usersSnap.exists()) return
+  const entries = Object.entries(usersSnap.val())
+  const referrer = entries.find(([uid])=>uid.startsWith(referrerId))
+  if(!referrer) return
+  const [fullReferrerId] = referrer
+
+  await set(ref(db,'users/'+newUid+'/referredBy'), fullReferrerId)
+  await set(ref(db,'referrals/'+fullReferrerId+'/'+newUid),{
+    userName: newName,
+    status: 'pending',
+    videosWatched: 0,
+    joinedAt: Date.now()
+  })
+}
+
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
 window.doGoogleLogin=doGoogleLogin;window.doAdminLogin=doAdminLogin;window.doAdminLogout=doAdminLogout
 window.switchTab=switchTab;window.openEditModal=openEditModal;window.saveEditUser=saveEditUser
 window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
 window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
 window.toggleMaintenance=toggleMaintenance
+window.approveWithdrawal=approveWithdrawal
+window.denyWithdrawal=denyWithdrawal
+window.toggleWithdrawals=toggleWithdrawals
+window.startWatch=startWatch
+window.cancelWatch=cancelWatch
+window.doCheckIn=doCheckIn
+window.doUserLogout=doUserLogout
+window.requestWithdrawal=requestWithdrawal
+window.showDashTab=showDashTab
+window.claimReward=claimReward
+window.copyReferralLink=copyReferralLink
+window.shareReferral=shareReferral
 window.antiFraud_checkVideoWatch=antiFraud_checkVideoWatch
 
 // init
