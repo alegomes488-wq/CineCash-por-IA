@@ -270,7 +270,13 @@
 <body>
 <script>
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{})
+  // Try both root and subpath for GitHub Pages compatibility
+  const swPath = location.pathname.includes('CineCash') 
+    ? '/CineCash-por-IA/sw.js' 
+    : '/sw.js'
+  navigator.serviceWorker.register(swPath).catch(()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{})
+  })
 }
 </script>
 
@@ -278,7 +284,7 @@ if('serviceWorker' in navigator){
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
+    <div class="auth-logo" ondblclick="showPage('admin-login')" title=""><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
     <div class="field-group"><label class="field-label">Email</label><input id="login-email" class="auth-input" type="email" placeholder="seu@email.com"></div>
     <div class="field-group"><label class="field-label">Senha</label><div class="input-wrap"><input id="login-password" class="auth-input" type="password" placeholder="••••••••"><button class="input-eye" onclick="togglePwd('login-password',this)">👁</button></div></div>
@@ -286,7 +292,7 @@ if('serviceWorker' in navigator){
     <div class="divider">OU</div>
     <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
     <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
-    <p class="admin-link" id="admin-link-btn" onclick="showPage('admin-login')" style="opacity:0;font-size:1px;color:transparent;user-select:none;pointer-events:none">.</p>
+    <p id="admin-link-btn" style="opacity:0;height:1px;overflow:hidden;pointer-events:none" aria-hidden="true">.</p>
   </div></div>
 </div>
 
@@ -634,17 +640,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open')}
 function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
 function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
 
-// ── auth state ────────────────────────────────────────────────────────────────
-onAuthStateChanged(auth, async user => {
-  if(user){
-    const snap=await get(ref(db,'users/'+user.uid));
-    if(snap.exists()){
-      const p=snap.val();
-      if(p.status==='inativo'){showToast('Conta inativa. Contate o suporte.','error');await signOut(auth);return}
-      showToast('Bem-vindo, '+p.display+'! ✅','success')
-    }
-  }
-})
+// auth state handled in dashboard section below
 
 // ── ✅ register ───────────────────────────────────────────────────────────────
 async function doRegister(){
@@ -922,8 +918,10 @@ async function loadMaintenanceState(){
 // Acesse: seusite.netlify.app/index.html#admin para abrir login admin
 // mesmo durante manutenção
 function checkAdminHash(){
-  if(window.location.hash === '#admin'){
-    // Limpa o hash da URL (discreto)
+  // Works with any URL format: domain/#admin or domain/path/#admin
+  const hash = window.location.hash
+  const search = window.location.search
+  if(hash === '#admin' || search.includes('admin=1')){
     history.replaceState(null, '', window.location.pathname)
     showPage('admin-login')
     return true
@@ -932,9 +930,12 @@ function checkAdminHash(){
 }
 
 // Checa manutenção para usuários ao carregar
-if(!checkAdminHash()){
-  checkMaintenance()
-}
+// Delay slightly to ensure DOM is ready
+setTimeout(()=>{
+  if(!checkAdminHash()){
+    checkMaintenance()
+  }
+}, 100)
 
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
 const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
@@ -974,8 +975,13 @@ let _watchTimer = null
 let _watchVideoId = null
 let _watchDuration = 30
 
-// Auth state - redirect to dashboard
+// Auth state - redirect to dashboard (only for regular users, not admin)
 onAuthStateChanged(auth, async user => {
+  // Don't redirect if admin pages are active
+  const adminActive = document.getElementById('page-admin-login')?.classList.contains('active')
+    || document.getElementById('page-admin-dashboard')?.classList.contains('active')
+  if(adminActive) return
+
   if(user){
     const snap = await get(ref(db, 'users/'+user.uid))
     if(snap.exists()){
@@ -985,10 +991,19 @@ onAuthStateChanged(auth, async user => {
         await signOut(auth); return
       }
       _currentUser = { uid: user.uid, ...profile }
-      showToast('Bem-vindo, '+profile.display+'! ✅','success')
-      showPage('dashboard')
-      loadUserDashboard()
+      // Only redirect if on login/register page
+      const onAuthPage = document.getElementById('page-login')?.classList.contains('active')
+        || document.getElementById('page-register')?.classList.contains('active')
+      if(onAuthPage || !document.getElementById('page-dashboard')?.classList.contains('active')){
+        showToast('Bem-vindo, '+profile.display+'! ✅','success')
+        showPage('dashboard')
+        loadUserDashboard()
+      }
     }
+  } else {
+    // User signed out - go to login unless on maintenance or admin page
+    const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
+    if(onDash) showPage('login')
   }
 })
 
