@@ -717,6 +717,7 @@ async function doAdminLogin(){
 function doAdminLogout(){
   try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
   _cachedUsers=[];_cachedVideos=[]
+  sessionStorage.removeItem('_adminMode')
   showPage('login')
   document.getElementById('admin-user').value=''
   document.getElementById('admin-pwd').value=''
@@ -914,28 +915,43 @@ async function loadMaintenanceState(){
   } catch(_){}
 }
 
-// ── Hash admin secret URL ────────────────────────────────────
-// Acesse: seusite.netlify.app/index.html#admin para abrir login admin
-// mesmo durante manutenção
+// ── Admin access URLs ────────────────────────────────────────
+// cinecash.com.br/#admin  ← URL secreta
+// cinecash.com.br/?adm=1  ← URL alternativa
+// Duplo clique no logo    ← acesso discreto
+// ── Admin access — checked synchronously BEFORE Firebase ─────────────────
+// Detects: cinecash.com.br/#admin OR cinecash.com.br/?adm=1
+;(function(){
+  const h = window.location.hash
+  const s = window.location.search
+  const isAdminAccess = h === '#admin' || h === '#adm' || s.includes('adm=1')
+  if(isAdminAccess){
+    sessionStorage.setItem('_adminMode','1')
+    history.replaceState(null,'',window.location.pathname)
+  }
+})()
+
 function checkAdminHash(){
-  // Works with any URL format: domain/#admin or domain/path/#admin
-  const hash = window.location.hash
-  const search = window.location.search
-  if(hash === '#admin' || search.includes('admin=1')){
-    history.replaceState(null, '', window.location.pathname)
+  if(sessionStorage.getItem('_adminMode')==='1'){
+    sessionStorage.removeItem('_adminMode')
+    showPage('admin-login')
+    return true
+  }
+  const h = window.location.hash
+  if(h==='#admin'||h==='#adm'){
+    history.replaceState(null,'',window.location.pathname)
     showPage('admin-login')
     return true
   }
   return false
 }
 
-// Checa manutenção para usuários ao carregar
-// Delay slightly to ensure DOM is ready
+// Checa manutenção após pequeno delay
 setTimeout(()=>{
   if(!checkAdminHash()){
     checkMaintenance()
   }
-}, 100)
+}, 150)
 
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
 const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
@@ -975,35 +991,37 @@ let _watchTimer = null
 let _watchVideoId = null
 let _watchDuration = 30
 
-// Auth state - redirect to dashboard (only for regular users, not admin)
+// Auth state - handles user login/logout
 onAuthStateChanged(auth, async user => {
-  // Don't redirect if admin pages are active
+  // ❌ Never interfere with admin pages
   const adminActive = document.getElementById('page-admin-login')?.classList.contains('active')
     || document.getElementById('page-admin-dashboard')?.classList.contains('active')
   if(adminActive) return
 
+  // ❌ Never interfere if admin mode was triggered via URL
+  if(sessionStorage.getItem('_adminMode')==='1') return
+
   if(user){
     const snap = await get(ref(db, 'users/'+user.uid))
-    if(snap.exists()){
-      const profile = snap.val()
-      if(profile.status === 'inativo'){
-        showToast('Conta inativa. Contate o suporte.','error')
-        await signOut(auth); return
-      }
-      _currentUser = { uid: user.uid, ...profile }
-      // Only redirect if on login/register page
-      const onAuthPage = document.getElementById('page-login')?.classList.contains('active')
-        || document.getElementById('page-register')?.classList.contains('active')
-      if(onAuthPage || !document.getElementById('page-dashboard')?.classList.contains('active')){
-        showToast('Bem-vindo, '+profile.display+'! ✅','success')
-        showPage('dashboard')
-        loadUserDashboard()
-      }
+    if(!snap.exists()) return
+    const profile = snap.val()
+    if(profile.status === 'inativo'){
+      showToast('Conta inativa. Contate o suporte.','error')
+      await signOut(auth); return
+    }
+    _currentUser = { uid: user.uid, ...profile }
+    const onLoginPage = ['page-login','page-register','page-maintenance'].some(
+      id => document.getElementById(id)?.classList.contains('active')
+    )
+    const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
+    if(onLoginPage || (!onDash)){
+      showToast('Bem-vindo, '+profile.display+'! ✅','success')
+      showPage('dashboard')
+      loadUserDashboard()
     }
   } else {
-    // User signed out - go to login unless on maintenance or admin page
     const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
-    if(onDash) showPage('login')
+    if(onDash){ _currentUser=null; showPage('login') }
   }
 })
 
