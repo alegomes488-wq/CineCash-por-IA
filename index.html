@@ -178,7 +178,7 @@
     <div class="divider">OU</div>
     <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
     <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
-    <p class="admin-link" onclick="showPage('admin-login')">Acesso Admin</p>
+    <p class="admin-link" id="admin-link-btn" onclick="showPage('admin-login')" style="opacity:0;font-size:1px;color:transparent;user-select:none;pointer-events:none">.</p>
   </div></div>
 </div>
 
@@ -364,7 +364,7 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
-const ADMIN_CREDS = { user:'admin16', pass:'admin123' };
+const ADMIN_CREDS = { user:'admin16', pass:'ale_gome16' };
 let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -662,8 +662,52 @@ async function loadMaintenanceState(){
   } catch(_){}
 }
 
+// ── Hash admin secret URL ────────────────────────────────────
+// Acesse: seusite.netlify.app/index.html#admin para abrir login admin
+// mesmo durante manutenção
+function checkAdminHash(){
+  if(window.location.hash === '#admin'){
+    // Limpa o hash da URL (discreto)
+    history.replaceState(null, '', window.location.pathname)
+    showPage('admin-login')
+    return true
+  }
+  return false
+}
+
 // Checa manutenção para usuários ao carregar
-checkMaintenance()
+if(!checkAdminHash()){
+  checkMaintenance()
+}
+
+// ── Anti-fraude: detecta tentativas suspeitas ─────────────
+const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
+
+function antiFraud_checkLogin(){
+  const now = Date.now()
+  // Reset contador se passou mais de 5 minutos
+  if(now - _fraudLog.lastAttempt > 5 * 60 * 1000) _fraudLog.attempts = 0
+  _fraudLog.attempts++
+  _fraudLog.lastAttempt = now
+  if(_fraudLog.attempts > 5){
+    _fraudLog.blocked = true
+    showToast('Muitas tentativas. Aguarde 5 minutos.', 'error')
+    setTimeout(()=>{ _fraudLog.blocked = false; _fraudLog.attempts = 0 }, 5*60*1000)
+    return false
+  }
+  return true
+}
+
+function antiFraud_checkVideoWatch(uid, videoId){
+  // Chave local para evitar duplo clique
+  const key = `watched_${uid}_${videoId}`
+  if(sessionStorage.getItem(key)){
+    showToast('Você já assistiu este vídeo nesta sessão!', 'error')
+    return false
+  }
+  sessionStorage.setItem(key, '1')
+  return true
+}
 
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
 window.doGoogleLogin=doGoogleLogin;window.doAdminLogin=doAdminLogin;window.doAdminLogout=doAdminLogout
@@ -671,6 +715,7 @@ window.switchTab=switchTab;window.openEditModal=openEditModal;window.saveEditUse
 window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
 window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
 window.toggleMaintenance=toggleMaintenance
+window.antiFraud_checkVideoWatch=antiFraud_checkVideoWatch
 
 // init
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
