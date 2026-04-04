@@ -270,7 +270,6 @@
 <body>
 <script>
 if('serviceWorker' in navigator){
-  // Try both root and subpath for GitHub Pages compatibility
   const swPath = location.pathname.includes('CineCash') 
     ? '/CineCash-por-IA/sw.js' 
     : '/sw.js'
@@ -279,12 +278,16 @@ if('serviceWorker' in navigator){
   })
 }
 </script>
+<!-- ✅ MONETAG: Multitag all-in-one -->
+<script src="https://quge5.com/88/tag.min.js" data-zone="226253" async data-cfasync="false"></script>
+<!-- ✅ MONETAG: Onclick Popunder -->
+<script>(function(s){s.dataset.zone='10828297',s.src='https://al5sm.com/tag.min.js'})([document.documentElement,document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 
 
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo" ondblclick="showPage('admin-login')" title=""><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
+    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
     <div class="field-group"><label class="field-label">Email</label><input id="login-email" class="auth-input" type="email" placeholder="seu@email.com"></div>
     <div class="field-group"><label class="field-label">Senha</label><div class="input-wrap"><input id="login-password" class="auth-input" type="password" placeholder="••••••••"><button class="input-eye" onclick="togglePwd('login-password',this)">👁</button></div></div>
@@ -292,7 +295,7 @@ if('serviceWorker' in navigator){
     <div class="divider">OU</div>
     <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
     <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
-    <p id="admin-link-btn" style="opacity:0;height:1px;overflow:hidden;pointer-events:none" aria-hidden="true">.</p>
+    
   </div></div>
 </div>
 
@@ -346,6 +349,7 @@ if('serviceWorker' in navigator){
       <button class="tab-btn" onclick="switchTab('seguranca',this)">🛡 Segurança</button>
       <button class="tab-btn" onclick="switchTab('lucros',this)">$ Lucros</button>
       <button class="tab-btn" onclick="switchTab('saques',this)">💸 Saques</button>
+      <button class="tab-btn" onclick="switchTab('ia',this)">🤖 IA Monitor</button>
     </div>
     <div id="tab-usuarios" class="tab-panel active">
       <div class="panel-card">
@@ -444,6 +448,51 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+
+
+    <!-- TAB: IA MONITOR -->
+    <div id="tab-ia" class="tab-panel">
+      <div class="panel-card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div class="panel-title" style="margin:0">🤖 IA de Monitoramento</div>
+          <button onclick="runAICheck()" style="padding:9px 18px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">🔍 Analisar agora</button>
+        </div>
+        <div id="ia-report" style="background:#0d1117;border:1px solid #1f2937;border-radius:12px;padding:20px;min-height:200px">
+          <div style="text-align:center;color:#6b7280;font-size:13px;padding:40px 0">
+            Clique em "Analisar agora" para a IA verificar seus usuários 🤖
+          </div>
+        </div>
+      </div>
+      <div class="panel-card" style="margin-bottom:16px">
+        <div class="panel-title">🚨 Alertas de Fraude</div>
+        <div id="ia-alerts" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;padding:20px;color:#6b7280;font-size:13px">Nenhum alerta detectado</div>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">💬 Suporte via WhatsApp</div>
+        <div style="display:flex;align-items:center;gap:16px;padding:14px;background:#0d1117;border:1px solid #1f2937;border-radius:12px;margin-bottom:14px">
+          <div style="font-size:32px">📱</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:4px">Botão de Suporte para Usuários</div>
+            <div style="font-size:12px;color:#6b7280">Aparece no site para seus usuários pedirem ajuda</div>
+          </div>
+          <div style="margin-left:auto">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="support-toggle" onchange="toggleSupport(this)" style="width:18px;height:18px;cursor:pointer">
+              <span style="font-size:12px;color:#d1d5db">Ativo</span>
+            </label>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="dark-label">Seu número de WhatsApp (com DDD e +55)</label>
+          <input id="support-phone" class="dark-input" type="text" placeholder="+5585999999999" style="margin-bottom:8px">
+          <label class="dark-label">Mensagem inicial do bot</label>
+          <textarea id="support-msg" class="dark-input" rows="3" placeholder="Olá! Sou o suporte do CineCash IA. Como posso ajudar?"></textarea>
+        </div>
+        <button onclick="saveSupport()" style="padding:10px 20px;background:#16a34a;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">💾 Salvar configurações</button>
+      </div>
+    </div>
 
 <!-- USER DASHBOARD -->
 <div id="page-dashboard" class="page">
@@ -717,7 +766,6 @@ async function doAdminLogin(){
 function doAdminLogout(){
   try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
   _cachedUsers=[];_cachedVideos=[]
-  sessionStorage.removeItem('_adminMode')
   showPage('login')
   document.getElementById('admin-user').value=''
   document.getElementById('admin-pwd').value=''
@@ -921,37 +969,11 @@ async function loadMaintenanceState(){
 // Duplo clique no logo    ← acesso discreto
 // ── Admin access — checked synchronously BEFORE Firebase ─────────────────
 // Detects: cinecash.com.br/#admin OR cinecash.com.br/?adm=1
-;(function(){
-  const h = window.location.hash
-  const s = window.location.search
-  const isAdminAccess = h === '#admin' || h === '#adm' || s.includes('adm=1')
-  if(isAdminAccess){
-    sessionStorage.setItem('_adminMode','1')
-    history.replaceState(null,'',window.location.pathname)
-  }
-})()
+// Admin access: via login form only (secure)
 
-function checkAdminHash(){
-  if(sessionStorage.getItem('_adminMode')==='1'){
-    sessionStorage.removeItem('_adminMode')
-    showPage('admin-login')
-    return true
-  }
-  const h = window.location.hash
-  if(h==='#admin'||h==='#adm'){
-    history.replaceState(null,'',window.location.pathname)
-    showPage('admin-login')
-    return true
-  }
-  return false
-}
-
-// Checa manutenção após pequeno delay
-setTimeout(()=>{
-  if(!checkAdminHash()){
-    checkMaintenance()
-  }
-}, 150)
+function checkAdminHash(){ return false }
+// Checa manutenção ao carregar
+setTimeout(checkMaintenance, 150)
 
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
 const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
@@ -999,8 +1021,6 @@ onAuthStateChanged(auth, async user => {
   if(adminActive) return
 
   // ❌ Never interfere if admin mode was triggered via URL
-  if(sessionStorage.getItem('_adminMode')==='1') return
-
   if(user){
     const snap = await get(ref(db, 'users/'+user.uid))
     if(!snap.exists()) return
@@ -1569,12 +1589,229 @@ async function registerReferral(newUid, newName, referrerId){
   })
 }
 
+
+// ═══════════════════════════════════════════════════════════
+//  DEVICE TRACKING — ID único por usuário/dispositivo
+// ═══════════════════════════════════════════════════════════
+function getDeviceId(){
+  let did = localStorage.getItem('_cc_did')
+  if(!did){
+    did = 'DEV_'+Date.now()+'_'+Math.random().toString(36).substr(2,9)
+    localStorage.setItem('_cc_did', did)
+  }
+  return did
+}
+
+async function registerDevice(uid){
+  const did = getDeviceId()
+  const now = Date.now()
+  const devSnap = await get(ref(db,'devices/'+uid))
+  if(devSnap.exists()){
+    const devs = devSnap.val()
+    const devList = Object.keys(devs)
+    // If this device is already registered, just update lastSeen
+    if(devs[did]){ 
+      await update(ref(db,'devices/'+uid+'/'+did),{ lastSeen: now })
+      return
+    }
+    // Block if more than 2 different devices
+    if(devList.length >= 2){
+      showToast('⚠️ Acesso bloqueado: muitos dispositivos detectados. Contate o suporte.','error')
+      await signOut(auth)
+      return
+    }
+  }
+  await set(ref(db,'devices/'+uid+'/'+did),{ 
+    registered: now, lastSeen: now,
+    ua: navigator.userAgent.substring(0,100)
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+//  IA MONITOR — Analisa usuários suspeitos
+// ═══════════════════════════════════════════════════════════
+async function runAICheck(){
+  const report = document.getElementById('ia-report')
+  const alerts = document.getElementById('ia-alerts')
+  if(!report) return
+  report.innerHTML = '<div style="text-align:center;color:#a78bfa;font-size:13px;padding:40px 0">🤖 IA analisando usuários... aguarde</div>'
+
+  const usersSnap = await get(ref(db,'users'))
+  const devicesSnap = await get(ref(db,'devices'))
+  const withdrawalsSnap = await get(ref(db,'withdrawals'))
+
+  if(!usersSnap.exists()){ report.innerHTML='<div style="text-align:center;color:#6b7280;padding:40px">Nenhum usuário para analisar</div>'; return }
+
+  const users = Object.entries(usersSnap.val()).map(([uid,u])=>({...u,uid}))
+  const devices = devicesSnap.exists() ? devicesSnap.val() : {}
+  const withdrawals = withdrawalsSnap.exists() ? Object.values(withdrawalsSnap.val()) : []
+
+  let suspicious = []
+  let reportHtml = []
+  let alertsHtml = []
+
+  const now = Date.now()
+  const dayMs = 24*60*60*1000
+
+  for(const u of users){
+    const issues = []
+    const devList = devices[u.uid] ? Object.keys(devices[u.uid]) : []
+
+    // Check 1: Multiple devices
+    if(devList.length > 2) issues.push({ type:'error', msg:`🚨 ${devList.length} dispositivos detectados` })
+    else if(devList.length > 1) issues.push({ type:'warn', msg:`⚠️ ${devList.length} dispositivos` })
+
+    // Check 2: Too many videos in short time (more than 50 in one day)
+    const watched = u.videosWatched || 0
+    const joinedDays = Math.max(1, Math.floor((now - u.createdAt) / dayMs))
+    const vidsPerDay = watched / joinedDays
+    if(vidsPerDay > 100) issues.push({ type:'error', msg:`🚨 ${vidsPerDay.toFixed(0)} vídeos/dia (suspeito)` })
+    else if(vidsPerDay > 50) issues.push({ type:'warn', msg:`⚠️ ${vidsPerDay.toFixed(0)} vídeos/dia (alto)` })
+
+    // Check 3: Large balance without withdrawals
+    const bal = Number(u.balance||0)
+    const userWithdrawals = withdrawals.filter(w=>w.uid===u.uid && w.status==='approved')
+    if(bal > 50 && userWithdrawals.length === 0) issues.push({ type:'warn', msg:`⚠️ Saldo R$${bal.toFixed(2)} sem saques` })
+
+    // Check 4: Check-in streak too long without videos
+    const streak = u.checkInStreak || 0
+    if(streak > 30 && watched < 10) issues.push({ type:'warn', msg:`⚠️ ${streak} dias streak sem assistir vídeos` })
+
+    const status = issues.some(i=>i.type==='error') ? '🚨' : issues.length > 0 ? '⚠️' : '✅'
+    const color = issues.some(i=>i.type==='error') ? '#f87171' : issues.length > 0 ? '#fbbf24' : '#34d399'
+
+    reportHtml.push(`
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1f2937;font-size:12px">
+        <div>
+          <div style="font-weight:600;color:#fff">${status} ${u.fullname||u.display||'Usuário'}</div>
+          <div style="color:#6b7280;margin-top:2px">${u.email} • ${watched} vídeos • R$${Number(u.balance||0).toFixed(2)} • ${devList.length} dispositivo(s)</div>
+          ${issues.map(i=>`<div style="color:${i.type==='error'?'#f87171':'#fbbf24'};margin-top:2px">${i.msg}</div>`).join('')}
+        </div>
+        <span style="color:${color};font-size:16px">${status}</span>
+      </div>
+    `)
+
+    if(issues.some(i=>i.type==='error')){
+      alertsHtml.push(`
+        <div style="padding:12px 16px;background:#1c0000;border:1px solid #7f1d1d;border-radius:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#f87171">🚨 ${u.fullname||u.display}</div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:2px">${u.email}</div>
+              ${issues.filter(i=>i.type==='error').map(i=>`<div style="font-size:12px;color:#f87171;margin-top:4px">${i.msg}</div>`).join('')}
+            </div>
+            <button onclick="blockUser('${u.uid}')" style="padding:7px 14px;background:#dc2626;border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">Bloquear</button>
+          </div>
+        </div>
+      `)
+    }
+  }
+
+  const total = users.length
+  const clean = users.filter(u=>!suspicious.includes(u.uid)).length
+  report.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:#34d399">${total}</div>
+        <div style="font-size:11px;color:#6b7280">Total usuários</div>
+      </div>
+      <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:#f87171">${alertsHtml.length}</div>
+        <div style="font-size:11px;color:#6b7280">Alertas críticos</div>
+      </div>
+      <div style="background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:#60a5fa">${new Date().toLocaleTimeString('pt-BR')}</div>
+        <div style="font-size:11px;color:#6b7280">Última análise</div>
+      </div>
+    </div>
+    ${reportHtml.join('')}
+  `
+  alerts.innerHTML = alertsHtml.length ? alertsHtml.join('') : '<div style="text-align:center;padding:20px;color:#34d399;font-size:13px">✅ Nenhum alerta crítico detectado</div>'
+  showToast('🤖 Análise concluída!','success')
+}
+
+async function blockUser(uid){
+  if(!confirm('Bloquear este usuário?')) return
+  try{
+    await update(ref(db,'users/'+uid),{ status:'inativo' })
+    showToast('Usuário bloqueado!','success')
+    runAICheck()
+  }catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WHATSAPP SUPPORT
+// ═══════════════════════════════════════════════════════════
+async function toggleSupport(checkbox){
+  await set(ref(db,'config/supportEnabled'), checkbox.checked)
+  showToast(checkbox.checked?'💬 Suporte ativado!':'Suporte desativado','info')
+  if(checkbox.checked) loadSupportWidget()
+  else removeSupportWidget()
+}
+
+async function saveSupport(){
+  const phone = document.getElementById('support-phone')?.value.trim()
+  const msg   = document.getElementById('support-msg')?.value.trim()
+  if(!phone) return showToast('Digite o número do WhatsApp!','error')
+  await set(ref(db,'config/supportPhone'), phone)
+  await set(ref(db,'config/supportMsg'), msg)
+  showToast('✅ Suporte salvo!','success')
+}
+
+async function loadSupportWidget(){
+  const [enabledSnap, phoneSnap, msgSnap] = await Promise.all([
+    get(ref(db,'config/supportEnabled')),
+    get(ref(db,'config/supportPhone')),
+    get(ref(db,'config/supportMsg'))
+  ])
+  if(!enabledSnap.exists() || !enabledSnap.val()) return
+  const phone = phoneSnap.exists() ? phoneSnap.val() : ''
+  const msg   = msgSnap.exists() ? msgSnap.val() : 'Olá! Preciso de ajuda com o CineCash IA.'
+  if(!phone) return
+  removeSupportWidget()
+  const btn = document.createElement('a')
+  btn.id = 'wa-support-btn'
+  btn.href = 'https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)
+  btn.target = '_blank'
+  btn.rel = 'noopener'
+  btn.innerHTML = '💬'
+  btn.style.cssText = 'position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;z-index:9997;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:.2s'
+  btn.onmouseover = ()=>btn.style.transform='scale(1.1)'
+  btn.onmouseout  = ()=>btn.style.transform='scale(1)'
+  document.body.appendChild(btn)
+}
+
+function removeSupportWidget(){
+  document.getElementById('wa-support-btn')?.remove()
+}
+
+// Load support widget for users on dashboard
+async function initSupportWidget(){
+  await loadSupportWidget()
+  // Load support config for admin
+  const [enabledSnap, phoneSnap, msgSnap] = await Promise.all([
+    get(ref(db,'config/supportEnabled')),
+    get(ref(db,'config/supportPhone')),
+    get(ref(db,'config/supportMsg'))
+  ])
+  const tog = document.getElementById('support-toggle')
+  const ph  = document.getElementById('support-phone')
+  const ms  = document.getElementById('support-msg')
+  if(tog && enabledSnap.exists()) tog.checked = enabledSnap.val()
+  if(ph  && phoneSnap.exists())  ph.value  = phoneSnap.val()
+  if(ms  && msgSnap.exists())    ms.value  = msgSnap.val()
+}
+
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
 window.doGoogleLogin=doGoogleLogin;window.doAdminLogin=doAdminLogin;window.doAdminLogout=doAdminLogout
 window.switchTab=switchTab;window.openEditModal=openEditModal;window.saveEditUser=saveEditUser
 window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
 window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
 window.toggleMaintenance=toggleMaintenance
+window.runAICheck=runAICheck
+window.blockUser=blockUser
+window.toggleSupport=toggleSupport
+window.saveSupport=saveSupport
 window.approveWithdrawal=approveWithdrawal
 window.denyWithdrawal=denyWithdrawal
 window.toggleWithdrawals=toggleWithdrawals
