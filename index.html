@@ -218,7 +218,7 @@
     /* Video watch modal */
     .watch-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;align-items:center;justify-content:center}
     .watch-modal-overlay.open{display:flex}
-    .watch-modal{background:#0f0c29;border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:28px;width:100%;max-width:520px;text-align:center}
+    .watch-modal{background:#0f0c29;border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:28px;width:100%;max-width:520px;text-align:center;position:relative;overflow:hidden}
     .watch-modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
     .watch-modal-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px}
     .watch-timer{font-size:48px;font-weight:700;color:#7c3aed;margin:20px 0}
@@ -614,13 +614,27 @@ if('serviceWorker' in navigator){
 <!-- Watch Video Modal -->
 <div class="watch-modal-overlay" id="modal-watch">
   <div class="watch-modal">
-    <div class="watch-modal-title" id="watch-modal-title">Assistindo vídeo</div>
-    <div class="watch-modal-sub" id="watch-modal-sub">Assista pelo menos 30 segundos para ganhar</div>
-    <div class="watch-timer" id="watch-timer">30</div>
-    <div class="watch-progress"><div class="watch-progress-fill" id="watch-progress-fill" style="width:0%"></div></div>
-    <a id="watch-video-link" href="#" target="_blank" rel="noopener"><button class="watch-open-btn">▶ Abrir vídeo no YouTube</button></a>
-    <br>
-    <button class="watch-cancel-btn" onclick="cancelWatch()">Cancelar</button>
+    <!-- AD COUNTDOWN OVERLAY (shown after video) -->
+    <div id="ad-overlay" style="display:none;position:absolute;inset:0;background:#0a0a1a;border-radius:20px;z-index:10;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center">
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px">Anúncio do patrocinador</div>
+      <div style="font-size:40px;margin-bottom:12px">📢</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Aguarde o anúncio finalizar</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px">Você receberá sua recompensa em instantes!</div>
+      <div style="font-size:52px;font-weight:700;color:#7c3aed;margin-bottom:12px" id="ad-countdown">30</div>
+      <div style="width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:16px">
+        <div id="ad-progress" style="height:100%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border-radius:3px;width:0%;transition:width .5s"></div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3)">O vídeo está aberto em outra aba — não feche ainda!</div>
+    </div>
+    <div id="watch-main-content">
+      <div class="watch-modal-title" id="watch-modal-title">Assistindo vídeo</div>
+      <div class="watch-modal-sub" id="watch-modal-sub">Assista pelo menos 30 segundos para ganhar</div>
+      <div class="watch-timer" id="watch-timer">30</div>
+      <div class="watch-progress"><div class="watch-progress-fill" id="watch-progress-fill" style="width:0%"></div></div>
+      <a id="watch-video-link" href="#" target="_blank" rel="noopener"><button class="watch-open-btn">▶ Abrir vídeo no YouTube</button></a>
+      <br>
+      <button class="watch-cancel-btn" onclick="cancelWatch()">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -1093,6 +1107,7 @@ async function loadUserDashboard(){
 
   updateCheckInBtn(u)
   updateRewardButtons(totalVids, u.claimedRewards||{})
+  fetchYouTubeVideos() // auto-fetch videos daily
   loadUserVideos()
   loadWithdrawalsConfig()
   loadUserWithdrawals()
@@ -1165,24 +1180,38 @@ function updateCheckInBtn(u){
   }
 }
 
+// _pendingCheckIn: set to true when user clicks check-in, cleared after watching
+let _pendingCheckIn = false
+
 async function doCheckIn(){
   if(!_currentUser) return
-  const btn = document.getElementById('checkin-btn')
-  btn.disabled = true
-
   const snap = await get(ref(db,'users/'+_currentUser.uid))
   const u = snap.val()
   const today = new Date().toDateString()
   const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
+  if(lastCI === today){ showToast('Você já fez check-in hoje! ✅','error'); return }
 
-  if(lastCI === today){ showToast('Você já fez check-in hoje!','error'); return }
+  // Must watch a video first!
+  _pendingCheckIn = true
+  showToast('📹 Assista um vídeo para resgatar seu bônus diário!','info')
+  // Scroll to videos section
+  document.getElementById('user-video-grid')?.scrollIntoView({ behavior:'smooth' })
+  const btn = document.getElementById('checkin-btn')
+  if(btn){ btn.textContent = '⏳ Assista um vídeo para resgatar...'; btn.disabled = true }
+}
 
-  // Calculate streak
+async function completeCheckIn(){
+  if(!_currentUser || !_pendingCheckIn) return
+  _pendingCheckIn = false
+  const snap = await get(ref(db,'users/'+_currentUser.uid))
+  const u = snap.val()
+  const today = new Date().toDateString()
+  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
+  if(lastCI === today) return // already done
+
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
   const wasYesterday = lastCI === yesterday.toDateString()
   const newStreak = wasYesterday ? (u.checkInStreak||0)+1 : 1
-
-  // Get config reward
   const cfgSnap = await get(ref(db,'config/dailyCheckInReward'))
   const reward = cfgSnap.exists() ? Number(cfgSnap.val()) : 0.05
 
@@ -1192,11 +1221,9 @@ async function doCheckIn(){
     checkInStreak: newStreak,
     totalEarned: Number(u.totalEarned||0)+reward
   })
-  // Admin earns 10% of check-in reward
   const adminBal2 = Number((await get(ref(db,'config/adminBalance'))).val()||0)
   await set(ref(db,'config/adminBalance'), adminBal2 + reward*0.10)
-
-  showToast('🎁 Check-in feito! +R$'+reward.toFixed(2)+' • Sequência: '+newStreak+' dias 🔥','success')
+  showToast('🎁 Bônus diário resgatado! +R$'+reward.toFixed(2)+' • '+newStreak+' dias 🔥','success')
   loadUserDashboard()
 }
 
@@ -1216,14 +1243,17 @@ async function loadUserVideos(){
 
   grid.innerHTML = videos.map(v=>{
     const watched = watchedList[v.id]
+    const thumb = v.thumbnail ? `<img src="${v.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:0">` : '📹'
+    const catBadge = v.category ? `<span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px">${v.category}</span>` : ''
     return `<div class="video-card">
-      <div class="video-thumb">
-        📹
+      <div class="video-thumb" style="${v.thumbnail?'padding:0;':''}">
+        ${thumb}
+        ${catBadge}
         <span class="video-reward-badge">+R$ ${Number(v.reward||0).toFixed(2)}</span>
       </div>
       <div class="video-info">
         <div class="video-title">${v.title}</div>
-        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}','${v.title}','${v.url}',${v.reward})" ${watched?'disabled':''}>
+        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})" ${watched?'disabled':''}>
           ${watched ? '✅ Já assistido' : '▶ Assistir e ganhar'}
         </button>
       </div>
@@ -1290,9 +1320,10 @@ async function creditVideoReward(videoId, reward){
     await completeReferral(userData.referredBy, u.uid)
   }
 
-  document.getElementById('modal-watch').classList.remove('open')
-  showToast('🎉 +R$'+Number(reward).toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
-  loadUserDashboard()
+  // Show Monetag ad after video
+  showAdAfterVideo(Number(reward))
+  // Complete check-in if pending
+  if(_pendingCheckIn) await completeCheckIn()
 }
 
 async function completeReferral(referrerId, newUserId){
@@ -1412,6 +1443,148 @@ async function doUserLogout(){
   showPage('login')
   showToast('Até logo!','info')
 }
+
+
+// ═══════════════════════════════════════════════════════════
+//  AD AFTER VIDEO — shows Monetag ad for 30s after each video
+// ═══════════════════════════════════════════════════════════
+let _adTimer = null
+const AD_DURATION = 30 // seconds
+
+function showAdAfterVideo(reward){
+  const overlay = document.getElementById('ad-overlay')
+  const mainContent = document.getElementById('watch-main-content')
+  if(!overlay || !mainContent) {
+    // Fallback: just show toast and update dashboard
+    showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
+    loadUserDashboard()
+    return
+  }
+
+  // Show ad overlay
+  overlay.style.display = 'flex'
+  mainContent.style.opacity = '0'
+
+  // Open Monetag popunder ad in background tab
+  try {
+    const adWin = window.open('about:blank', '_blank')
+    if(adWin){
+      adWin.document.write('<script src="https://al5sm.com/tag.min.js" data-zone="10828297"><\/script>')
+      adWin.document.close()
+    }
+  } catch(e){}
+
+  // Countdown
+  let elapsed = 0
+  document.getElementById('ad-countdown').textContent = AD_DURATION
+  document.getElementById('ad-progress').style.width = '0%'
+
+  _adTimer = setInterval(()=>{
+    elapsed++
+    const remaining = AD_DURATION - elapsed
+    const pct = (elapsed/AD_DURATION)*100
+    const countEl = document.getElementById('ad-countdown')
+    const progEl  = document.getElementById('ad-progress')
+    if(countEl) countEl.textContent = remaining > 0 ? remaining : '✅'
+    if(progEl)  progEl.style.width = Math.min(pct,100)+'%'
+
+    if(elapsed >= AD_DURATION){
+      clearInterval(_adTimer); _adTimer = null
+      overlay.style.display = 'none'
+      mainContent.style.opacity = '1'
+      document.getElementById('modal-watch').classList.remove('open')
+      showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
+      loadUserDashboard()
+    }
+  }, 1000)
+}
+
+// ═══════════════════════════════════════════════════════════
+//  YOUTUBE AUTO-FETCH — busca vídeos automaticamente
+// ═══════════════════════════════════════════════════════════
+const YT_API_KEY = 'AIzaSyDx0jwyezPxW02LnvJ51vEkjNw-IZRbXYQ'
+const YT_CATEGORIES = [
+  { q:'entretenimento brasil', label:'Entretenimento' },
+  { q:'culinária receitas fáceis', label:'Culinária' },
+  { q:'humor comédia brasil', label:'Humor' },
+  { q:'música brasileira popular', label:'Música' },
+  { q:'esportes futebol brasil', label:'Esportes' },
+  { q:'tecnologia dicas tutorial', label:'Tecnologia' },
+]
+const DEFAULT_REWARD = 0.02
+
+async function fetchYouTubeVideos(){
+  const lastFetch = localStorage.getItem('_yt_last_fetch')
+  const now = Date.now()
+  // Only fetch once per 6 hours
+  if(lastFetch && now - Number(lastFetch) < 6*60*60*1000) return
+
+  try {
+    // Fetch from random category
+    const cat = YT_CATEGORIES[Math.floor(Math.random()*YT_CATEGORIES.length)]
+    const maxDuration = 'long' // PT30M or less handled by maxResults filter
+    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=10&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
+
+    const res = await fetch(url)
+    const data = await res.json()
+
+    if(!data.items || !data.items.length) return
+
+    // Get video details (duration check)
+    const ids = data.items.map(i=>i.id.videoId).join(',')
+    const detailUrl = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id='+ids+'&key='+YT_API_KEY
+    const detailRes = await fetch(detailUrl)
+    const detailData = await detailRes.json()
+
+    const validVideos = (detailData.items||[]).filter(v=>{
+      const dur = v.contentDetails?.duration || ''
+      // Parse ISO 8601 duration — accept up to PT30M
+      const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+      if(!match) return false
+      const hours = Number(match[1]||0)
+      const mins  = Number(match[2]||0)
+      if(hours > 0) return false // skip videos over 1h
+      if(mins > 30) return false // skip over 30min
+      if(mins < 1)  return false // skip under 1min
+      return true
+    })
+
+    if(!validVideos.length) return
+
+    // Save to Firebase (replace old auto-fetched videos)
+    const existingSnap = await get(ref(db,'videos'))
+    const existing = existingSnap.exists() ? existingSnap.val() : {}
+
+    // Remove old auto-fetched videos (keep manually added ones)
+    const toDelete = Object.entries(existing)
+      .filter(([,v])=>v.autoFetched)
+      .map(([id])=>id)
+    for(const id of toDelete){
+      await remove(ref(db,'videos/'+id))
+    }
+
+    // Add new videos
+    for(const v of validVideos.slice(0,5)){
+      const newRef = push(ref(db,'videos'))
+      await set(newRef,{
+        title: v.snippet.title.substring(0,80),
+        url: 'https://www.youtube.com/watch?v='+v.id,
+        thumbnail: v.snippet.thumbnails?.medium?.url || '',
+        category: cat.label,
+        reward: DEFAULT_REWARD,
+        createdAt: Date.now(),
+        autoFetched: true
+      })
+    }
+
+    localStorage.setItem('_yt_last_fetch', String(now))
+    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
+  } catch(e){
+    console.warn('YouTube fetch error:', e)
+  }
+}
+
+// Run auto-fetch when user opens dashboard
 
 // ═══════════════════════════════════════════════════════════
 //  ADMIN — SAQUES
@@ -1808,6 +1981,8 @@ window.switchTab=switchTab;window.openEditModal=openEditModal;window.saveEditUse
 window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
 window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
 window.toggleMaintenance=toggleMaintenance
+window.fetchYouTubeVideos=fetchYouTubeVideos
+window.showAdAfterVideo=showAdAfterVideo
 window.runAICheck=runAICheck
 window.blockUser=blockUser
 window.toggleSupport=toggleSupport
