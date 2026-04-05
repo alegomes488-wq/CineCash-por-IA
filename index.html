@@ -724,14 +724,63 @@ async function doRegister(){
 
 // ── ✅ login (corrigido — estava com o corpo cortado) ─────────────────────────
 async function doLogin(){
-  const email=document.getElementById('login-email').value.trim()
-  const pass=document.getElementById('login-password').value
-  if(!email||!pass)return showToast('Preencha email e senha!','error')
-  setLoading('login-btn',true,'Entrar')
-  try{
-    await signInWithEmailAndPassword(auth,email,pass)
-  }catch(err){showToast(fbError(err),'error')}
-  finally{setLoading('login-btn',false,'Entrar')}
+  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado. Aguarde.','error')
+  if(_fraudLog) antiFraud_checkLogin()
+
+  const input = document.getElementById('login-email').value.trim()
+  const pass  = document.getElementById('login-password').value
+  if(!input || !pass) return showToast('Preencha usuário/email e senha!','error')
+
+  setLoading('login-btn', true, '⏳ Entrando...')
+  try {
+    // ── Resolve email: se digitou admin16 → admin@cinecash.com.br ──────────
+    let emailToUse = input
+    if(!input.includes('@')){
+      // Could be username → check Firebase mapping
+      emailToUse = input.toLowerCase() + '@cinecash.com.br'
+    }
+
+    // ── Firebase Auth login ────────────────────────────────────────────────
+    const cred = await signInWithEmailAndPassword(auth, emailToUse, pass)
+    const uid  = cred.user.uid
+
+    // ── Check if this UID is the admin ─────────────────────────────────────
+    const adminSnap = await get(ref(db, 'config/adminUID'))
+    if(adminSnap.exists() && adminSnap.val() === uid){
+      // ✅ IS ADMIN
+      _cachedUsers = []; _cachedVideos = []
+      showPage('admin-dashboard')
+      attachRealtimeListeners()
+      loadMaintenanceState()
+      setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
+      showToast('🛡 Bem-vindo, Admin!', 'success')
+      return
+    }
+
+    // ── Regular user handled by onAuthStateChanged ─────────────────────────
+
+  } catch(err) {
+    // If email not found, try looking up by display name
+    if(!input.includes('@') && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential')){
+      try {
+        const usersSnap = await get(ref(db,'users'))
+        if(usersSnap.exists()){
+          const found = Object.values(usersSnap.val()).find(u =>
+            (u.display||'').toLowerCase() === input.toLowerCase() ||
+            (u.fullname||'').toLowerCase() === input.toLowerCase()
+          )
+          if(found && found.email){
+            const cred2 = await signInWithEmailAndPassword(auth, found.email, pass)
+            // onAuthStateChanged handles the redirect
+            return
+          }
+        }
+      } catch(_){}
+    }
+    showToast(fbError(err), 'error')
+  } finally {
+    setLoading('login-btn', false, 'Entrar')
+  }
 }
 
 // ── ✅ google login (corrigido — estava duplicado e com syntax error) ─────────
