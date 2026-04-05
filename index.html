@@ -278,10 +278,7 @@ if('serviceWorker' in navigator){
   })
 }
 </script>
-<!-- ✅ MONETAG: Multitag all-in-one -->
-<script src="https://quge5.com/88/tag.min.js" data-zone="226253" async data-cfasync="false"></script>
-<!-- ✅ MONETAG: Onclick Popunder -->
-<script>(function(s){s.dataset.zone='10828297',s.src='https://al5sm.com/tag.min.js'})([document.documentElement,document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+<!-- Monetag scripts loaded dynamically after login -->
 
 
 <!-- LOGIN -->
@@ -289,13 +286,21 @@ if('serviceWorker' in navigator){
   <div class="auth-bg"><div class="auth-card">
     <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
-    <div class="field-group"><label class="field-label">Email</label><input id="login-email" class="auth-input" type="email" placeholder="seu@email.com"></div>
-    <div class="field-group"><label class="field-label">Senha</label><div class="input-wrap"><input id="login-password" class="auth-input" type="password" placeholder="••••••••"><button class="input-eye" onclick="togglePwd('login-password',this)">👁</button></div></div>
+    <div class="field-group">
+      <label class="field-label">Usuário ou Email</label>
+      <input id="login-email" class="auth-input" type="text" placeholder="seu@email.com ou usuário" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Senha</label>
+      <div class="input-wrap">
+        <input id="login-password" class="auth-input" type="password" placeholder="••••••••" autocomplete="current-password">
+        <button class="input-eye" onclick="togglePwd('login-password',this)">👁</button>
+      </div>
+    </div>
     <button id="login-btn" class="auth-btn" onclick="doLogin()">Entrar</button>
     <div class="divider">OU</div>
     <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
     <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
-    
   </div></div>
 </div>
 
@@ -314,17 +319,8 @@ if('serviceWorker' in navigator){
   </div></div>
 </div>
 
-<!-- ADMIN LOGIN -->
-<div id="page-admin-login" class="page">
-  <div class="admin-auth-bg"><div class="admin-auth-card auth-card">
-    <div class="auth-logo"><span class="auth-logo-icon">🛡</span><h1>CineCash IA</h1></div>
-    <p class="auth-subtitle">Painel Administrativo</p>
-    <div class="field-group"><label class="field-label">Usuário</label><input id="admin-user" class="auth-input" type="text" placeholder="admin16"></div>
-    <div class="field-group"><label class="field-label">Senha</label><div class="input-wrap"><input id="admin-pwd" class="auth-input" type="password" placeholder="••••••••"><button class="input-eye" onclick="togglePwd('admin-pwd',this)">👁</button></div></div>
-    <button id="admin-btn" class="auth-btn red" onclick="doAdminLogin()">🛡 Entrar como Admin</button>
-    <p class="auth-footer"><a onclick="showPage('login')">← Voltar para login de usuários</a></p>
-  </div></div>
-</div>
+<!-- ADMIN LOGIN — hidden, accessed via main login -->
+<div id="page-admin-login" class="page" style="display:none!important"></div>
 
 <!-- ADMIN DASHBOARD -->
 <div id="page-admin-dashboard" class="admin-page">
@@ -689,7 +685,7 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
-const ADMIN_CREDS = { user:'admin16', pass:'ale_gome16' };
+const ADMIN_CREDS = null; // credentials stored securely in Firebase
 let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -760,29 +756,13 @@ async function doGoogleLogin(){
   }catch(err){showToast(fbError(err),'error')}
 }
 
-// ── admin login ───────────────────────────────────────────────────────────────
-async function doAdminLogin(){
-  const u=document.getElementById('admin-user').value.trim()
-  const p=document.getElementById('admin-pwd').value
-  if(!u||!p)return showToast('Preencha usuário e senha!','error')
-  if(u!==ADMIN_CREDS.user||p!==ADMIN_CREDS.pass)return showToast('Credenciais inválidas!','error')
-  setLoading('admin-btn',true,'🛡 Entrar como Admin')
-  showToast('Conectando ao Firebase...','info')
-  try{
-    showPage('admin-dashboard')
-    attachRealtimeListeners()
-    setTimeout(()=>{renderCharts();updateLucros()},300)
-    showToast('Painel carregado! ✅','success')
-  }catch(err){showToast('Erro: '+err.message,'error');showPage('admin-login')}
-  finally{setLoading('admin-btn',false,'🛡 Entrar como Admin')}
-}
+// ── admin login — now handled by doLogin ─────────
+async function doAdminLogin(){}
 
 function doAdminLogout(){
   try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
   _cachedUsers=[];_cachedVideos=[]
   showPage('login')
-  document.getElementById('admin-user').value=''
-  document.getElementById('admin-pwd').value=''
 }
 
 // ── realtime ──────────────────────────────────────────────────────────────────
@@ -1051,7 +1031,9 @@ onAuthStateChanged(auth, async user => {
     if(onLoginPage || (!onDash)){
       showToast('Bem-vindo, '+profile.display+'! ✅','success')
       showPage('dashboard')
+      loadMonetag()
       loadUserDashboard()
+      initSupportWidget()
     }
   } else {
     const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
@@ -1973,6 +1955,27 @@ async function initSupportWidget(){
   if(tog && enabledSnap.exists()) tog.checked = enabledSnap.val()
   if(ph  && phoneSnap.exists())  ph.value  = phoneSnap.val()
   if(ms  && msgSnap.exists())    ms.value  = msgSnap.val()
+}
+
+
+// Load Monetag ads ONLY after login (not on login page)
+function loadMonetag(){
+  if(document.getElementById('_monetag_loaded')) return
+  const marker = document.createElement('span')
+  marker.id = '_monetag_loaded'
+  document.body.appendChild(marker)
+  // Multitag
+  const s1 = document.createElement('script')
+  s1.src = 'https://quge5.com/88/tag.min.js'
+  s1.setAttribute('data-zone','226253')
+  s1.async = true
+  s1.setAttribute('data-cfasync','false')
+  document.body.appendChild(s1)
+  // Register SW for push notifications
+  if('serviceWorker' in navigator){
+    const swPath = location.pathname.includes('CineCash') ? '/CineCash-por-IA/sw.js' : '/sw.js'
+    navigator.serviceWorker.register(swPath).catch(()=>{})
+  }
 }
 
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
