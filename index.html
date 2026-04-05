@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <!-- ✅ MONETAG: verificação + anúncios -->
   <meta name="monetag" content="c9926a683e19787211bfa2f59d146b72">
- <script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',7869506,document.createElement('script'))</script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -60,9 +59,14 @@
     .admin-shield{font-size:22px;color:#dc2626}
     .admin-header-title{font-size:20px;font-weight:700;color:#fff}
     .admin-header-sub{font-size:12px;color:#6b7280;margin-top:1px}
-    .admin-logout{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px solid #374151;border-radius:10px;background:transparent;color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .admin-logout{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border:1.5px solid #374151;border-radius:10px;background:transparent;color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
     .admin-logout:hover{background:#1f2937;border-color:#4b5563}
     .admin-body{padding:28px;flex:1}
+    #admin-sidebar{transition:width .2s;}
+    #admin-sidebar.sidebar-collapsed{width:78px!important;}
+    #admin-sidebar.sidebar-collapsed .nav-text{display:none!important;}
+    #admin-sidebar.sidebar-collapsed .tab-btn{justify-content:center!important;padding:12px 0;}
+    #admin-sidebar.sidebar-collapsed .panel-sub{display:none!important;}
     .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
     .stat-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between}
     .stat-label{font-size:12px;color:#9ca3af;margin-bottom:8px}
@@ -70,7 +74,7 @@
     .stat-icon{font-size:32px;opacity:.8}
     .c-blue{color:#60a5fa}.c-green{color:#34d399}.c-purple{color:#a78bfa}.c-amber{color:#fbbf24}
     .admin-tabs{display:flex;align-items:center;gap:4px;margin-bottom:24px;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:6px}
-    .tab-btn{display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#6b7280;font-family:'Sora',sans-serif;transition:.15s;flex:1;justify-content:center}
+    .tab-btn{display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-family:'Sora',sans-serif;transition:.15s;width:100%;text-align:left;}
     .tab-btn:hover{color:#d1d5db;background:#1f2937}
     .tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
     .tab-panel{display:none}.tab-panel.active{display:block}
@@ -328,31 +332,54 @@ if('serviceWorker' in navigator){
 <div id="page-admin-login" class="page" style="display:none!important"></div>
 
 <!-- ADMIN DASHBOARD -->
-<div id="page-admin-dashboard" class="admin-page">
-  <header class="admin-header">
-    <div class="admin-header-left"><span class="admin-shield">🛡</span><div><div class="admin-header-title">Painel Administrativo</div><div class="admin-header-sub">CineCash IA — Admin16</div></div></div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button id="maintenance-btn" onclick="toggleMaintenance()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.2s;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 Manutenção: <span id="maint-status">OFF</span></button>
-      <button class="admin-logout" onclick="doAdminLogout()">↩ Sair</button>
+<div id="page-admin-dashboard" class="admin-page" style="display:flex!important; height:100vh; overflow:hidden;">
+  
+  <!-- BARRA LATERAL (SIDEBAR) -->
+  <aside id="admin-sidebar" style="width:260px; background:#0d1117; border-right:1px solid #1f2937; display:flex; flex-direction:column; flex-shrink:0;">
+    <div style="padding:24px 20px; border-bottom:1px solid #1f2937; display:flex; align-items:flex-start; justify-content:space-between;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:#fff;">
+          <span style="font-size:24px;">🛡</span> <span class="nav-text">CineCash<span style="color:#7c3aed">IA</span></span>
+        </div>
+        <div class="panel-sub" style="font-size:12px;color:#9ca3af;margin-top:4px">Painel Administrativo</div>
+      </div>
+      <button onclick="document.getElementById('admin-sidebar').classList.toggle('sidebar-collapsed')" style="background:transparent;border:none;color:#9ca3af;font-size:24px;cursor:pointer;padding:0;line-height:1;margin-top:2px;">☰</button>
     </div>
-  </header>
-  <div class="admin-body">
-    <div class="stat-grid">
-      <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value" id="stat-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
-      <div class="stat-card"><div><div class="stat-label">Usuários Ativos</div><div class="stat-value c-green" id="stat-active">0</div></div><span class="stat-icon c-green">📈</span></div>
-      <div class="stat-card"><div><div class="stat-label">Vídeos Assistidos</div><div class="stat-value c-purple" id="stat-videos">0</div></div><span class="stat-icon c-purple">📹</span></div>
-      <div class="stat-card"><div><div class="stat-label">Total de Saques</div><div class="stat-value c-amber" id="stat-saques">0</div></div><span class="stat-icon c-amber">$</span></div>
+    
+    <div class="admin-tabs" style="flex:1; display:flex; flex-direction:column; gap:8px; padding:24px 14px; background:transparent; border:none; margin:0; border-radius:0;">
+      <button class="tab-btn active" onclick="switchTab('geral',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">🏠 <span class="nav-text">Visão Geral</span></button>
+      <button class="tab-btn" onclick="switchTab('usuarios',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">👥 <span class="nav-text">Usuários</span></button>
+      <button class="tab-btn" onclick="switchTab('videos',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">📹 <span class="nav-text">Vídeos</span></button>
+      <button class="tab-btn" onclick="switchTab('crescimento',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">📈 <span class="nav-text">Crescimento</span></button>
+      <button class="tab-btn" onclick="switchTab('seguranca',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">🛡 <span class="nav-text">Segurança</span></button>
+      <button class="tab-btn" onclick="switchTab('lucros',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">💰 <span class="nav-text">Lucros</span></button>
+      <button class="tab-btn" onclick="switchTab('saques',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">💸 <span class="nav-text">Saques</span></button>
+      <button class="tab-btn" onclick="switchTab('ia',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start; color:#34d399">🤖 <span class="nav-text">IA Monitor</span></button>
     </div>
-    <div class="admin-tabs">
-      <button class="tab-btn active" onclick="switchTab('usuarios',this)">👥 Usuários</button>
-      <button class="tab-btn" onclick="switchTab('videos',this)">📹 Vídeos</button>
-      <button class="tab-btn" onclick="switchTab('crescimento',this)">📈 Crescimento</button>
-      <button class="tab-btn" onclick="switchTab('seguranca',this)">🛡 Segurança</button>
-      <button class="tab-btn" onclick="switchTab('lucros',this)">$ Lucros</button>
-      <button class="tab-btn" onclick="switchTab('saques',this)">💸 Saques</button>
-      <button class="tab-btn" onclick="switchTab('ia',this)">🤖 IA Monitor</button>
+
+    <div style="padding:20px; border-top:1px solid #1f2937; display:flex; flex-direction:column; gap:10px;">
+      <button id="maintenance-btn" onclick="toggleMaintenance()" style="width:100%; display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.2s;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 <span class="nav-text">Manutenção: <span id="maint-status">OFF</span></span></button>
+      <button class="admin-logout" onclick="doAdminLogout()" style="width:100%; justify-content:center; padding:12px;">↩ <span class="nav-text">Sair do Painel</span></button>
     </div>
-    <div id="tab-usuarios" class="tab-panel active">
+  </aside>
+
+  <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+  <main style="flex:1; display:flex; flex-direction:column; overflow:hidden; background:#050b14;">
+    <div class="admin-body" style="flex:1; overflow-y:auto; padding:32px;">
+      
+      <!-- ABA 1: VISÃO GERAL (OS CARDS DE CIMA) -->
+      <div id="tab-geral" class="tab-panel active">
+        <h2 style="font-size:24px;font-weight:600;color:#fff;margin-bottom:24px;">Visão Geral da Plataforma</h2>
+        <div class="stat-grid">
+          <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value" id="stat-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
+          <div class="stat-card"><div><div class="stat-label">Usuários Ativos</div><div class="stat-value c-green" id="stat-active">0</div></div><span class="stat-icon c-green">📈</span></div>
+          <div class="stat-card"><div><div class="stat-label">Vídeos Assistidos</div><div class="stat-value c-purple" id="stat-videos">0</div></div><span class="stat-icon c-purple">📹</span></div>
+          <div class="stat-card"><div><div class="stat-label">Total de Saques</div><div class="stat-value c-amber" id="stat-saques">0</div></div><span class="stat-icon c-amber">$</span></div>
+        </div>
+      </div>
+
+      <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
+      <div id="tab-usuarios" class="tab-panel">
       <div class="panel-card">
         <div class="panel-title">Gerenciamento de Usuários</div>
         <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
@@ -1102,7 +1129,7 @@ onAuthStateChanged(auth, async user => {
     if(onLoginPage || (!onDash)){
       showToast('Bem-vindo, '+(profile.display||'Usuário')+'! ✅','success')
       showPage('dashboard')
-      loadMonetag()
+      registerServiceWorker()
       loadUserDashboard()
       initSupportWidget()
     }
@@ -1518,11 +1545,12 @@ function showAdAfterVideo(reward){
   overlay.style.display = 'flex'
   mainContent.style.opacity = '0'
 
-  // Open Monetag popunder ad in background tab
+  // Open Monetag ad in a background context or inject it temporarily
   try {
     const adWin = window.open('about:blank', '_blank')
     if(adWin){
-      adWin.document.write('<script src="https://al5sm.com/tag.min.js" data-zone="10828297"><\/script>')
+      adWin.document.write('<html><body>Aguarde o anunciante...<script src="https://quge5.com/88/tag.min.js" data-zone="226253"><\\/script>')
+      adWin.document.write('<script>(function(d,z,s){s.src="https://"+d+"/400/"+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})("vemtoutcheeg.com",7869506,document.createElement("script"))<\\/script></body></html>')
       adWin.document.close()
     }
   } catch(e){}
@@ -2028,20 +2056,8 @@ async function initSupportWidget(){
 }
 
 
-// Load Monetag ads ONLY after login (not on login page)
-function loadMonetag(){
-  if(document.getElementById('_monetag_loaded')) return
-  const marker = document.createElement('span')
-  marker.id = '_monetag_loaded'
-  document.body.appendChild(marker)
-  // Multitag
-  const s1 = document.createElement('script')
-  s1.src = 'https://quge5.com/88/tag.min.js'
-  s1.setAttribute('data-zone','226253')
-  s1.async = true
-  s1.setAttribute('data-cfasync','false')
-  document.body.appendChild(s1)
-  // Register SW for push notifications
+// Register service workers for push notifications after login
+function registerServiceWorker(){
   if('serviceWorker' in navigator){
     const swPath = location.pathname.includes('CineCash') ? '/CineCash-por-IA/sw.js' : '/sw.js'
     navigator.serviceWorker.register(swPath).catch(()=>{})
@@ -2079,7 +2095,15 @@ function secretAdminTap(){
   _secretTaps++
   if(_secretTaps >= 3){
     _secretTaps = 0
-    _cachedUsers = []; _cachedVideos = []
+    const pwd = prompt('Acesso bloqueado. Digite a senha master:')
+    if(pwd !== 'admin16') {
+      return showToast('Senha incorreta! Acesso negado.', 'error')
+    }
+
+    // Esconde a tela de manutenção se estiver ativa
+    const mp = document.getElementById('maintenance-page')
+    if(mp) mp.style.display = 'none'
+
     showPage('admin-dashboard')
     attachRealtimeListeners()
     loadMaintenanceState()
@@ -2109,13 +2133,13 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 
 <!-- ═══ MAINTENANCE PAGE ═══ -->
 <div id="maintenance-page" style="display:none;position:fixed;inset:0;z-index:99999;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px">
-  <div style="font-size:64px;margin-bottom:24px">🔧</div>
+  <div style="font-size:64px;margin-bottom:24px;cursor:pointer" onclick="secretAdminTap()" title="Toque 3x para Admin">🔧</div>
   <h1 style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px">Site em Manutenção</h1>
   <p style="font-size:15px;color:#9ca3af;max-width:400px;line-height:1.6" id="maintenance-msg">Estamos realizando melhorias para você. Voltamos em breve!</p>
   <div style="margin-top:32px;padding:14px 24px;background:#161b27;border:1px solid #1f2937;border-radius:12px;font-size:13px;color:#6b7280">
     Se você é admin, acesse normalmente através do link de admin.
   </div>
+  </main>
 </div>
-
 </body>
 </html>
