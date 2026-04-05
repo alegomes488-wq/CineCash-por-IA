@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineCash IA</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <!-- ✅ MONETAG: verificação + anúncios -->
   <meta name="monetag" content="c9926a683e19787211bfa2f59d146b72">
+  <script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',7869506,document.createElement('script'))</script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -53,20 +51,39 @@
     .admin-auth-card .auth-input:focus{background:#0d1117;box-shadow:0 0 0 2px #dc262633;border-color:#dc2626}
     .admin-auth-card .auth-footer a{color:#6b7280;font-weight:400}
     .admin-auth-card .auth-footer a:hover{color:#9ca3af}
-    .admin-layout{min-height:100vh;background:#0d1117;color:#fff;display:flex;flex-direction:column}
-    .admin-header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111827;border-bottom:1px solid #1f2937;position:sticky;top:0;z-index:100}
-    .admin-header-left{display:flex;align-items:center;gap:12px}
+    /* ── ADMIN SIDEBAR LAYOUT ── */
+    .admin-page{display:none!important}
+    .admin-page.active{display:flex!important;height:100vh;overflow:hidden;background:#0d1117;color:#fff}
+    .admin-sidebar{width:240px;min-width:240px;background:#111827;border-right:1px solid #1f2937;display:flex;flex-direction:column;transition:width .25s;overflow:hidden;z-index:200}
+    .admin-sidebar.collapsed{width:56px;min-width:56px}
+    .admin-sidebar-top{display:flex;align-items:center;justify-content:space-between;padding:16px 14px;border-bottom:1px solid #1f2937;min-height:60px}
+    .admin-sidebar-logo{display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
+    .admin-sidebar-logo span{font-size:18px}
+    .admin-sidebar-logo h2{font-size:14px;font-weight:700;color:#fff;transition:opacity .2s}
+    .admin-sidebar.collapsed .admin-sidebar-logo h2{opacity:0;width:0}
+    .sidebar-toggle{background:none;border:none;color:#6b7280;font-size:18px;cursor:pointer;padding:4px;border-radius:6px;transition:.15s;flex-shrink:0}
+    .sidebar-toggle:hover{color:#fff;background:#1f2937}
+    .admin-nav{flex:1;padding:12px 8px;overflow-y:auto}
+    .admin-nav-item{display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:10px;cursor:pointer;color:#9ca3af;font-size:13px;font-weight:500;transition:.15s;white-space:nowrap;overflow:hidden;margin-bottom:2px;border:none;background:none;width:100%;font-family:'Sora',sans-serif}
+    .admin-nav-item:hover{background:#1f2937;color:#d1d5db}
+    .admin-nav-item.active{background:#1f2937;color:#fff;border-left:3px solid #7c3aed}
+    .admin-nav-item .nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
+    .admin-nav-item .nav-label{transition:opacity .2s;opacity:1}
+    .admin-sidebar.collapsed .nav-label{opacity:0;width:0;overflow:hidden}
+    .admin-sidebar-bottom{padding:10px 8px;border-top:1px solid #1f2937}
+    /* Main content area */
+    .admin-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#111827;border-bottom:1px solid #1f2937;flex-shrink:0}
+    .admin-topbar-title{font-size:16px;font-weight:700;color:#fff}
+    .admin-topbar-right{display:flex;align-items:center;gap:10px}
+    .admin-content{flex:1;overflow-y:auto;padding:24px}
+    .admin-logout{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px solid #374151;border-radius:10px;background:transparent;color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+    .admin-logout:hover{background:#1f2937;border-color:#4b5563}
+    /* Keep old classes working */
     .admin-shield{font-size:22px;color:#dc2626}
     .admin-header-title{font-size:20px;font-weight:700;color:#fff}
     .admin-header-sub{font-size:12px;color:#6b7280;margin-top:1px}
-    .admin-logout{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border:1.5px solid #374151;border-radius:10px;background:transparent;color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .admin-logout:hover{background:#1f2937;border-color:#4b5563}
-    .admin-body{padding:28px;flex:1}
-    #admin-sidebar{transition:width .2s;}
-    #admin-sidebar.sidebar-collapsed{width:78px!important;}
-    #admin-sidebar.sidebar-collapsed .nav-text{display:none!important;}
-    #admin-sidebar.sidebar-collapsed .tab-btn{justify-content:center!important;padding:12px 0;}
-    #admin-sidebar.sidebar-collapsed .panel-sub{display:none!important;}
+    .admin-body{padding:0;flex:1}
     .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
     .stat-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between}
     .stat-label{font-size:12px;color:#9ca3af;margin-bottom:8px}
@@ -74,7 +91,7 @@
     .stat-icon{font-size:32px;opacity:.8}
     .c-blue{color:#60a5fa}.c-green{color:#34d399}.c-purple{color:#a78bfa}.c-amber{color:#fbbf24}
     .admin-tabs{display:flex;align-items:center;gap:4px;margin-bottom:24px;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:6px}
-    .tab-btn{display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-family:'Sora',sans-serif;transition:.15s;width:100%;text-align:left;}
+    .tab-btn{display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#6b7280;font-family:'Sora',sans-serif;transition:.15s;flex:1;justify-content:center}
     .tab-btn:hover{color:#d1d5db;background:#1f2937}
     .tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
     .tab-panel{display:none}.tab-panel.active{display:block}
@@ -291,7 +308,7 @@ if('serviceWorker' in navigator){
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo" onclick="secretAdminTap()" style="cursor:pointer" title="Acesso Admin"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
+    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
     <div class="field-group">
       <label class="field-label">Usuário ou Email</label>
@@ -307,9 +324,7 @@ if('serviceWorker' in navigator){
     <button id="login-btn" class="auth-btn" onclick="doLogin()">Entrar</button>
     <div class="divider">OU</div>
     <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
-    <p class="auth-footer" style="margin-top:16px;">
-      <a onclick="resetPassword()" style="color:#6b7280; font-weight:normal; text-decoration:underline">Esqueci minha senha</a>
-    </p>
+    <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
   </div></div>
 </div>
 
@@ -332,54 +347,65 @@ if('serviceWorker' in navigator){
 <div id="page-admin-login" class="page" style="display:none!important"></div>
 
 <!-- ADMIN DASHBOARD -->
-<div id="page-admin-dashboard" class="admin-page" style="display:flex!important; height:100vh; overflow:hidden;">
-  
-  <!-- BARRA LATERAL (SIDEBAR) -->
-  <aside id="admin-sidebar" style="width:260px; background:#0d1117; border-right:1px solid #1f2937; display:flex; flex-direction:column; flex-shrink:0;">
-    <div style="padding:24px 20px; border-bottom:1px solid #1f2937; display:flex; align-items:flex-start; justify-content:space-between;">
-      <div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:#fff;">
-          <span style="font-size:24px;">🛡</span> <span class="nav-text">CineCash<span style="color:#7c3aed">IA</span></span>
-        </div>
-        <div class="panel-sub" style="font-size:12px;color:#9ca3af;margin-top:4px">Painel Administrativo</div>
+<div id="page-admin-dashboard" class="admin-page">
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-top">
+      <div class="admin-sidebar-logo">
+        <span>🛡</span>
+        <h2>CineCash Admin</h2>
       </div>
-      <button onclick="document.getElementById('admin-sidebar').classList.toggle('sidebar-collapsed')" style="background:transparent;border:none;color:#9ca3af;font-size:24px;cursor:pointer;padding:0;line-height:1;margin-top:2px;">☰</button>
+      <button class="sidebar-toggle" onclick="toggleSidebar()" title="Minimizar">☰</button>
     </div>
-    
-    <div class="admin-tabs" style="flex:1; display:flex; flex-direction:column; gap:8px; padding:24px 14px; background:transparent; border:none; margin:0; border-radius:0;">
-      <button class="tab-btn active" onclick="switchTab('geral',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">🏠 <span class="nav-text">Visão Geral</span></button>
-      <button class="tab-btn" onclick="switchTab('usuarios',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">👥 <span class="nav-text">Usuários</span></button>
-      <button class="tab-btn" onclick="switchTab('videos',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">📹 <span class="nav-text">Vídeos</span></button>
-      <button class="tab-btn" onclick="switchTab('crescimento',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">📈 <span class="nav-text">Crescimento</span></button>
-      <button class="tab-btn" onclick="switchTab('seguranca',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">🛡 <span class="nav-text">Segurança</span></button>
-      <button class="tab-btn" onclick="switchTab('lucros',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">💰 <span class="nav-text">Lucros</span></button>
-      <button class="tab-btn" onclick="switchTab('saques',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start">💸 <span class="nav-text">Saques</span></button>
-      <button class="tab-btn" onclick="switchTab('ia',this); document.getElementById('admin-sidebar').classList.add('sidebar-collapsed')" style="justify-content:flex-start; color:#34d399">🤖 <span class="nav-text">IA Monitor</span></button>
-    </div>
-
-    <div style="padding:20px; border-top:1px solid #1f2937; display:flex; flex-direction:column; gap:10px;">
-      <button id="maintenance-btn" onclick="toggleMaintenance()" style="width:100%; display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.2s;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 <span class="nav-text">Manutenção: <span id="maint-status">OFF</span></span></button>
-      <button class="admin-logout" onclick="doAdminLogout()" style="width:100%; justify-content:center; padding:12px;">↩ <span class="nav-text">Sair do Painel</span></button>
+    <nav class="admin-nav">
+      <button class="admin-nav-item active" onclick="switchTab('usuarios',this)" data-tab="usuarios">
+        <span class="nav-icon">👥</span><span class="nav-label">Usuários</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('videos',this)" data-tab="videos">
+        <span class="nav-icon">📹</span><span class="nav-label">Vídeos</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('crescimento',this)" data-tab="crescimento">
+        <span class="nav-icon">📈</span><span class="nav-label">Crescimento</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('seguranca',this)" data-tab="seguranca">
+        <span class="nav-icon">🛡</span><span class="nav-label">Segurança</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('lucros',this)" data-tab="lucros">
+        <span class="nav-icon">💰</span><span class="nav-label">Lucros</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('saques',this)" data-tab="saques">
+        <span class="nav-icon">💸</span><span class="nav-label">Saques</span>
+      </button>
+      <button class="admin-nav-item" onclick="switchTab('ia',this)" data-tab="ia">
+        <span class="nav-icon">🤖</span><span class="nav-label">IA Monitor</span>
+      </button>
+    </nav>
+    <div class="admin-sidebar-bottom">
+      <button class="admin-nav-item" onclick="doAdminLogout()">
+        <span class="nav-icon">↩</span><span class="nav-label">Sair</span>
+      </button>
     </div>
   </aside>
 
-  <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
-  <main style="flex:1; display:flex; flex-direction:column; overflow:hidden; background:#050b14;">
-    <div class="admin-body" style="flex:1; overflow-y:auto; padding:32px;">
-      
-      <!-- ABA 1: VISÃO GERAL (OS CARDS DE CIMA) -->
-      <div id="tab-geral" class="tab-panel active">
-        <h2 style="font-size:24px;font-weight:600;color:#fff;margin-bottom:24px;">Visão Geral da Plataforma</h2>
-        <div class="stat-grid">
-          <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value" id="stat-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
-          <div class="stat-card"><div><div class="stat-label">Usuários Ativos</div><div class="stat-value c-green" id="stat-active">0</div></div><span class="stat-icon c-green">📈</span></div>
-          <div class="stat-card"><div><div class="stat-label">Vídeos Assistidos</div><div class="stat-value c-purple" id="stat-videos">0</div></div><span class="stat-icon c-purple">📹</span></div>
-          <div class="stat-card"><div><div class="stat-label">Total de Saques</div><div class="stat-value c-amber" id="stat-saques">0</div></div><span class="stat-icon c-amber">$</span></div>
-        </div>
+  <!-- MAIN CONTENT -->
+  <div class="admin-main">
+    <!-- Top bar -->
+    <div class="admin-topbar">
+      <div id="admin-topbar-title" class="admin-topbar-title">👥 Usuários</div>
+      <div class="admin-topbar-right">
+        <button id="maintenance-btn" onclick="toggleMaintenance()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 <span id="maint-status">OFF</span></button>
       </div>
+    </div>
 
-      <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
-      <div id="tab-usuarios" class="tab-panel">
+    <!-- Scrollable content -->
+    <div class="admin-content">
+      <div class="stat-grid">
+        <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value" id="stat-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
+        <div class="stat-card"><div><div class="stat-label">Usuários Ativos</div><div class="stat-value c-green" id="stat-active">0</div></div><span class="stat-icon c-green">📈</span></div>
+        <div class="stat-card"><div><div class="stat-label">Vídeos Assistidos</div><div class="stat-value c-purple" id="stat-videos">0</div></div><span class="stat-icon c-purple">📹</span></div>
+        <div class="stat-card"><div><div class="stat-label">Saques Pendentes</div><div class="stat-value c-amber" id="stat-saques">0</div></div><span class="stat-icon c-amber">💸</span></div>
+      </div>
+    <div id="tab-usuarios" class="tab-panel active">
       <div class="panel-card">
         <div class="panel-title">Gerenciamento de Usuários</div>
         <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
@@ -756,7 +782,8 @@ async function doRegister(){
 
 // ── ✅ login (corrigido — estava com o corpo cortado) ─────────────────────────
 async function doLogin(){
-  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado por tentativas falhas. Aguarde 5 minutos.','error')
+  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado. Aguarde.','error')
+  if(_fraudLog) antiFraud_checkLogin()
 
   const input = document.getElementById('login-email').value.trim()
   const pass  = document.getElementById('login-password').value
@@ -809,7 +836,6 @@ async function doLogin(){
       } catch(_){}
     }
     showToast(fbError(err), 'error')
-    registerLoginFailure()
   } finally {
     setLoading('login-btn', false, 'Entrar')
   }
@@ -840,10 +866,9 @@ async function doGoogleLogin(){
 // ── admin login — now handled by doLogin ─────────
 async function doAdminLogin(){}
 
-async function doAdminLogout(){
+function doAdminLogout(){
   try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
   _cachedUsers=[];_cachedVideos=[]
-  await signOut(auth)
   showPage('login')
 }
 
@@ -1054,16 +1079,19 @@ setTimeout(checkMaintenance, 150)
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
 const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
 
-function registerLoginFailure(){
+function antiFraud_checkLogin(){
   const now = Date.now()
+  // Reset contador se passou mais de 5 minutos
   if(now - _fraudLog.lastAttempt > 5 * 60 * 1000) _fraudLog.attempts = 0
   _fraudLog.attempts++
   _fraudLog.lastAttempt = now
-  if(_fraudLog.attempts >= 3){
+  if(_fraudLog.attempts > 5){
     _fraudLog.blocked = true
-    showToast('Muitas tentativas incorretas. Acesso bloqueado por 5 minutos.', 'error')
+    showToast('Muitas tentativas. Aguarde 5 minutos.', 'error')
     setTimeout(()=>{ _fraudLog.blocked = false; _fraudLog.attempts = 0 }, 5*60*1000)
+    return false
   }
+  return true
 }
 
 function antiFraud_checkVideoWatch(uid, videoId){
@@ -1095,25 +1123,6 @@ onAuthStateChanged(auth, async user => {
 
   // ❌ Never interfere if admin mode was triggered via URL
   if(user){
-    // ── Check if THIS user is the admin ─────────────────────────────────────
-    try {
-      const adminSnap = await get(ref(db, 'config/adminUID'));
-      if (adminSnap.exists() && adminSnap.val() === user.uid) {
-        const onLoginPage = ['page-login','page-register','page-maintenance'].some(
-          id => document.getElementById(id)?.classList.contains('active')
-        )
-        if(onLoginPage){
-          _cachedUsers = []; _cachedVideos = []
-          showPage('admin-dashboard')
-          attachRealtimeListeners()
-          loadMaintenanceState()
-          setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
-          showToast('🛡 Bem-vindo de volta, Admin!', 'success')
-        }
-        return; // Important: return here so admin doesn't load user dashboard
-      }
-    } catch(err){}
-
     const snap = await get(ref(db, 'users/'+user.uid))
     if(!snap.exists()) return
     const profile = snap.val()
@@ -1127,9 +1136,9 @@ onAuthStateChanged(auth, async user => {
     )
     const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
     if(onLoginPage || (!onDash)){
-      showToast('Bem-vindo, '+(profile.display||'Usuário')+'! ✅','success')
+      showToast('Bem-vindo, '+profile.display+'! ✅','success')
       showPage('dashboard')
-      registerServiceWorker()
+      loadMonetag()
       loadUserDashboard()
       initSupportWidget()
     }
@@ -1545,12 +1554,11 @@ function showAdAfterVideo(reward){
   overlay.style.display = 'flex'
   mainContent.style.opacity = '0'
 
-  // Open Monetag ad in a background context or inject it temporarily
+  // Open Monetag popunder ad in background tab
   try {
     const adWin = window.open('about:blank', '_blank')
     if(adWin){
-      adWin.document.write('<html><body>Aguarde o anunciante...<script src="https://quge5.com/88/tag.min.js" data-zone="226253"><\\/script>')
-      adWin.document.write('<script>(function(d,z,s){s.src="https://"+d+"/400/"+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})("vemtoutcheeg.com",7869506,document.createElement("script"))<\\/script></body></html>')
+      adWin.document.write('<script src="https://al5sm.com/tag.min.js" data-zone="10828297"><\/script>')
       adWin.document.close()
     }
   } catch(e){}
@@ -1730,7 +1738,8 @@ async function loadSaquesTab(){
 }
 
 async function approveWithdrawal(id, uid, amount){
-  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'?\\nLembre-se de enviar o PIX antes de aprovar!')) return
+  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'?
+Lembre-se de enviar o PIX antes de aprovar!')) return
   try {
     await update(ref(db,'withdrawals/'+id),{ status:'approved', processedAt: Date.now() })
     showToast('✅ Saque aprovado! Lembre-se de enviar o PIX.','success')
@@ -2056,8 +2065,20 @@ async function initSupportWidget(){
 }
 
 
-// Register service workers for push notifications after login
-function registerServiceWorker(){
+// Load Monetag ads ONLY after login (not on login page)
+function loadMonetag(){
+  if(document.getElementById('_monetag_loaded')) return
+  const marker = document.createElement('span')
+  marker.id = '_monetag_loaded'
+  document.body.appendChild(marker)
+  // Multitag
+  const s1 = document.createElement('script')
+  s1.src = 'https://quge5.com/88/tag.min.js'
+  s1.setAttribute('data-zone','226253')
+  s1.async = true
+  s1.setAttribute('data-cfasync','false')
+  document.body.appendChild(s1)
+  // Register SW for push notifications
   if('serviceWorker' in navigator){
     const swPath = location.pathname.includes('CineCash') ? '/CineCash-por-IA/sw.js' : '/sw.js'
     navigator.serviceWorker.register(swPath).catch(()=>{})
@@ -2066,7 +2087,14 @@ function registerServiceWorker(){
 
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
 window.doGoogleLogin=doGoogleLogin;window.doAdminLogin=doAdminLogin;window.doAdminLogout=doAdminLogout
-window.switchTab=switchTab;window.openEditModal=openEditModal;window.saveEditUser=saveEditUser
+
+function toggleSidebar(){
+  const sb = document.getElementById('admin-sidebar')
+  if(sb) sb.classList.toggle('collapsed')
+}
+
+window.switchTab=switchTab
+window.toggleSidebar=toggleSidebar;window.openEditModal=openEditModal;window.saveEditUser=saveEditUser
 window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
 window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
 window.toggleMaintenance=toggleMaintenance
@@ -2090,56 +2118,19 @@ window.copyReferralLink=copyReferralLink
 window.shareReferral=shareReferral
 window.antiFraud_checkVideoWatch=antiFraud_checkVideoWatch
 
-let _secretTaps = 0
-function secretAdminTap(){
-  _secretTaps++
-  if(_secretTaps >= 3){
-    _secretTaps = 0
-    const pwd = prompt('Acesso bloqueado. Digite a senha master:')
-    if(pwd !== 'admin16') {
-      return showToast('Senha incorreta! Acesso negado.', 'error')
-    }
-
-    // Esconde a tela de manutenção se estiver ativa
-    const mp = document.getElementById('maintenance-page')
-    if(mp) mp.style.display = 'none'
-
-    showPage('admin-dashboard')
-    attachRealtimeListeners()
-    loadMaintenanceState()
-    setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
-    showToast('🛡 ACESSO SECRETO: Painel Admin Aberto!', 'success')
-  }
-}
-window.secretAdminTap = secretAdminTap
-
-import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-window.resetPassword = async function() {
-  const email = document.getElementById('login-email').value.trim()
-  if(!email || !email.includes('@')) return showToast('Preencha seu email no campo de login primeiro!', 'info')
-  if(!confirm('Deseja solicitar redefinição para '+email+'?\n\nAviso: Sua redefinição será submetida à análise da nossa IA de segurança antes de ser enviada.')) return
-  try {
-    await sendPasswordResetEmail(auth, email)
-    showToast('✅ A IA analisou sua conta. O link foi enviado para o email!', 'success')
-  } catch(err) {
-    if(err.code === 'auth/user-not-found') return showToast('Conta não encontrada.', 'error')
-    showToast('Erro: '+err.message, 'error')
-  }
-}
-
 // init
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
 </script>
 
 <!-- ═══ MAINTENANCE PAGE ═══ -->
 <div id="maintenance-page" style="display:none;position:fixed;inset:0;z-index:99999;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px">
-  <div style="font-size:64px;margin-bottom:24px;cursor:pointer" onclick="secretAdminTap()" title="Toque 3x para Admin">🔧</div>
+  <div style="font-size:64px;margin-bottom:24px">🔧</div>
   <h1 style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px">Site em Manutenção</h1>
   <p style="font-size:15px;color:#9ca3af;max-width:400px;line-height:1.6" id="maintenance-msg">Estamos realizando melhorias para você. Voltamos em breve!</p>
   <div style="margin-top:32px;padding:14px 24px;background:#161b27;border:1px solid #1f2937;border-radius:12px;font-size:13px;color:#6b7280">
     Se você é admin, acesse normalmente através do link de admin.
   </div>
-  </main>
 </div>
+
 </body>
 </html>
