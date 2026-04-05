@@ -811,9 +811,10 @@ async function doGoogleLogin(){
 // ── admin login — now handled by doLogin ─────────
 async function doAdminLogin(){}
 
-function doAdminLogout(){
+async function doAdminLogout(){
   try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
   _cachedUsers=[];_cachedVideos=[]
+  await signOut(auth)
   showPage('login')
 }
 
@@ -1068,6 +1069,25 @@ onAuthStateChanged(auth, async user => {
 
   // ❌ Never interfere if admin mode was triggered via URL
   if(user){
+    // ── Check if THIS user is the admin ─────────────────────────────────────
+    try {
+      const adminSnap = await get(ref(db, 'config/adminUID'));
+      if (adminSnap.exists() && adminSnap.val() === user.uid) {
+        const onLoginPage = ['page-login','page-register','page-maintenance'].some(
+          id => document.getElementById(id)?.classList.contains('active')
+        )
+        if(onLoginPage){
+          _cachedUsers = []; _cachedVideos = []
+          showPage('admin-dashboard')
+          attachRealtimeListeners()
+          loadMaintenanceState()
+          setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
+          showToast('🛡 Bem-vindo de volta, Admin!', 'success')
+        }
+        return; // Important: return here so admin doesn't load user dashboard
+      }
+    } catch(err){}
+
     const snap = await get(ref(db, 'users/'+user.uid))
     if(!snap.exists()) return
     const profile = snap.val()
@@ -1081,7 +1101,7 @@ onAuthStateChanged(auth, async user => {
     )
     const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
     if(onLoginPage || (!onDash)){
-      showToast('Bem-vindo, '+profile.display+'! ✅','success')
+      showToast('Bem-vindo, '+(profile.display||'Usuário')+'! ✅','success')
       showPage('dashboard')
       loadMonetag()
       loadUserDashboard()
