@@ -289,6 +289,8 @@ if('serviceWorker' in navigator){
 <!-- Monetag scripts loaded dynamically after login -->
 
 
+<!-- ESPAÇO DO USUÁRIO (Login, Cadastro, Dashboard, Manutenção) -->
+<div id="app-user-space" style="display: block;">
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
@@ -335,9 +337,89 @@ if('serviceWorker' in navigator){
   </div></div>
 </div>
 
+<!-- USER DASHBOARD MOVE -->
+<div id="page-dashboard" class="page">
+<div class="dash-bg">
+  <header class="dash-header">
+    <div class="dash-logo">📹 CineCash IA</div>
+    <div class="dash-user-info">
+      <div class="dash-avatar" id="dash-avatar">?</div>
+      <span class="dash-username" id="dash-username">Usuário</span>
+      <button class="dash-logout-btn" onclick="doUserLogout()">Sair</button>
+    </div>
+  </header>
+  <div class="dash-body">
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="dash-nav-btn active" onclick="showDashTab('videos',this)">📹 Vídeos</button>
+      <button class="dash-nav-btn" onclick="showDashTab('moedas',this)">🪙 Minhas Moedas</button>
+      <button class="dash-nav-btn" onclick="showDashTab('saque',this)">💸 Sacar</button>
+      <button class="dash-nav-btn" onclick="showDashTab('indicacoes',this)">🔗 Indicações</button>
+    </div>
+    <div class="balance-bar">
+      <div class="balance-card"><div class="balance-card-label">Saldo disponível</div><div class="balance-card-value green" id="dash-balance">R$ 0,00</div></div>
+      <div class="balance-card"><div class="balance-card-label">🪙 Moedas</div><div class="balance-card-value amber" id="dash-coins">0</div></div>
+      <div class="balance-card"><div class="balance-card-label">Vídeos assistidos</div><div class="balance-card-value purple" id="dash-videos">0</div></div>
+    </div>
+    <div class="checkin-card">
+      <div class="checkin-info"><h3>Check-in diário</h3><p>Entre todo dia e ganhe recompensa!</p><div class="streak-badge" id="streak-badge">🔥 0 dias seguidos</div></div>
+      <button id="checkin-btn" class="checkin-btn" onclick="doCheckIn()">🎁 Fazer Check-in</button>
+    </div>
+    <div id="dash-tab-videos" class="dash-tab-panel active">
+      <div class="section-title">📹 Vídeos disponíveis</div>
+      <div class="video-grid" id="user-video-grid"><div class="no-videos">Carregando vídeos...</div></div>
+    </div>
+    <div id="dash-tab-moedas" class="dash-tab-panel" style="display:none">
+      <div class="section-title">🪙 Minhas Moedas & Recompensas</div>
+      <div id="coins-progress-card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div><div style="font-size:12px;color:rgba(255,255,255,.5)">Suas moedas acumuladas</div><div id="dash-coins-detail" style="font-size:24px;font-weight:700;color:#fbbf24">0 🪙</div></div>
+          <div style="text-align:right"><div style="font-size:12px;color:rgba(255,255,255,.5)">Próximo Nível</div><div id="next-level-name" style="font-size:14px;font-weight:600;color:#a78bfa">Bronze</div></div>
+        </div>
+        <div style="width:100%;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden"><div id="level-progress-fill" style="height:100%;background:linear-gradient(90deg,#fbbf24,#7c3aed);width:0%"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="rewards-list"></div>
+    </div>
+    <div id="dash-tab-saque" class="dash-tab-panel" style="display:none">
+      <div class="withdraw-card">
+        <div class="withdraw-title">💸 Solicitar Saque (PIX)</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:14px">O pagamento é processado e enviado para sua chave PIX.</p>
+        <div id="withdraw-closed-msg" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:12px;margin-bottom:14px;color:#f87171;font-size:12px;text-align:center">🔒 Saques estão temporariamente fechados. Tente mais tarde.</div>
+        <div style="margin-bottom:12px"><label class="field-label" style="color:rgba(255,255,255,.7)">Sua Chave PIX</label><input id="withdraw-pix" class="withdraw-input" type="text" placeholder="CPF, CPF ou Chave Aleatória"></div>
+        <div style="margin-bottom:12px"><label class="field-label" style="color:rgba(255,255,255,.7)">Valor do Saque (R$)</label><input id="withdraw-amount" class="withdraw-input" type="number" step="0.01" placeholder="Mínimo R$ 10,00"></div>
+        <button id="withdraw-btn" class="withdraw-btn" onclick="requestWithdrawal()">Solicitar Saque Agora</button>
+      </div>
+      <div class="section-title">🕒 Histórico de Saques</div>
+      <div id="user-withdrawals-list"></div>
+    </div>
+    <div id="dash-tab-indicacoes" class="dash-tab-panel" style="display:none">
+       <div class="checkin-card" style="background:linear-gradient(135deg,rgba(167,139,250,.2),rgba(52,211,153,.2));border:1px solid rgba(52,211,153,.3)">
+        <div class="checkin-info"><h3 style="color:#34d399">Indique e Ganhe R$ 1,00!</h3><p>Ganhe por cada amigo que se cadastrar e assistir 30 vídeos.</p></div>
+        <button class="checkin-btn" style="background:#34d399" onclick="shareReferral()">🚀 Compartilhar</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div class="balance-card"><div class="balance-card-label">Indicados</div><div class="balance-card-value" id="ref-total">0</div></div>
+        <div class="balance-card"><div class="balance-card-label">Concluídos</div><div class="balance-card-value green" id="ref-completed">0</div></div>
+        <div class="balance-card"><div class="balance-card-label">Ganhos totais</div><div class="balance-card-value green" id="ref-earned">R$ 0,00</div></div>
+      </div>
+      <div class="panel-card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;margin-bottom:20px">
+        <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:10px">Seu Link de Indicação</div>
+        <div style="display:flex;gap:10px">
+          <div id="referral-link-box" style="flex:1;background:rgba(0,0,0,.3);padding:10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid rgba(255,255,255,.1)">Carregando...</div>
+          <button onclick="copyReferralLink()" style="padding:10px 16px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Copiar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ADMIN LOGIN — hidden, accessed via main login -->
 <div id="page-admin-login" class="page" style="display:none!important"></div>
 
+</div> <!-- FIM DO ESPAÇO DO USUÁRIO -->
+
+<!-- ESPAÇO DO ADMINISTRADOR (Totalmente isolado) -->
+<div id="app-admin-space" style="display: none;">
 <!-- ADMIN DASHBOARD -->
 <div id="page-admin-dashboard" class="admin-page" style="display:flex!important; height:100vh; width:100%;">
   
@@ -395,6 +477,32 @@ if('serviceWorker' in navigator){
           <div style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px;display:flex;align-items:center;justify-content:space-between">
             <div><div style="font-size:12px;color:#9ca3af;margin-bottom:8px">Total de Saques</div><div style="font-size:28px;font-weight:700;color:#fbbf24" id="stat-saques">0</div></div>
             <span style="font-size:32px;opacity:0.8">$</span>
+          </div>
+        </div>
+
+        <!-- CONFIGURAÇÕES DE MANUTENÇÃO E SISTEMA -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">🔧</span>
+              <div style="font-weight:600;color:#fff;font-size:14px">Controle de Manutenção</div>
+            </div>
+            <label class="dark-label">Mensagem para os Usuários</label>
+            <textarea id="admin-maint-msg" class="dark-input" rows="2" placeholder="Ex: Estamos realizando melhorias. Voltamos em breve!" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;outline:none"></textarea>
+            <div style="margin-top:12px;display:flex;gap:10px">
+              <button onclick="saveMaintenanceConfig()" style="flex:1;padding:10px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar Mensagem</button>
+            </div>
+          </div>
+          <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">📧</span>
+              <div style="font-weight:600;color:#fff;font-size:14px">E-mail do Sistema</div>
+            </div>
+            <label class="dark-label">E-mail Principal para Contato</label>
+            <input id="admin-system-email" class="dark-input" type="email" placeholder="alegomes488@gmail.com" value="alegomes488@gmail.com" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;outline:none">
+            <div style="margin-top:12px">
+              <button onclick="saveSystemEmail()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar E-mail</button>
+            </div>
           </div>
         </div>
 
@@ -594,48 +702,7 @@ if('serviceWorker' in navigator){
 </main>
 </div>
 
-<!-- USER DASHBOARD -->
-<div id="page-dashboard" class="page">
-<div class="dash-bg">
-  <header class="dash-header">
-    <div class="dash-logo">📹 CineCash IA</div>
-    <div class="dash-user-info">
-      <div class="dash-avatar" id="dash-avatar">?</div>
-      <span class="dash-username" id="dash-username">Usuário</span>
-      <button class="dash-logout-btn" onclick="doUserLogout()">Sair</button>
-    </div>
-  </header>
-  <div class="dash-body">
-    <!-- Nav tabs -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="dash-nav-btn active" onclick="showDashTab('videos',this)">📹 Vídeos</button>
-      <button class="dash-nav-btn" onclick="showDashTab('moedas',this)">🪙 Minhas Moedas</button>
-      <button class="dash-nav-btn" onclick="showDashTab('saque',this)">💸 Sacar</button>
-      <button class="dash-nav-btn" onclick="showDashTab('indicacoes',this)">🔗 Indicações</button>
-    </div>
-
-    <!-- Balance cards -->
-    <div class="balance-bar">
-      <div class="balance-card"><div class="balance-card-label">Saldo disponível</div><div class="balance-card-value green" id="dash-balance">R$ 0,00</div></div>
-      <div class="balance-card"><div class="balance-card-label">🪙 Moedas</div><div class="balance-card-value amber" id="dash-coins">0</div></div>
-      <div class="balance-card"><div class="balance-card-label">Vídeos assistidos</div><div class="balance-card-value purple" id="dash-videos">0</div></div>
-    </div>
-
-    <!-- Check-in -->
-    <div class="checkin-card">
-      <div class="checkin-info">
-        <h3>Check-in diário</h3>
-        <p>Entre todo dia e ganhe recompensa!</p>
-        <div class="streak-badge" id="streak-badge">🔥 0 dias seguidos</div>
-      </div>
-      <button id="checkin-btn" class="checkin-btn" onclick="doCheckIn()">🎁 Fazer Check-in</button>
-    </div>
-
-    <!-- TAB: VÍDEOS -->
-    <div id="dash-tab-videos" class="dash-tab-panel active">
-      <div class="section-title">📹 Vídeos disponíveis</div>
-      <div class="video-grid" id="user-video-grid"><div class="no-videos">Carregando vídeos...</div></div>
-    </div>
+<!-- O dashboard original foi movido para dentro do app-user-space -->
 
     <!-- TAB: MOEDAS -->
     <div id="dash-tab-moedas" class="dash-tab-panel" style="display:none">
@@ -798,8 +865,31 @@ function fmtDate(ts){return new Date(ts).toLocaleDateString('pt-BR')}
 function fmt(v){return 'R$ '+Number(v||0).toFixed(2)}
 function fmtU(v){return '$'+Number(v||0).toFixed(2)}
 function setLoading(id,on,label){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.textContent=on?'⏳ Aguarde...':label}
-function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
-function showPage(name){document.querySelectorAll('.page,.admin-page').forEach(p=>p.classList.remove('active'));const el=document.getElementById('page-'+name);if(el)el.classList.add('active')}
+function showToast(msg,type='info'){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
+function showSpace(type){
+  const user = document.getElementById('app-user-space');
+  const admin = document.getElementById('app-admin-space');
+  if(!user || !admin) return;
+  if(type === 'admin'){
+    user.style.display = 'none';
+    admin.style.display = 'block';
+    document.body.style.background = '#0d1117';
+    document.body.style.overflow = 'hidden'; 
+  } else {
+    admin.style.display = 'none';
+    user.style.display = 'block';
+    document.body.style.background = ''; 
+    document.body.style.overflow = 'auto';
+  }
+}
+function showPage(name){
+  document.querySelectorAll('.page,.admin-page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+name);
+  if(el)el.classList.add('active');
+  // Se for uma página de admin, garante que o espaço admin está visível
+  if(name.includes('admin')){ showSpace('admin'); } 
+  else { showSpace('user'); }
+}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
 function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
@@ -872,7 +962,10 @@ async function doLogin(){
     const uid  = cred.user.uid
 
     const adminSnap = await get(ref(db, 'config/adminUID'))
-    if(adminSnap.exists() && adminSnap.val() === uid){
+    const userEmail = (cred.user.email || '').toLowerCase()
+    const isTestUser = userEmail === 'usuarioteste@gmail.com'
+    
+    if(adminSnap.exists() && adminSnap.val() === uid && !isTestUser){
       _cachedUsers = []; _cachedVideos = []
       const mp = document.getElementById('maintenance-page')
       if(mp) mp.style.display = 'none'
@@ -881,7 +974,7 @@ async function doLogin(){
       attachRealtimeListeners()
       await loadMaintenanceState()
       setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
-      showToast('🛡 Bem-vindo, Admin!', 'success')
+      showToast('🛡 Acesso Administrativo Autorizado!', 'success')
       return
     }
 
@@ -1167,13 +1260,39 @@ function updateMaintenanceBtn(){
   }
 }
 
-// Ao abrir o painel admin, carrega estado atual de manutenção
+// Ao abrir o painel admin, carrega estado atual de manutenção e configurações
 async function loadMaintenanceState(){
   try {
     const snap = await get(ref(db, 'config/maintenance'))
     _isMaintenance = snap.exists() && snap.val() === true
     updateMaintenanceBtn()
+    
+    // Carrega mensagem atual
+    const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
+    if(msgSnap.exists()) document.getElementById('admin-maint-msg').value = msgSnap.val()
+    
+    // Carrega e-mail do sistema
+    const mailSnap = await get(ref(db, 'config/systemEmail'))
+    if(mailSnap.exists()) document.getElementById('admin-system-email').value = mailSnap.val()
   } catch(_){}
+}
+
+async function saveMaintenanceConfig(){
+  const msg = document.getElementById('admin-maint-msg').value.trim()
+  if(!msg) return showToast('Digite uma mensagem!','error')
+  try {
+    await set(ref(db, 'config/maintenanceMessage'), msg)
+    showToast('✅ Mensagem de manutenção salva!','success')
+  } catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+async function saveSystemEmail(){
+  const email = document.getElementById('admin-system-email').value.trim()
+  if(!email) return showToast('Digite um e-mail!','error')
+  try {
+    await set(ref(db, 'config/systemEmail'), email)
+    showToast('✅ E-mail do sistema salvo!','success')
+  } catch(err){ showToast('Erro: '+err.message,'error') }
 }
 
 // ── Admin access URLs ────────────────────────────────────────
@@ -1245,77 +1364,75 @@ let _watchDuration = 30
 
 // Auth state - handles user login/logout
 onAuthStateChanged(auth, async user => {
-  // ❌ Never interfere with admin pages
-  const adminActive = document.getElementById('page-admin-login')?.classList.contains('active')
-    || document.getElementById('page-admin-dashboard')?.classList.contains('active')
-  if(adminActive) return
-
   if(user){
-    // ── Check if THIS user is the admin ─────────────────────────────────────
-    const adminSnap = await get(ref(db, 'config/adminUID'))
-    const isAdmin = adminSnap.exists() && adminSnap.val() === user.uid
+    const userEmail = (user.email || '').toLowerCase()
+    const isTestUser = userEmail === 'usuarioteste@gmail.com'
     
-    // ── Admin SEMPRE acessa, mesmo em manutenção ──────────────────────────
+    // ── Verifica se é Admin (Exclui usuário de teste) ────────────────────────
+    const adminSnap = await get(ref(db, 'config/adminUID'))
+    const isAdmin = adminSnap.exists() && adminSnap.val() === user.uid && !isTestUser
+    
     if(isAdmin){
-      const onLoginPage = ['page-login','page-register','page-maintenance'].some(
-        id => document.getElementById(id)?.classList.contains('active')
-      )
-      if(onLoginPage){
-        const mp = document.getElementById('maintenance-page')
-        if(mp) mp.style.display = 'none'
-        
-        _cachedUsers = []; _cachedVideos = []
-        showPage('admin-dashboard')
-        attachRealtimeListeners()
-        await loadMaintenanceState()
-        setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
-        showToast('🛡 Bem-vindo, Admin!', 'success')
-      }
-      return;
+      // Admin sempre vai para o espaço admin se logado
+      _currentUser = { uid: user.uid, isAdmin: true }
+      showPage('admin-dashboard')
+      attachRealtimeListeners()
+      await loadMaintenanceState()
+      const mp = document.getElementById('maintenance-page')
+      if(mp) mp.style.display = 'none'
+      return
     }
 
-    // ── USUÁRIOS NORMAIS: verifica manutenção ──────────────────────────────
-    try {
-      const maintSnap = await get(ref(db, 'config/maintenance'));
-      if(maintSnap.exists() && maintSnap.val() === true){
-        const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
-        const msg = msgSnap.exists() ? msgSnap.val() : 'Estamos realizando melhorias. Volte em breve!'
-        const mp = document.getElementById('maintenance-page')
-        if(mp){ mp.style.display = 'flex'; document.getElementById('maintenance-msg').textContent = msg }
-        showToast('🔧 ' + msg, 'error')
-        await signOut(auth)
-        showPage('login')
-        return
-      }
-    } catch(e){}
+    // ── Usuário Comum: Verifica Manutenção (Usuário teste ignora manutenção) ─
+    const maintSnap = await get(ref(db, 'config/maintenance'))
+    if(maintSnap.exists() && maintSnap.val() === true && !isTestUser){
+       await signOut(auth)
+       _currentUser = null
+       showPage('login')
+       return
+    }
 
-    // ── Carrega perfil do usuário ───────────────────────────────────────────
-    try {
-      const snap = await get(ref(db, 'users/'+user.uid))
-      if(!snap.exists()) return
-      
+    // ── Carrega Perfil do Usuário ───────────────────────────────────────────
+    const snap = await get(ref(db, 'users/'+user.uid))
+    if(snap.exists()){
       const profile = snap.val()
       if(profile.status === 'inativo'){
-        showToast('Conta inativa. Contate o suporte.','error')
+        showToast('Esta conta foi suspensa por violação de termos.','error')
         await signOut(auth); return
       }
-      _currentUser = { uid: user.uid, ...profile }
-      const onLoginPage = ['page-login','page-register','page-maintenance'].some(
-        id => document.getElementById(id)?.classList.contains('active')
-      )
-      const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
-      if(onLoginPage || (!onDash)){
-        showToast('Bem-vindo, '+(profile.display||'Usuário')+'! ✅','success')
-        showPage('dashboard')
-        registerServiceWorker()
-        loadUserDashboard()
-        initSupportWidget()
-      }
-    } catch(e){}
+      _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
+      showPage('dashboard')
+      loadUserDashboard()
+      if(typeof loadSupportWidget === 'function') loadSupportWidget()
+    }
   } else {
-    const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
-    if(onDash){ _currentUser=null; showPage('login') }
+    _currentUser = null
+    showSpace('user')
+    showPage('login')
   }
+})
+
+// Listener global de manutenção com expulsão em tempo real
+onValue(ref(db, 'config/maintenance'), async snap => {
+  _isMaintenance = snap.exists() && snap.val() === true
+  const mp = document.getElementById('maintenance-page')
+  
+  if(_isMaintenance){
+    // Se manutenção ativada, expulsa quem não for admin E não for usuário de teste
+    if(_currentUser && !_currentUser.isAdmin && !_currentUser.isTestUser){
+      await signOut(auth)
+      showToast('⚠️ O site entrou em manutenção. Você foi desconectado.','info')
+    }
+    if(mp) mp.style.display = 'flex'
+    // Atualiza mensagem se houver
+    const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
+    if(msgSnap.exists()) document.getElementById('maintenance-msg').textContent = msgSnap.val()
+  } else {
+    if(mp) mp.style.display = 'none'
+  }
+  
+  // Atualiza botão no painel admin se ele estiver visível
+  updateMaintenanceBtn()
 })
 
 // Reward thresholds
