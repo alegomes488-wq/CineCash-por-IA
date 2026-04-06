@@ -311,6 +311,9 @@ if('serviceWorker' in navigator){
     <p class="auth-footer" style="margin-top:16px;">
       <a onclick="resetPassword()" style="color:#6b7280; font-weight:normal; text-decoration:underline">Esqueci minha senha</a>
     </p>
+    <p class="auth-footer" style="margin-top:10px;">
+      Não tem conta? <a onclick="showPage('register')">Criar conta grátis</a>
+    </p>
   </div></div>
 </div>
 
@@ -764,8 +767,8 @@ import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/fi
 import { getAnalytics }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-  sendPasswordResetEmail
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+  onAuthStateChanged, signOut, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getDatabase, ref, set, get, update, remove, onValue, push, off
@@ -905,46 +908,63 @@ async function doLogin(){
   }
 }
 
-// ── ✅ google login ───────────────────────────────────────────────────────────
+// ── ✅ google login — usa redirect (compatível com mobile/popup bloqueado) ──
 async function doGoogleLogin(){
-  const provider=new GoogleAuthProvider()
-  try{
-    const result=await signInWithPopup(auth,provider)
-    const user=result.user
-    const snap=await get(ref(db,'users/'+user.uid))
-    if(!snap.exists()){
-      const nameParts = (user.displayName||'Usuário Google').split(' ')
-      const firstName = nameParts[0] || 'Usuário'
-      const lastName = nameParts.slice(1).join(' ') || 'Google'
-      const display = firstName.toLowerCase() + '_' + Math.floor(Math.random()*999)
-      
-      await set(ref(db,'users/'+user.uid),{
-        firstName,
-        lastName,
-        fullName: firstName + ' ' + lastName,
-        display,
-        email: user.email,
-        createdAt: Date.now(),
-        status: 'ativo',
-        balance: 0,
-        videosWatched: 0,
-        checkInStreak: 0,
-        totalEarned: 0,
-        authProvider: 'google'
-      })
-      
-      const refParam=checkReferralParam()
-      if(refParam){
-        await registerReferral(user.uid,display,refParam)
-        showToast('Conta Google criada! Bônus de indicação registrado! 🎁','success')
-      } else {
-        showToast('Conta criada com Google! ✅','success')
-      }
+  const provider = new GoogleAuthProvider()
+  provider.setCustomParameters({ prompt: 'select_account' })
+  // Tenta popup primeiro; se falhar (mobile/bloqueado), usa redirect
+  try {
+    const result = await signInWithPopup(auth, provider)
+    await _handleGoogleUser(result.user)
+  } catch(err) {
+    if(err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      // Fallback para redirect
+      showToast('Redirecionando para o Google...', 'info')
+      await signInWithRedirect(auth, provider)
     } else {
-      showToast('Login com Google realizado! ✅','success')
+      showToast(fbError(err), 'error')
     }
-  }catch(err){showToast(fbError(err),'error')}
+  }
 }
+
+async function _handleGoogleUser(user) {
+  const snap = await get(ref(db,'users/'+user.uid))
+  if(!snap.exists()){
+    const nameParts = (user.displayName||'Usuário Google').split(' ')
+    const firstName = nameParts[0] || 'Usuário'
+    const lastName = nameParts.slice(1).join(' ') || 'Google'
+    const display = firstName.toLowerCase() + '_' + Math.floor(Math.random()*999)
+    await set(ref(db,'users/'+user.uid),{
+      firstName, lastName,
+      fullName: firstName + ' ' + lastName,
+      display,
+      email: user.email,
+      createdAt: Date.now(),
+      status: 'ativo',
+      balance: 0,
+      videosWatched: 0,
+      checkInStreak: 0,
+      totalEarned: 0,
+      authProvider: 'google'
+    })
+    const refParam = checkReferralParam()
+    if(refParam){
+      await registerReferral(user.uid, display, refParam)
+      showToast('Conta Google criada! Bônus de indicação registrado! 🎁','success')
+    } else {
+      showToast('Conta criada com Google! ✅','success')
+    }
+  } else {
+    showToast('Login com Google realizado! ✅','success')
+  }
+}
+
+// Captura resultado do redirect do Google ao retornar para a página
+getRedirectResult(auth).then(result => {
+  if(result && result.user) _handleGoogleUser(result.user)
+}).catch(err => {
+  if(err.code && err.code !== 'auth/no-auth-event') showToast(fbError(err), 'error')
+})
 
 // ── admin login — now handled by doLogin ─────────
 async function doAdminLogin(){}
@@ -1882,33 +1902,22 @@ async function loadSaquesTab(){
   if(!pending.length){
     pendingList.innerHTML='<div style="text-align:center;padding:30px;color:#34d399;font-size:13px">✅ Nenhuma solicitação pendente!</div>'
   } else {
-    pendingList.innerHTML = pending.map(async ([id,w])=>{
-      // Get user data for analysis
-      const userSnap = await get(ref(db,'users/'+w.uid))
-      const user = userSnap.exists() ? userSnap.val() : {}
-      
-      const checkInDays = user.checkInStreak || 0
-      const videosWatched = user.videosWatched || w.videosWatched || 0
-      const balance = user.balance || 0
-      const daysSinceJoin = Math.floor((Date.now() - (user.createdAt || Date.now())) / (1000*60*60*24))
-      
-      // Analysis
+    pendingList.innerHTML = pending.map(([id,w])=>{
+      // Use data stored in the withdrawal record (no extra Firebase calls)
+      const videosWatched = w.videosWatched || 0
+      const balance = w.balance || 0
       const analysis = []
       if(videosWatched < 5) analysis.push('⚠️ Poucos vídeos assistidos')
-      if(checkInDays < 3) analysis.push('⚠️ Check-in irregular')
       if(balance < 10) analysis.push('⚠️ Saldo baixo')
-      if(daysSinceJoin < 7) analysis.push('⚠️ Conta recente')
-      
-      const statusColor = analysis.some(a=>a.includes('⚠️')) ? '#fbbf24' : '#34d399'
+      const statusColor = analysis.length > 0 ? '#fbbf24' : '#34d399'
       const statusBadge = analysis.length === 0 ? '✅ Análise OK' : '🔍 Verificar'
-      
       return `
         <div class="saque-item" style="border-left:4px solid ${statusColor}">
           <div class="saque-info">
             <div class="name">${w.userName||'Usuário'}</div>
             <div class="detail">${w.userEmail}</div>
             <div class="detail">📱 PIX: ${w.pixKey}</div>
-            <div class="detail">📹 Vídeos: ${videosWatched} • 🔥 Streak: ${checkInDays} dias</div>
+            <div class="detail">📹 Vídeos: ${videosWatched} • Saldo s/ saque: R$${Number(balance).toFixed(2)}</div>
             <div class="detail">📅 Solicitado: ${new Date(w.requestedAt).toLocaleDateString('pt-BR')}</div>
             ${analysis.length > 0 ? '<div style="margin-top:8px;font-size:11px;color:#fbbf24">'+analysis.join(' • ')+'</div>' : ''}
           </div>
@@ -2350,8 +2359,6 @@ async function adminCreateUser(){
 }
 
 window.adminCreateUser = adminCreateUser
-}
-
 window.saveAdminBank = saveAdminBank
 window.loadAdminBank = loadAdminBank
 
