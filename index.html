@@ -1738,8 +1738,7 @@ async function loadSaquesTab(){
 }
 
 async function approveWithdrawal(id, uid, amount){
-  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'?
-Lembre-se de enviar o PIX antes de aprovar!')) return
+  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'? Lembre-se de enviar o PIX antes de aprovar!')) return
   try {
     await update(ref(db,'withdrawals/'+id),{ status:'approved', processedAt: Date.now() })
     showToast('✅ Saque aprovado! Lembre-se de enviar o PIX.','success')
