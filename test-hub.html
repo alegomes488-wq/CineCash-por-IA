@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Meu Hub - Loading...</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body style="background:#0d1117;color:#fff;font-family:sans-serif;padding:50px;text-align:center">
+  <h1>Carregando Hub...</h1>
+  <p id="status">Aguardando Firebase...</p>
+  <button id="loginBtn" style="display:none;padding:15px 30px;font-size:18px;background:#7c3aed;color:#fff;border:none;border-radius:10px;cursor:pointer">Entrar</button>
+  <script>
+    // Mostrar status
+    document.getElementById('status').textContent = 'Firebase carregando...';
+    
+    // Config
+    var config = {
+      apiKey: "AIzaSyAPkVreL1fqepaiRqeNjtOpCetQ8nHtKEs",
+      authDomain: "meu-hub-ba6b0.firebaseapp.com",
+      databaseURL: "https://meu-hub-ba6b0-default-rtdb.firebaseio.com",
+      projectId: "meu-hub-ba6b0"
+    };
+    
+    // Inicializar
+    if (typeof firebase !== 'undefined') {
+      document.getElementById('status').textContent = 'Firebase OK!';
+      if (firebase.apps.length === 0) firebase.initializeApp(config);
+      
+      // Verificar login
+      var user = localStorage.getItem('hub_user');
+      if (user) {
+        document.body.innerHTML = '<h1>✅ Você está logado!</h1><p>UID: ' + JSON.parse(user).uid + '</p>';
+      } else {
+        document.getElementById('loginBtn').style.display = 'inline-block';
+        document.getElementById('loginBtn').onclick = function() {
+          var email = prompt('Email:');
+          var pw = prompt('Senha:');
+          if (!email || !pw) { alert('Preencha todos os campos'); return; }
+          
+          firebase.auth().signInWithEmailAndPassword(email, pw)
+            .then(function(u) {
+              localStorage.setItem('hub_user', JSON.stringify({email:u.user.email, uid:u.user.uid}));
+              document.body.innerHTML = '<h1>✅ Login OK!</h1><p>UID: ' + u.user.uid + '</p>';
+            })
+            .catch(function(e) {
+              alert('Erro: ' + e.message);
+            });
+        };
+      }
+    } else {
+      document.getElementById('status').textContent = '❌ Firebase não carregou!';
+    }
+  </script>
+</body>
+</html>

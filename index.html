@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineCash IA</title>
-  <!-- ✅ MONETAG: verificação + anúncios -->
+  <!-- ✅ MONETAG: verificação de domínio (sem carregamento automático de anúncios) -->
   <meta name="monetag" content="c9926a683e19787211bfa2f59d146b72">
-  <script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',7869506,document.createElement('script'))</script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -293,17 +292,26 @@
 </head>
 <body>
 <script>
+// Debug inicial
+console.log('🚀 CineCash carregando...');
+
+// Desregistra qualquer service worker Monetag que já esteja ativo no navegador
 if('serviceWorker' in navigator){
-  const swPath = location.pathname.includes('CineCash') 
-    ? '/CineCash-por-IA/sw.js' 
-    : '/sw.js'
-  navigator.serviceWorker.register(swPath).catch(()=>{
-    navigator.serviceWorker.register('/sw.js').catch(()=>{})
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister())
   })
 }
 </script>
-<!-- Monetag scripts loaded dynamically after login -->
 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('✅ DOM carregado');
+  // Confirma que página de login está visível
+  var loginPage = document.getElementById('page-login');
+  console.log('Login page display:', loginPage ? window.getComputedStyle(loginPage).display : 'NÃO ENCONTRADO');
+});
+</script>
 
 <!-- LOGIN -->
 <div id="page-login" class="page active">
@@ -393,6 +401,7 @@ if('serviceWorker' in navigator){
     <div class="admin-topbar">
       <div id="admin-topbar-title" class="admin-topbar-title">👥 Usuários</div>
       <div class="admin-topbar-right">
+        <button id="offline-btn" onclick="toggleOfflineMode()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid #374151;background:#1f2937;color:#60a5fa">🔒 <span id="offline-status">OFF</span></button>
         <button id="maintenance-btn" onclick="toggleMaintenance()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 <span id="maint-status">OFF</span></button>
       </div>
     </div>
@@ -739,7 +748,7 @@ const firebaseConfig = {
 };
 
 const app  = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app); // Desativado temporariamente
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
@@ -788,6 +797,21 @@ async function doLogin(){
   const input = document.getElementById('login-email').value.trim()
   const pass  = document.getElementById('login-password').value
   if(!input || !pass) return showToast('Preencha usuário/email e senha!','error')
+
+  // Verificar modo offline antes de fazer login
+  try {
+    const offlineSnap = await get(ref(db, 'config/offlineMode'))
+    if(offlineSnap.val() === true){
+      // Se for admin, permite
+      const isAdmin = input.toLowerCase().includes('admin')
+      // Se for usuarioteste (por email ou nome de usuário)
+      const isTestUser = input.toLowerCase().includes('teste')
+      
+      if(!isAdmin && !isTestUser){
+        return showToast('🔧 Estamos em manutenção. Tente novamente mais tarde.','error')
+      }
+    }
+  } catch(e){}
 
   setLoading('login-btn', true, '⏳ Entrando...')
   try {
@@ -1005,6 +1029,7 @@ function doConversion(){
 //  MODO MANUTENÇÃO — Firebase Realtime
 // ═══════════════════════════════════════════════════════════
 let _isMaintenance = false
+let _isTestMode = false
 
 // Verifica modo manutenção ao carregar a página (para usuários normais)
 async function checkMaintenance(){
@@ -1055,12 +1080,49 @@ function updateMaintenanceBtn(){
   }
 }
 
-// Ao abrir o painel admin, carrega estado atual de manutenção
+function updateTestModeBtn(){
+  const span = document.getElementById('testmode-status')
+  const btn  = document.getElementById('testmode-btn')
+  if(!span || !btn) return
+  if(_isTestMode){
+    span.textContent = 'ON'
+    btn.style.background = '#2563eb'
+    btn.style.borderColor = '#3b82f6'
+    btn.style.color = '#fff'
+  } else {
+    span.textContent = 'OFF'
+    btn.style.background = '#1f2937'
+    btn.style.borderColor = '#374151'
+    btn.style.color = '#60a5fa'
+  }
+}
+
+async function toggleTestMode(){
+  const newState = !_isTestMode
+  const btn = document.getElementById('testmode-btn')
+  btn.disabled = true
+  try {
+    await set(ref(db, 'config/testMode'), newState)
+    _isTestMode = newState
+    updateTestModeBtn()
+    showToast(newState ? '🔓 Modo Teste ATIVADO!' : '🔒 Modo Teste DESATIVADO!', newState ? 'info' : 'success')
+  } catch(err){
+    showToast('Erro: '+err.message, 'error')
+  } finally {
+    btn.disabled = false
+  }
+}
+
+// Ao abrir o painel admin, carrega estado atual de manutenção e modo teste
 async function loadMaintenanceState(){
   try {
-    const snap = await get(ref(db, 'config/maintenance'))
-    _isMaintenance = snap.exists() && snap.val() === true
+    const maintSnap = await get(ref(db, 'config/maintenance'))
+    _isMaintenance = maintSnap.exists() && maintSnap.val() === true
     updateMaintenanceBtn()
+
+    const testSnap = await get(ref(db, 'config/testMode'))
+    _isTestMode = testSnap.exists() && testSnap.val() === true
+    updateTestModeBtn()
   } catch(_){}
 }
 
@@ -1073,8 +1135,144 @@ async function loadMaintenanceState(){
 // Admin access: via login form only (secure)
 
 function checkAdminHash(){ return false }
-// Checa manutenção ao carregar
-setTimeout(checkMaintenance, 150)
+
+// Escuta manutenção e modo teste em TEMPO REAL via Firebase Realtime Database
+function initMaintenanceListener(){
+  try {
+    // Listener de manutenção - desconecta todos os usuários
+    onValue(ref(db, 'config/maintenance'), async (snapshot) => {
+      const isMaintenance = snapshot.val() === true
+      const wasMaintenance = _isMaintenance
+      _isMaintenance = isMaintenance
+      
+      const mp = document.getElementById('maintenance-page')
+      if(mp){
+        mp.style.display = isMaintenance ? 'flex' : 'none'
+      }
+      updateMaintenanceBtn()
+      console.log('[Realtime] Manutenção:', isMaintenance ? 'ATIVA' : 'Desativada')
+      
+      // Se manutenção foi ATIVADA, desconectar todos os usuários
+      if(isMaintenance && !wasMaintenance){
+        console.log('[Manutenção] Desconectando todos os usuários...')
+        try {
+          await signOut(auth)
+          localStorage.removeItem('cinecash_user')
+          localStorage.removeItem('cinecash_token')
+          showPage('page-login')
+          showToast('🔧 Site em manutenção. Volte mais tarde!', 'info')
+        } catch(e){ console.error('Erro ao desconectar:', e) }
+      }
+    }, (err) => console.error('Erro manutenção:', err))
+
+    // Listener de modo offline - bloqueia todos exceto admin e usuarioteste
+    onValue(ref(db, 'config/offlineMode'), (snapshot) => {
+      const isOffline = snapshot.val() === true
+      _isTestMode = isOffline
+      console.log('[Realtime] Modo Offline:', isOffline ? 'ATIVO' : 'Desativado')
+      if(isOffline){
+        updateOfflineBtn()
+        console.log('[Offline] Apenas admin e usuarioteste podem acessar')
+      } else {
+        updateOfflineBtn()
+      }
+    }, (err) => console.error('Erro offline:', err))
+
+  } catch(e){
+    console.error('Falha ao inicializar listeners:', e)
+  }
+}
+
+// Verifica se usuário pode acessar em modo offline
+async function canAccessInOfflineMode() {
+  try {
+    const currentUser = auth.currentUser
+    if(!currentUser) return false
+    
+    const email = currentUser.email || currentUser.providerData?.[0]?.email || ''
+    
+    // Admin sempre pode acessar
+    if(email === 'admin@cinecash.com.br' || email === 'admin16@meuhub.com.br'){
+      return true
+    }
+    
+    // Usuário especial "usuarioteste" pode acessar
+    const userSnap = await get(ref(db, 'users/' + currentUser.uid))
+    if(userSnap.exists()){
+      const userData = userSnap.val()
+      if(userData.name && userData.name.toLowerCase().includes('teste')){
+        return true
+      }
+      if(userData.email && userData.email.toLowerCase().includes('teste')){
+        return true
+      }
+    }
+    
+    return false
+  } catch(e){
+    return false
+  }
+}
+
+// Verifica se está em modo offline e bloqueia login
+async function checkOfflineModeBlock(email, password) {
+  try {
+    const snap = await get(ref(db, 'config/offlineMode'))
+    if(snap.val() === true){
+      // Se for admin ou email含有teste, permite
+      if(email && (email === 'admin@cinecash.com.br' || email === 'admin16@meuhub.com.br' || email.toLowerCase().includes('teste'))){
+        return { allowed: true }
+      }
+      return { allowed: false, message: '🔧 Estamos em manutenção. Tente novamente mais tarde.' }
+    }
+    return { allowed: true }
+  } catch(e){
+    return { allowed: true }
+  }
+}
+
+function updateOfflineBtn(){
+  const span = document.getElementById('offline-status')
+  const btn  = document.getElementById('offline-btn')
+  if(!span || !btn) return
+  if(_isTestMode){
+    span.textContent = 'ON'
+    btn.style.background = '#dc2626'
+    btn.style.borderColor = '#ef4444'
+    btn.style.color = '#fff'
+  } else {
+    span.textContent = 'OFF'
+    btn.style.background = '#1f2937'
+    btn.style.borderColor = '#374151'
+    btn.style.color = '#60a5fa'
+  }
+}
+
+async function toggleOfflineMode(){
+  const newState = !_isTestMode
+  const btn = document.getElementById('offline-btn')
+  if(btn) btn.disabled = true
+  try {
+    await set(ref(db, 'config/offlineMode'), newState)
+    _isTestMode = newState
+    updateOfflineBtn()
+    showToast(newState ? '🔒 Modo Offline ATIVADO - Apenas admin pode acessar' : '🔓 Modo Offline DESATIVADO - Site liberado!', newState ? 'warning' : 'success')
+    
+    // Se ativou offline, desconectar todos usuários comuns
+    if(newState){
+      try { await signOut(auth) } catch(e){}
+    }
+  } catch(err){
+    showToast('Erro: '+err.message, 'error')
+  } finally {
+    if(btn) btn.disabled = false
+  }
+}
+
+// Inicializa listener em tempo real e também verifica ao carregar
+// Temporariamente desativado para teste - descomente após teste
+// initMaintenanceListener()
+// setTimeout(checkMaintenance, 500)
 
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
 const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
@@ -1544,26 +1742,28 @@ function showAdAfterVideo(reward){
   const overlay = document.getElementById('ad-overlay')
   const mainContent = document.getElementById('watch-main-content')
   if(!overlay || !mainContent) {
-    // Fallback: just show toast and update dashboard
     showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
     loadUserDashboard()
     return
   }
 
-  // Show ad overlay
+  // Exibe overlay bloqueando toda a tela
   overlay.style.display = 'flex'
   mainContent.style.opacity = '0'
 
-  // Open Monetag popunder ad in background tab
-  try {
-    const adWin = window.open('about:blank', '_blank')
-    if(adWin){
-      adWin.document.write('<script src="https://al5sm.com/tag.min.js" data-zone="10828297"><\/script>')
-      adWin.document.close()
-    }
-  } catch(e){}
+  // ✅ Carrega script Monetag SOMENTE agora (após vídeo concluído)
+  // Remove instância anterior para evitar duplicatas
+  const oldAd = document.getElementById('_monetag_post_video')
+  if(oldAd) oldAd.remove()
+  const adScript = document.createElement('script')
+  adScript.id = '_monetag_post_video'
+  adScript.src = 'https://al5sm.com/tag.min.js'
+  adScript.setAttribute('data-zone', '10828297')
+  adScript.setAttribute('data-cfasync', 'false')
+  adScript.async = true
+  document.body.appendChild(adScript)
 
-  // Countdown
+  // Countdown 30 segundos
   let elapsed = 0
   document.getElementById('ad-countdown').textContent = AD_DURATION
   document.getElementById('ad-progress').style.width = '0%'
@@ -1582,6 +1782,8 @@ function showAdAfterVideo(reward){
       overlay.style.display = 'none'
       mainContent.style.opacity = '1'
       document.getElementById('modal-watch').classList.remove('open')
+      // Remove script após uso para não continuar disparando
+      document.getElementById('_monetag_post_video')?.remove()
       showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
       loadUserDashboard()
     }
@@ -2064,24 +2266,10 @@ async function initSupportWidget(){
 }
 
 
-// Load Monetag ads ONLY after login (not on login page)
+// Monetag: anúncios SOMENTE após cada vídeo (via showAdAfterVideo)
+// Multitag removido — disparava anúncios em qualquer clique da página
 function loadMonetag(){
-  if(document.getElementById('_monetag_loaded')) return
-  const marker = document.createElement('span')
-  marker.id = '_monetag_loaded'
-  document.body.appendChild(marker)
-  // Multitag
-  const s1 = document.createElement('script')
-  s1.src = 'https://quge5.com/88/tag.min.js'
-  s1.setAttribute('data-zone','226253')
-  s1.async = true
-  s1.setAttribute('data-cfasync','false')
-  document.body.appendChild(s1)
-  // Register SW for push notifications
-  if('serviceWorker' in navigator){
-    const swPath = location.pathname.includes('CineCash') ? '/CineCash-por-IA/sw.js' : '/sw.js'
-    navigator.serviceWorker.register(swPath).catch(()=>{})
-  }
+  // Service Worker de anúncios removido — não registrar mais
 }
 
 window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
