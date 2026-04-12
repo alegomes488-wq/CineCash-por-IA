@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Meu Hub</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Sora', sans-serif; 
+      background: #0d1117; 
+      color: #fff; 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .login-card { 
+      background: #161b27; 
+      border: 1px solid #1f2937; 
+      border-radius: 20px; 
+      padding: 40px; 
+      width: 100%; 
+      max-width: 420px; 
+      text-align: center; 
+    }
+    .logo { font-size: 40px; margin-bottom: 16px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 30px; }
+    input { 
+      width: 100%; 
+      padding: 14px 18px; 
+      background: #0d1117; 
+      border: 1px solid #1f2937; 
+      border-radius: 12px; 
+      color: #fff; 
+      font-size: 14px; 
+      margin-bottom: 16px; 
+    }
+    input:focus { outline: none; border-color: #7c3aed; }
+    .password-wrap { position: relative; margin-bottom: 16px; display: flex; align-items: center; }
+    .password-wrap input { 
+      padding-right: 40px; margin-bottom: 0; flex: 1; 
+    }
+    .eye-btn { 
+      position: absolute; right: 8px;
+      background: transparent; border: none; font-size: 14px; cursor: pointer; 
+      color: #6b7280; padding: 4px 8px; z-index: 100; width: auto; height: auto;
+    }
+    .eye-btn:hover { color: #fff; }
+    button { 
+      width: 100%; 
+      padding: 14px; 
+      background: #7c3aed; 
+      color: #fff; 
+      border: none; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      font-weight: 600; 
+      cursor: pointer; 
+    }
+    button:hover { background: #6d28d9; }
+    .msg { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 8px; }
+    .error { background: #7f1d1d; color: #f87171; }
+    .success { background: #052e16; color: #34d399; }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo">🎛️</div>
+    <h1>Meu Hub</h1>
+    <p class="subtitle">Painel Central - Login</p>
+    
+    <input type="text" id="email" placeholder="Seu email">
+    <div class="password-wrap">
+      <input type="password" id="password" placeholder="Senha">
+      <button type="button" class="eye-btn" onclick="togglePwd()">👁️</button>
+    </div>
+    <button onclick="login()">Entrar</button>
+    
+    <div id="msg" class="msg" style="display:none"></div>
+  </div>
+
+  <script>
+    // Firebase Config
+    var config = {
+      apiKey: "AIzaSyAPkVreL1fqepaiRqeNjtOpCetQ8nHtKEs",
+      authDomain: "meu-hub-ba6b0.firebaseapp.com",
+      databaseURL: "https://meu-hub-ba6b0-default-rtdb.firebaseio.com",
+      projectId: "meu-hub-ba6b0",
+      storageBucket: "meu-hub-ba6b0.firebasestorage.app",
+      messagingSenderId: "777921161600",
+      appId: "1:777921161600:web:871e3a7e0af6599dc07965"
+    };
+
+    // Initialize Firebase
+    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+      firebase.initializeApp(config);
+      console.log('Firebase initialized');
+    }
+
+    function togglePwd() {
+      var p = document.getElementById('password');
+      var b = document.querySelector('.eye-btn');
+      p.type = p.type === 'password' ? 'text' : 'password';
+      b.textContent = p.type === 'text' ? '🙈' : '👁️';
+    }
+
+    function showMsg(text, type) {
+      var m = document.getElementById('msg');
+      m.textContent = text;
+      m.className = 'msg ' + type;
+      m.style.display = 'block';
+    }
+
+    function login() {
+      var email = document.getElementById('email').value.trim();
+      var password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showMsg('Preencha email e senha!', 'error');
+        return;
+      }
+
+      showMsg('Tentando login...', 'success');
+
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(function(user) {
+          console.log('Login OK:', user.user.uid);
+          showMsg('✅ Login successful! UID: ' + user.user.uid, 'success');
+          
+          // Save to localStorage
+          localStorage.setItem('hub_user', JSON.stringify({ 
+            email: user.user.email, 
+            uid: user.user.uid 
+          }));
+          
+          // Redirect to hub
+          setTimeout(function() {
+            window.location.href = 'hub.html';
+          }, 1500);
+        })
+        .catch(function(err) {
+          console.log('Login error:', err);
+          var msg = 'Erro';
+          if (err.code === 'auth/invalid-credential') msg = 'Email ou senha incorretos';
+          else if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado';
+          else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta';
+          else msg = err.message;
+          showMsg(msg, 'error');
+        });
+    }
+  </script>
+</body>
+</html>

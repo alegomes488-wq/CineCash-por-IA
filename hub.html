@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu Hub - Painel Central</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <title>Meu Hub - Painel Central v4</title>
+  <!-- Preload Firebase -->
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" onload="console.log('Firebase App loaded')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" onload="console.log('Firebase Auth loaded')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js" onload="console.log('Firebase DB loaded')"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Sora', sans-serif; background: #0d1117; color: #fff; min-height: 100vh; }
     
-    .hub-container { display: flex; min-height: 100vh; }
-    
-    /* Sidebar */
-    .hub-sidebar { width: 260px; background: #161b27; border-right: 1px solid #1f2937; padding: 20px; display: flex; flex-direction: column; }
+    .hub-container { display: flex; min-height: 100vh; overflow: hidden; }
+    .hub-sidebar { width: 280px; background: #161b27; border-right: 1px solid #1f2937; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
+    .hub-main { flex: 1; padding: 30px; overflow-y: auto; min-width: 0; }
     .hub-logo { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
     .hub-logo span { color: #7c3aed; }
     .hub-subtitle { font-size: 12px; color: #6b7280; margin-bottom: 30px; }
@@ -76,7 +77,7 @@
     .hub-btn-small.green { background: #16a34a; color: #fff; }
     
     /* Config Panel */
-    .config-panel { display: none; }
+    .config-panel { display: none; overflow-y: auto; max-height: calc(100vh - 140px); }
     .config-panel.active { display: block; }
     .config-section { background: #161b27; border: 1px solid #1f2937; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
     .config-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -95,6 +96,12 @@
     .login-subtitle { font-size: 14px; color: #6b7280; margin-bottom: 30px; }
     .login-input { width: 100%; padding: 14px 18px; background: #0d1117; border: 1px solid #1f2937; border-radius: 12px; color: #fff; font-size: 14px; margin-bottom: 16px; font-family: 'Sora', sans-serif; }
     .login-input:focus { outline: none; border-color: #7c3aed; }
+    .login-password-wrap { position: relative; margin-bottom: 16px; }
+    .login-password-wrap .login-input { margin-bottom: 0; padding-right: 45px; text-align: left; }
+    .login-eye-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-size: 20px; cursor: pointer; color: #6b7280; padding: 8px; z-index: 100; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .login-eye-btn:hover { color: #9ca3af; background: rgba(255,255,255,0.05); border-radius: 8px; }
+    .login-remember { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .login-remember input { width: 16px; height: 16px; }
     .login-btn { width: 100%; padding: 14px; background: #7c3aed; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
     .login-btn:hover { background: #6d28d9; }
     
@@ -111,6 +118,15 @@
       .hub-sidebar { position: fixed; left: -260px; z-index: 1000; transition: .3s; }
       .hub-sidebar.open { left: 0; }
     }
+
+    @media (min-width: 901px) {
+      .hub-sidebar { width: 280px !important; flex-shrink: 0; }
+      .hub-main { flex: 1; min-width: 0; }
+    }
+
+    .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 20px; flex-wrap: wrap; }
+    .hub-header h1 { flex: 1; min-width: 200px; }
+    .hub-header button { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -121,11 +137,18 @@
     <div class="login-logo">🎛️</div>
     <h1 class="login-title">Meu Hub</h1>
     <p class="login-subtitle">Painel Central de Gerenciamento</p>
-    <input id="hub-email" class="login-input" type="email" placeholder="Seu email">
-    <input id="hub-password" class="login-input" type="password" placeholder="Senha">
-    <button class="login-btn" onclick="hubLogin()">Entrar</button>
+    <input id="hub-email" class="login-input" type="text" placeholder="Seu email ou usuário">
+    <div class="login-password-wrap">
+      <input id="hub-password" class="login-input" type="password" placeholder="Senha">
+      <button type="button" id="toggle-pwd-btn" class="login-eye-btn" onclick="var p=document.getElementById('hub-password');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='text'?'🙈':'👁️'">👁️</button>
+    </div>
+    <div class="login-remember">
+      <input type="checkbox" id="hub-remember" checked>
+      <label for="hub-remember" style="color:#9ca3af;font-size:13px">Lembrar login</label>
+    </div>
+    <button id="login-btn" class="login-btn" onclick="hubLogin()">Entrar</button>
     <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
-      Use o mesmo login do CineCash Admin
+      Painel Central de Gerenciamento
     </p>
   </div>
 </div>
@@ -138,12 +161,22 @@
     <div class="hub-logo">🎛️ <span>MeuHub</span></div>
     <p class="hub-subtitle">Painel Central</p>
     
+    <div style="margin-bottom:16px;padding:12px;background:#0d1117;border-radius:10px;border:1px solid #1f2937">
+      <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px">Projeto</label>
+      <select id="project-selector" onchange="changeProject(this.value)" style="width:100%;padding:8px;background:#161b27;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;font-family:'Sora',sans-serif">
+        <option value="cinecash">CineCash IA</option>
+      </select>
+    </div>
+    
     <nav class="hub-nav">
       <button class="hub-nav-btn active" onclick="showHubSection('overview', this)">📊 Visão Geral</button>
       <button class="hub-nav-btn" onclick="showHubSection('users', this)">👥 Usuários</button>
       <button class="hub-nav-btn" onclick="showHubSection('videos', this)">📹 Vídeos</button>
-      <button class="hub-nav-btn" onclick="showHubSection('saques', this)">💸 Saques</button>
+      <button class="hub-nav-btn" onclick="showHubSection('crescimento', this)">📈 Crescimento</button>
+      <button class="hub-nav-btn" onclick="showHubSection('seguranca', this)">🛡 Segurança</button>
       <button class="hub-nav-btn" onclick="showHubSection('lucros', this)">💰 Lucros</button>
+      <button class="hub-nav-btn" onclick="showHubSection('saques', this)">💸 Saques</button>
+      <button class="hub-nav-btn" onclick="showHubSection('bancario', this)">🏦 Dados Bancários</button>
       <button class="hub-nav-btn" onclick="showHubSection('projects', this)">📦 Projetos</button>
       <button class="hub-nav-btn" onclick="showHubSection('history', this)">📜 Histórico</button>
       <button class="hub-nav-btn" onclick="showHubSection('config', this)">⚙️ Configurações</button>
@@ -298,8 +331,129 @@
       </div>
     </div>
     
+    <!-- Crescimento Section -->
+    <div id="section-crescimento" class="config-panel">
+      <div class="hub-header">
+        <h1 class="hub-title">📈 Crescimento - CineCash IA</h1>
+        <button onclick="hubLoadCrescimento()" style="padding:10px 20px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer">🔄 Atualizar</button>
+      </div>
+      
+      <div class="hub-stats">
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Total de Usuários</div>
+          <div class="hub-stat-value" id="cresc-total">0</div>
+        </div>
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Novos Este Mês</div>
+          <div class="hub-stat-value green" id="cresc-month">0</div>
+        </div>
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Taxa de Crescimento</div>
+          <div class="hub-stat-value purple" id="cresc-rate">0%</div>
+        </div>
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Vídeos Este Mês</div>
+          <div class="hub-stat-value" id="cresc-videos">0</div>
+        </div>
+      </div>
+      
+      <div class="config-section" style="margin-top:20px">
+        <h3 class="config-title">📊 Estatísticas de Crescimento</h3>
+        <div id="crescimento-stats" style="color:#9ca3af;font-size:14px">
+          <p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Segurança Section -->
+    <div id="section-seguranca" class="config-panel">
+      <div class="hub-header">
+        <h1 class="hub-title">🛡 Segurança - CineCash IA</h1>
+        <button onclick="hubLoadSeguranca()" style="padding:10px 20px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer">🔄 Atualizar</button>
+      </div>
+      
+      <div class="hub-stats">
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Status do Sistema</div>
+          <div class="hub-stat-value green" id="seg-status">Seguro</div>
+        </div>
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Alertas de Fraude</div>
+          <div class="hub-stat-value" id="seg-alertas" style="color:#f87171">0</div>
+        </div>
+        <div class="hub-stat-card">
+          <div class="hub-stat-label">Logs Hoje</div>
+          <div class="hub-stat-value" id="seg-logs">0</div>
+        </div>
+      </div>
+      
+      <div class="config-section" style="margin-top:20px">
+        <h3 class="config-title">🔍 Monitoramento de Segurança</h3>
+        <div id="seguranca-monitor" style="color:#9ca3af;font-size:14px">
+          <p>Carregando...</p>
+        </div>
+      </div>
+      
+      <div class="config-section" style="margin-top:20px">
+        <h3 class="config-title">📋 Logs de Atividade</h3>
+        <div id="seguranca-logs" style="max-height:300px;overflow-y:auto;color:#9ca3af;font-size:13px">
+          <p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Dados Bancários Section -->
+    <div id="section-bancario" class="config-panel">
+      <div class="hub-header">
+        <h1 class="hub-title">🏦 Dados Bancários - CineCash IA</h1>
+        <button onclick="hubLoadBancario()" style="padding:10px 20px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer">🔄 Atualizar</button>
+      </div>
+      
+      <div class="config-section">
+        <h3 class="config-title">💳 Configurações de Pagamento</h3>
+        <div class="config-field">
+          <label class="config-label">Chave PIX Principal</label>
+          <input id="admin-pix-key" class="config-input" type="text" placeholder="CPF, email, telefone ou chave aleatória">
+        </div>
+        <div class="config-field">
+          <label class="config-label">Tipo de Chave PIX</label>
+          <select id="admin-pix-type" class="config-input">
+            <option value="cpf">CPF</option>
+            <option value="email">Email</option>
+            <option value="telefone">Telefone</option>
+            <option value="aleatoria">Chave Aleatória</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label class="config-label">Nome do Titular</label>
+          <input id="admin-bank-name" class="config-input" type="text" placeholder="Nome completo">
+        </div>
+        <div class="config-field">
+          <label class="config-label">Banco</label>
+          <select id="admin-bank" class="config-input">
+            <option value="">Selecione o banco</option>
+            <option value="001">Banco do Brasil</option>
+            <option value="104">Caixa Econômica</option>
+            <option value="341">Itaú</option>
+            <option value="033">Santander</option>
+            <option value="237">Bradesco</option>
+            <option value="001">Nubank</option>
+            <option value="other">Outro</option>
+          </select>
+        </div>
+        <button onclick="hubSaveBancario()" style="margin-top:12px;padding:12px 24px;background:#16a34a;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer">💾 Salvar Dados Bancários</button>
+      </div>
+      
+      <div class="config-section" style="margin-top:20px">
+        <h3 class="config-title">💰 Saldo e Extrato</h3>
+        <div id="bancario-saldo" style="color:#9ca3af;font-size:14px">
+          <p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+    
     <!-- Projects Section -->
-    <div id="section-projects" class="config-panel active">
+    <div id="section-projects" class="config-panel">
       <div class="hub-header">
         <h1 class="hub-title">📦 Meus Projetos</h1>
         <button class="hub-btn hub-btn-deploy" onclick="addNewProject()">➕ Adicionar Projeto</button>
@@ -391,47 +545,218 @@
 <div id="toast" class="toast"></div>
 
 <script>
-// Firebase Config - usando o projeto meuhub (meu-hub-ba6b0)
-const firebaseConfig = {
+// ============ FIREBASE INITIALIZATION (SIMPLE - SAME AS LOGIN.HTML) ============
+console.log('Script starting...');
+
+var firebaseConfig = {
   apiKey: "AIzaSyAPkVreL1fqepaiRqeNjtOpCetQ8nHtKEs",
   authDomain: "meu-hub-ba6b0.firebaseapp.com",
   databaseURL: "https://meu-hub-ba6b0-default-rtdb.firebaseio.com",
   projectId: "meu-hub-ba6b0",
   storageBucket: "meu-hub-ba6b0.firebasestorage.app",
   messagingSenderId: "777921161600",
-  appId: "1:777921161600:web:871e3a7e0af6599dc07965",
-  measurementId: "G-1JM5HQS2GS"
+  appId: "1:777921161600:web:871e3a7e0af6599dc07965"
 };
 
-// Firebase Config do CineCash (playearn-b001b)
-const cinecashConfig = {
-  apiKey: "AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
-  authDomain: "playearn-b001b.firebaseapp.com",
-  databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
-  projectId: "playearn-b001b",
-  storageBucket: "playearn-b001b.appspot.com",
-  messagingSenderId: "563829659490",
-  appId: "1:563829659490:web:abc123def456"
-};
-
-// Inicializar apps
-firebase.initializeApp(firebaseConfig); // App padrão (Hub)
-const db = firebase.database();
-const auth = firebase.auth();
-
-// Inicializar app do CineCash
-let cinecashApp;
-try {
-  cinecashApp = firebase.initializeApp(cinecashConfig, 'cinecash');
-} catch(e) {
-  console.log('App CineCash já existe ou erro:', e.message);
-  cinecashApp = firebase.app('cinecash');
+// Initialize Firebase - SIMPLES como login.html
+if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase initialized');
 }
-const cinecashDb = cinecashApp.database();
 
-// Hub State
-let hubUser = null;
-let projects = {};
+var db = firebase.database();
+var auth = firebase.auth();
+var cinecashDb = null;
+
+// Tentar inicializar CineCash separadamente (se necessário)
+// Mas não vai bloquear o login se falhar
+try {
+  var cinecashConfig = {
+    apiKey: "AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
+    authDomain: "playearn-b001b.firebaseapp.com",
+    databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
+    projectId: "playearn-b001b"
+  };
+  if (!firebase.apps.find(a => a.name === 'cinecash')) {
+    firebase.initializeApp(cinecashConfig, 'cinecash');
+  }
+  cinecashDb = firebase.app('cinecash').database();
+} catch(e) {
+  console.log('CineCash not available:', e.message);
+}
+
+console.log('Firebase ready');
+
+// ============ HUB STATE ============
+var hubUser = null;
+var projects = {};
+
+function showToast(msg, type) {
+  var toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.className = 'toast show ' + type;
+  setTimeout(function() { toast.className = 'toast'; }, 3000);
+}
+
+function checkAuth() {
+  try {
+    var saved = localStorage.getItem('hub_user');
+    if (saved) {
+      hubUser = JSON.parse(saved);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('hub-dashboard').style.display = 'flex';
+      try { loadProjects(); } catch(e) {}
+      try { loadHistory(); } catch(e) {}
+      try { hubLoadOverview(); } catch(e) {}
+    }
+  } catch(e) {
+    console.log('Auth check error:', e);
+  }
+}
+
+function loadCreds() {
+  try {
+    var saved = localStorage.getItem('hub_credentials');
+    if (saved) {
+      var c = JSON.parse(saved);
+      document.getElementById('hub-email').value = c.email || '';
+      document.getElementById('hub-password').value = c.password || '';
+    }
+  } catch(e) {}
+}
+
+window.onload = function() {
+  checkAuth();
+  loadCreds();
+};
+
+// ============ LOGIN FUNCTION - SAME STRUCTURE AS LOGIN.HTML ============
+function hubLogin() {
+  var email = document.getElementById('hub-email').value.trim();
+  var password = document.getElementById('hub-password').value;
+  
+  if (!email || !password) {
+    showToast('Preencha email e senha!', 'error');
+    return;
+  }
+
+  showToast('Tentando login...', 'success');
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(function(user) {
+      console.log('Login OK:', user.user.uid);
+      showToast('Login realizado!', 'success');
+      
+      try {
+        localStorage.setItem('hub_user', JSON.stringify({ 
+          email: user.user.email, 
+          uid: user.user.uid 
+        }));
+        if (document.getElementById('hub-remember').checked) {
+          localStorage.setItem('hub_credentials', JSON.stringify({ 
+            email: email, 
+            password: password 
+          }));
+        }
+      } catch(e) {}
+
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('hub-dashboard').style.display = 'flex';
+      
+      try { loadProjects(); } catch(e) {}
+      try { loadHistory(); } catch(e) {}
+      try { hubLoadOverview(); } catch(e) {}
+    })
+    .catch(function(err) {
+      console.log('Login error:', err);
+      var msg = 'Erro ao fazer login';
+      if (err.code === 'auth/invalid-credential') msg = 'Email ou senha incorretos';
+      else if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado';
+      else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta';
+      showToast(msg, 'error');
+    });
+}
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('hub-dashboard').style.display = 'flex';
+      loadProjects();
+      loadHistory();
+      hubLoadOverview();
+    }
+  } catch(e) {
+    console.log('Auth check error:', e);
+  }
+}
+
+// Load saved credentials
+function loadCreds() {
+  try {
+    var saved = localStorage.getItem('hub_credentials');
+    if (saved) {
+      var c = JSON.parse(saved);
+      document.getElementById('hub-email').value = c.email || '';
+      document.getElementById('hub-password').value = c.password || '';
+    }
+  } catch(e) {}
+}
+
+// Run on load
+window.onload = function() {
+  checkAuth();
+  loadCreds();
+};
+
+console.log('Hub initialization complete');
+
+// ============ LOGIN FUNCTION ============
+function doLogin() {
+  var email = document.getElementById('hub-email').value.trim();
+  var password = document.getElementById('hub-password').value;
+  
+  if (!email || !password) {
+    alert('Preencha email e senha!');
+    return;
+  }
+  
+  console.log('Login attempt with:', email);
+  
+  // Get auth from default app
+  var a;
+  try {
+    a = firebase.app().auth();
+  } catch(e) {
+    alert('Firebase não inicializado: ' + e.message);
+    return;
+  }
+  
+  // Try login
+  a.signInWithEmailAndPassword(email, password).then(function(c) {
+    console.log('Login success!', c.user.uid);
+    try {
+      localStorage.setItem('hub_user', JSON.stringify({ email: c.user.email, uid: c.user.uid }));
+      if (document.getElementById('hub-remember').checked) {
+        localStorage.setItem('hub_credentials', JSON.stringify({ email: email, password: password }));
+      }
+    } catch(e) {}
+    
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('hub-dashboard').style.display = 'flex';
+    
+    try { loadProjects(); } catch(e) {}
+    try { loadHistory(); } catch(e) {}
+    try { hubLoadOverview(); } catch(e) {}
+    
+    alert('Login realizado com sucesso!');
+  }).catch(function(err) {
+    console.log('Login error:', err);
+    var msg = 'Erro ao fazer login';
+    if (err.code === 'auth/invalid-credential') msg = 'Email ou senha incorretos';
+    else if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado';
+    else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta';
+    else if (err.message) msg = err.message;
+    alert(msg);
+  });
+}
 
 // Project Configuration - CineCash como primeiro projeto
 const defaultProjects = {
@@ -448,24 +773,57 @@ const defaultProjects = {
   }
 };
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  checkHubAuth();
-});
-
-function checkHubAuth() {
-  const savedUser = localStorage.getItem('hub_user');
-  if (savedUser) {
-    hubUser = JSON.parse(savedUser);
-    showHubDashboard();
+// Simple toggle password function
+function toggleEye() {
+  var pwdInput = document.getElementById('hub-password');
+  var eyeBtn = document.getElementById('toggle-pwd-btn');
+  if (pwdInput.type === 'password') {
+    pwdInput.type = 'text';
+    eyeBtn.textContent = '🙈';
   } else {
+    pwdInput.type = 'password';
+    eyeBtn.textContent = '👁️';
+  }
+}
+
+// Check auth on load
+function checkHubAuth() {
+  try {
+    var savedUser = localStorage.getItem('hub_user');
+    if (savedUser) {
+      hubUser = JSON.parse(savedUser);
+      showHubDashboard();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  } catch(e) {
     document.getElementById('login-screen').style.display = 'flex';
   }
 }
 
+// Load saved credentials
+function loadSavedCredentials() {
+  try {
+    var saved = localStorage.getItem('hub_credentials');
+    if (saved) {
+      var creds = JSON.parse(saved);
+      document.getElementById('hub-email').value = creds.email || '';
+      document.getElementById('hub-password').value = creds.password || '';
+      document.getElementById('hub-remember').checked = true;
+    }
+  } catch(e) {}
+}
+
+// Run on page load
+window.onload = function() {
+  checkHubAuth();
+  loadSavedCredentials();
+};
+
+// ========== HUB LOGIN ==========
 async function hubLogin() {
-  const email = document.getElementById('hub-email').value.trim();
-  const password = document.getElementById('hub-password').value;
+  var email = document.getElementById('hub-email').value.trim();
+  var password = document.getElementById('hub-password').value;
   
   if (!email || !password) {
     showToast('Preencha email e senha!', 'error');
@@ -475,8 +833,14 @@ async function hubLogin() {
   try {
     console.log('Tentando login com:', email);
     
+    // Verificar se Firebase está disponível
+    if (typeof firebase === 'undefined') {
+      showToast('Firebase não carregou. Recarregue a página.', 'error');
+      return;
+    }
+    
     // Login direto com o email informado
-    let cred;
+    var cred;
     try {
       cred = await auth.signInWithEmailAndPassword(email, password);
       console.log('Login OK, UID:', cred.user.uid);
@@ -490,30 +854,39 @@ async function hubLogin() {
       }
     }
     
-    // Login bem sucedido - mostrar dashboard imediatamente
+    // Login bem sucedido
     hubUser = { email: cred.user.email, uid: cred.user.uid };
-    localStorage.setItem('hub_user', JSON.stringify(hubUser));
+    try { localStorage.setItem('hub_user', JSON.stringify(hubUser)); } catch(e) {}
     
-    // Ocultar tela de login
-    document.getElementById('login-screen').style.display = 'none';
+    // Salvar credenciais
+    if (document.getElementById('hub-remember').checked) {
+      try { localStorage.setItem('hub_credentials', JSON.stringify({ email: email, password: password })); } catch(e) {}
+    }
     
     // Mostrar dashboard
-    const dashboard = document.getElementById('hub-dashboard');
-    if (dashboard) {
-      dashboard.style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('hub-dashboard').style.display = 'flex';
+    
+    showToast('Login realizado!', 'success');
+    
+    // Carregar dados
+    try { loadProjects(); } catch(e) {}
+    try { loadHistory(); } catch(e) {}
+    try { hubLoadOverview(); } catch(e) {}
+    
+  } catch(err) {
+    console.error('Login error:', err);
+    var errorMsg = 'Erro ao fazer login';
+    if (err.code === 'auth/invalid-credential') {
+      errorMsg = 'Email ou senha incorretos';
+    } else if (err.code === 'auth/user-not-found') {
+      errorMsg = 'Usuário não encontrado';
+    } else if (err.code === 'auth/wrong-password') {
+      errorMsg = 'Senha incorreta';
     }
-    
-    showToast('✅ Login realizado com sucesso!', 'success');
-    
-    // Tentargar projetos em background (não bloqueia)
-    try {
-      await loadProjects();
-    } catch(e) {
-      console.log('Projetos não carregados:', e.message);
-    }
-    
-    // Tentargar histórico em background
-    try {
+    showToast(errorMsg, 'error');
+  }
+}
       await loadHistory();
     } catch(e) {
       console.log('Histórico não carregado:', e.message);
@@ -541,7 +914,8 @@ async function hubLogin() {
 
 function hubLogout() {
   auth.signOut().then(() => {
-    localStorage.removeItem('hub_user');
+    try { localStorage.removeItem('hub_user'); } catch(e) {}
+    try { localStorage.removeItem('hub_credentials'); } catch(e) {}
     hubUser = null;
     document.getElementById('hub-dashboard').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -567,6 +941,7 @@ function showHubDashboard() {
     
     loadProjects();
     loadHistory();
+    hubLoadOverview();
     console.log('Dashboard mostrado com sucesso!');
   } catch(err) {
     console.error('Erro ao mostrar dashboard:', err);
@@ -899,7 +1274,463 @@ window.accessSite = accessSite;
 window.saveNewProject = saveNewProject;
 window.saveAdminConfig = saveAdminConfig;
 window.addNewProject = addNewProject;
-</script>
+
+// ============ CINE CASH DATA FUNCTIONS ============
+
+async function hubLoadOverview() {
+  try {
+    document.getElementById('cinecash-total-users').textContent = '...';
+    document.getElementById('cinecash-active-users').textContent = '...';
+    document.getElementById('cinecash-total-videos').textContent = '...';
+    document.getElementById('cinecash-total-withdrawals').textContent = '...';
+    document.getElementById('cinecash-total-balance').textContent = '...';
+    document.getElementById('cinecash-admin-balance').textContent = '...';
+
+    const [usersSnap, videosSnap, withdrawSnap, configSnap] = await Promise.all([
+      cinecashDb.ref('users').once('value'),
+      cinecashDb.ref('videos').once('value'),
+      cinecashDb.ref('withdrawals').once('value'),
+      cinecashDb.ref('config').once('value')
+    ]);
+
+    const users = usersSnap.exists() ? usersSnap.val() : {};
+    const videos = videosSnap.exists() ? videosSnap.val() : {};
+    const withdrawals = withdrawSnap.exists() ? withdrawSnap.val() : {};
+    const config = configSnap.exists() ? configSnap.val() : {};
+
+    const usersCount = Object.keys(users).length;
+    const activeUsers = Object.values(users).filter(u => u.lastActive && Date.now() - u.lastActive < 7 * 24 * 60 * 60 * 1000).length;
+    const videosCount = Object.keys(videos).length;
+    const withdrawalsCount = Object.keys(withdrawals).length;
+
+    let totalBalance = 0;
+    let adminBalance = config.adminBalance || 0;
+    Object.values(users).forEach(u => {
+      totalBalance += u.balance || 0;
+    });
+
+    document.getElementById('cinecash-total-users').textContent = usersCount;
+    document.getElementById('cinecash-active-users').textContent = activeUsers;
+    document.getElementById('cinecash-total-videos').textContent = videosCount;
+    document.getElementById('cinecash-total-withdrawals').textContent = withdrawalsCount;
+    document.getElementById('cinecash-total-balance').textContent = 'R$ ' + totalBalance.toFixed(2).replace('.', ',');
+    document.getElementById('cinecash-admin-balance').textContent = 'R$ ' + adminBalance.toFixed(2).replace('.', ',');
+
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const newUsers = Object.values(users).filter(u => u.createdAt && u.createdAt > sevenDaysAgo).length;
+    document.getElementById('overview-info').innerHTML = `
+      <p><strong>Usuários Online:</strong> ${activeUsers} de ${usersCount}</p>
+      <p><strong>Vídeos Cadastrados:</strong> ${videosCount}</p>
+      <p><strong>Manutenção:</strong> ${config.maintenance ? '🔴 Ativa' : '🟢 Desativada'}</p>
+      <p><strong>Modo Teste:</strong> ${config.testMode ? '🔴 Ativo' : '🟢 Desativado'}</p>
+    `;
+    document.getElementById('overview-new-users').innerHTML = `
+      <p>${newUsers} novos usuários nos últimos 7 dias</p>
+      <p style="font-size:12px;color:#6b7280">Média: ${Math.round(newUsers/7)} por dia</p>
+    `;
+
+    showToast('✅ Visão geral atualizada!', 'success');
+  } catch(err) {
+    console.error('Erro overview:', err);
+    showToast('Erro ao carregar: ' + err.message, 'error');
+  }
+}
+
+let allUsers = {};
+
+async function hubLoadUsers() {
+  try {
+    const snap = await cinecashDb.ref('users').once('value');
+    allUsers = snap.exists() ? snap.val() : {};
+    hubRenderUsers(allUsers);
+    showToast('✅ Usuários carregados!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+function hubSearchUsers() {
+  const term = document.getElementById('hub-user-search').value.toLowerCase();
+  const filtered = {};
+  Object.entries(allUsers).forEach(([id, user]) => {
+    const name = (user.name || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    if (name.includes(term) || email.includes(term)) {
+      filtered[id] = user;
+    }
+  });
+  hubRenderUsers(filtered);
+}
+
+function hubRenderUsers(users) {
+  const list = document.getElementById('users-list');
+  const arr = Object.entries(users);
+  if (arr.length === 0) {
+    list.innerHTML = '<p style="color:#6b7280;text-align:center;padding:40px">Nenhum usuário encontrado</p>';
+    return;
+  }
+  list.innerHTML = arr.map(([id, u]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#0d1117;border-radius:12px;margin-bottom:12px">
+      <div>
+        <div style="font-weight:600;color:#fff">${u.name || 'Sem nome'}</div>
+        <div style="font-size:12px;color:#6b7280">${u.email || 'Sem email'}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:#34d399;font-weight:600">R$ ${(u.balance || 0).toFixed(2).replace('.', ',')}</div>
+        <div style="font-size:11px;color:#6b7280">${u.videosWatched || 0} vídeos</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function hubLoadVideos() {
+  try {
+    const snap = await cinecashDb.ref('videos').once('value');
+    const videos = snap.exists() ? snap.val() : {};
+    hubRenderVideos(videos);
+    showToast('✅ Vídeos carregados!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+function hubRenderVideos(videos) {
+  const list = document.getElementById('videos-list');
+  const arr = Object.entries(videos);
+  if (arr.length === 0) {
+    list.innerHTML = '<p style="color:#6b7280;text-align:center;padding:40px">Nenhum vídeo cadastrado</p>';
+    return;
+  }
+  list.innerHTML = arr.map(([id, v]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#0d1117;border-radius:12px;margin-bottom:12px">
+      <div style="flex:1">
+        <div style="font-weight:600;color:#fff">${v.title || 'Sem título'}</div>
+        <div style="font-size:12px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px">${v.url || ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="color:#34d399;font-weight:600">R$ ${(v.reward || 0).toFixed(2).replace('.', ',')}</span>
+        <button onclick="hubDeleteVideo('${id}')" style="padding:6px 12px;background:#dc2626;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function hubAddVideo() {
+  const title = document.getElementById('hub-vid-title').value.trim();
+  const url = document.getElementById('hub-vid-url').value.trim();
+  const reward = parseFloat(document.getElementById('hub-vid-reward').value);
+
+  if (!title || !url || isNaN(reward)) {
+    showToast('Preencha todos os campos!', 'error');
+    return;
+  }
+
+  try {
+    const newVid = cinecashDb.ref('videos').push();
+    await newVid.set({ title, url, reward, createdAt: Date.now() });
+    showToast('✅ Vídeo adicionado!', 'success');
+    document.getElementById('hub-vid-title').value = '';
+    document.getElementById('hub-vid-url').value = '';
+    document.getElementById('hub-vid-reward').value = '';
+    hubLoadVideos();
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubDeleteVideo(id) {
+  if (!confirm('Excluir este vídeo?')) return;
+  try {
+    await cinecashDb.ref('videos/' + id).remove();
+    showToast('✅ Vídeo excluído!', 'success');
+    hubLoadVideos();
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubLoadWithdrawals() {
+  try {
+    const snap = await cinecashDb.ref('withdrawals').once('value');
+    const withdrawals = snap.exists() ? snap.val() : {};
+    hubRenderWithdrawals(withdrawals);
+    showToast('✅ Saques carregados!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+function hubRenderWithdrawals(withdrawals) {
+  const list = document.getElementById('withdrawals-list');
+  const arr = Object.entries(withdrawals);
+  if (arr.length === 0) {
+    list.innerHTML = '<p style="color:#6b7280;text-align:center;padding:40px">Nenhum saque solicitado</p>';
+    return;
+  }
+  list.innerHTML = arr.map(([id, w]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#0d1117;border-radius:12px;margin-bottom:12px">
+      <div>
+        <div style="font-weight:600;color:#fff">${w.userName || 'Usuário'}</div>
+        <div style="font-size:12px;color:#6b7280">${w.pixKey || 'Sem chave PIX'}</div>
+        <div style="font-size:11px;color:#6b7280">${new Date(w.timestamp).toLocaleString('pt-BR')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="color:#fbbf24;font-weight:600;font-size:18px">R$ ${(w.amount || 0).toFixed(2).replace('.', ',')}</span>
+        ${w.status === 'pending' ? `
+          <button onclick="hubApproveWithdrawal('${id}')" style="padding:8px 16px;background:#16a34a;border:none;border-radius:6px;color:#fff;cursor:pointer">✅ Aprovar</button>
+          <button onclick="hubDenyWithdrawal('${id}')" style="padding:8px 16px;background:#dc2626;border:none;border-radius:6px;color:#fff;cursor:pointer">❌ Negar</button>
+        ` : `<span style="padding:6px 12px;background:${w.status === 'approved' ? '#052e16' : '#7f1d1d'};color:${w.status === 'approved' ? '#34d399' : '#f87171'};border-radius:6px;font-size:12px">${w.status}</span>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function hubApproveWithdrawal(id) {
+  try {
+    await cinecashDb.ref('withdrawals/' + id).update({ status: 'approved', approvedAt: Date.now() });
+    showToast('✅ Saque aprovado!', 'success');
+    hubLoadWithdrawals();
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubDenyWithdrawal(id) {
+  const reason = prompt('Motivo da negação:');
+  if (!reason) return;
+  try {
+    await cinecashDb.ref('withdrawals/' + id).update({ status: 'denied', deniedAt: Date.now(), denialReason: reason });
+    showToast('❌ Saque negado', 'success');
+    hubLoadWithdrawals();
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubLoadLucros() {
+  try {
+    const [configSnap, usersSnap] = await Promise.all([
+      cinecashDb.ref('config').once('value'),
+      cinecashDb.ref('users').once('value')
+    ]);
+
+    const config = configSnap.exists() ? configSnap.val() : {};
+    const users = usersSnap.exists() ? usersSnap.val() : {};
+
+    const adminBalance = config.adminBalance || 0;
+    let totalVideos = 0;
+    let totalEarned = 0;
+    Object.values(users).forEach(u => {
+      totalVideos += u.videosWatched || 0;
+      totalEarned += u.totalEarned || 0;
+    });
+
+    document.getElementById('lucro-admin-balance').textContent = 'R$ ' + adminBalance.toFixed(2).replace('.', ',');
+    document.getElementById('lucro-total-videos').textContent = totalVideos;
+    document.getElementById('lucro-total-earned').textContent = 'R$ ' + totalEarned.toFixed(2).replace('.', ',');
+
+    const totalUsers = Object.keys(users).length;
+    document.getElementById('lucros-summary').innerHTML = `
+      <p><strong>Total de Usuários:</strong> ${totalUsers}</p>
+      <p><strong>Total Ganho por Usuários:</strong> R$ ${totalEarned.toFixed(2).replace('.', ',')}</p>
+      <p><strong>Receita do Admin:</strong> R$ ${adminBalance.toFixed(2).replace('.', ',')}</p>
+      <p><strong>Média por Usuário:</strong> R$ ${totalUsers > 0 ? (totalEarned / totalUsers).toFixed(2).replace('.', ',') : '0,00'}</p>
+    `;
+
+    showToast('✅ Lucros atualizados!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+// Change Project
+let currentProject = 'cinecash';
+let currentProjectName = 'CineCash IA';
+
+function changeProject(projectId) {
+  currentProject = projectId;
+  const projectNames = { 'cinecash': 'CineCash IA' };
+  currentProjectName = projectNames[projectId] || projectId;
+  
+  document.querySelectorAll('.hub-title').forEach(title => {
+    const baseTitle = title.textContent.split(' - ')[0];
+    title.textContent = baseTitle + ' - ' + currentProjectName;
+  });
+  
+  showToast(`Projeto: ${currentProjectName}`, 'info');
+}
+
+async function hubLoadCrescimento() {
+  try {
+    const [usersSnap, configSnap] = await Promise.all([
+      cinecashDb.ref('users').once('value'),
+      cinecashDb.ref('config').once('value')
+    ]);
+    
+    const users = usersSnap.exists() ? usersSnap.val() : {};
+    const config = configSnap.exists() ? configSnap.val() : {};
+    
+    const totalUsers = Object.keys(users).length;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+    const endOfLastMonth = startOfMonth - 1;
+    
+    const thisMonthUsers = Object.values(users).filter(u => u.createdAt && u.createdAt >= startOfMonth).length;
+    const lastMonthUsers = Object.values(users).filter(u => u.createdAt && u.createdAt >= startOfLastMonth && u.createdAt < startOfMonth).length;
+    const growthRate = lastMonthUsers > 0 ? ((thisMonthUsers - lastMonthUsers) / lastMonthUsers * 100).toFixed(1) : (thisMonthUsers > 0 ? 100 : 0);
+    
+    let videosThisMonth = 0;
+    Object.values(users).forEach(u => {
+      if (u.lastActive && u.lastActive >= startOfMonth) {
+        videosThisMonth += u.videosWatchedThisMonth || 0;
+      }
+    });
+    
+    document.getElementById('cresc-total').textContent = totalUsers;
+    document.getElementById('cresc-month').textContent = thisMonthUsers;
+    document.getElementById('cresc-rate').textContent = growthRate + '%';
+    document.getElementById('cresc-videos').textContent = videosThisMonth;
+    
+    document.getElementById('crescimento-stats').innerHTML = `
+      <p><strong>Usuários do mês passado:</strong> ${lastMonthUsers}</p>
+      <p><strong>Novos usuários este mês:</strong> ${thisMonthUsers}</p>
+      <p><strong>Crescimento:</strong> ${growthRate > 0 ? '+' : ''}${growthRate}%</p>
+      <p><strong>Vídeos assistidos este mês:</strong> ${videosThisMonth}</p>
+      <p><strong>Média de vídeos por usuário ativo:</strong> ${thisMonthUsers > 0 ? (videosThisMonth / thisMonthUsers).toFixed(1) : 0}</p>
+    `;
+    
+    showToast('✅ Crescimento atualizado!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubLoadSeguranca() {
+  try {
+    const [logsSnap, alertsSnap, configSnap] = await Promise.all([
+      cinecashDb.ref('logs').orderByChild('timestamp').limitToLast(50).once('value'),
+      cinecashDb.ref('alerts').once('value'),
+      cinecashDb.ref('config').once('value')
+    ]);
+    
+    const logs = logsSnap.exists() ? logsSnap.val() : {};
+    const alerts = alertsSnap.exists() ? alertsSnap.val() : {};
+    const config = configSnap.exists() ? configSnap.val() : {};
+    
+    const alertsCount = Object.keys(alerts).length;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayLogs = Object.values(logs).filter(l => l.timestamp && l.timestamp >= today.getTime()).length;
+    
+    document.getElementById('seg-status').textContent = alertsCount === 0 ? 'Seguro' : 'Alertas';
+    document.getElementById('seg-status').style.color = alertsCount === 0 ? '#34d399' : '#f87171';
+    document.getElementById('seg-alertas').textContent = alertsCount;
+    document.getElementById('seg-logs').textContent = todayLogs;
+    
+    document.getElementById('seguranca-monitor').innerHTML = `
+      <p><strong>Status:</strong> ${alertsCount === 0 ? '✅ Sistema seguro' : '⚠️ Há alertas pendentes'}</p>
+      <p><strong>Última verificação:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+      <p><strong>Logs registrados:</strong> ${Object.keys(logs).length}</p>
+      <p><strong>Alertas de fraude:</strong> ${alertsCount}</p>
+    `;
+    
+    const logsArr = Object.entries(logs).sort((a,b) => b[1].timestamp - a[1].timestamp).slice(0,20);
+    document.getElementById('seguranca-logs').innerHTML = logsArr.length > 0 ? logsArr.map(([id, log]) => `
+      <div style="padding:10px;border-bottom:1px solid #1f2937;display:flex;justify-content:space-between">
+        <span style="color:#fff">${log.action || 'Atividade'}</span>
+        <span style="color:#6b7280;font-size:12px">${new Date(log.timestamp).toLocaleString('pt-BR')}</span>
+      </div>
+    `).join('') : '<p style="text-align:center;padding:20px;color:#6b7280">Nenhum log registrado</p>';
+    
+    showToast('✅ Segurança atualizada!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubLoadBancario() {
+  try {
+    const configSnap = await cinecashDb.ref('config').once('value');
+    const config = configSnap.exists() ? configSnap.val() : {};
+    
+    document.getElementById('admin-pix-key').value = config.adminPixKey || '';
+    document.getElementById('admin-pix-type').value = config.adminPixType || 'cpf';
+    document.getElementById('admin-bank-name').value = config.adminBankName || '';
+    document.getElementById('admin-bank').value = config.adminBank || '';
+    
+    const adminBalance = config.adminBalance || 0;
+    const pendingWithdrawals = await cinecashDb.ref('withdrawals').orderByChild('status').equalTo('pending').once('value');
+    const pendingCount = pendingWithdrawals.exists() ? Object.keys(pendingWithdrawals.val()).length : 0;
+    let pendingAmount = 0;
+    if (pendingWithdrawals.exists()) {
+      Object.values(pendingWithdrawals.val()).forEach(w => pendingAmount += w.amount || 0);
+    }
+    
+    document.getElementById('bancario-saldo').innerHTML = `
+      <p><strong>Saldo disponível:</strong> R$ ${adminBalance.toFixed(2).replace('.', ',')}</p>
+      <p><strong>Saques pendentes:</strong> ${pendingCount} (R$ ${pendingAmount.toFixed(2).replace('.', ',')})</p>
+      <p><strong>Chave PIX:</strong> ${config.adminPixKey ? '✅ Configurada' : '❌ Não configurada'}</p>
+    `;
+    
+    showToast('✅ Dados bancários carregados!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function hubSaveBancario() {
+  const pixKey = document.getElementById('admin-pix-key').value.trim();
+  const pixType = document.getElementById('admin-pix-type').value;
+  const bankName = document.getElementById('admin-bank-name').value.trim();
+  const bank = document.getElementById('admin-bank').value;
+  
+  if (!pixKey) {
+    showToast('Preencha a chave PIX!', 'error');
+    return;
+  }
+  
+  try {
+    await cinecashDb.ref('config').update({
+      adminPixKey: pixKey,
+      adminPixType: pixType,
+      adminBankName: bankName,
+      adminBank: bank
+    });
+    showToast('✅ Dados bancários salvos!', 'success');
+  } catch(err) {
+    showToast('Erro: ' + err.message, 'error');
+  }
+}
+
+// Expose CineCash functions
+window.hubLoadOverview = hubLoadOverview;
+window.hubLoadUsers = hubLoadUsers;
+window.hubSearchUsers = hubSearchUsers;
+window.hubLoadVideos = hubLoadVideos;
+window.hubAddVideo = hubAddVideo;
+window.hubDeleteVideo = hubDeleteVideo;
+window.hubLoadWithdrawals = hubLoadWithdrawals;
+window.hubApproveWithdrawal = hubApproveWithdrawal;
+window.hubDenyWithdrawal = hubDenyWithdrawal;
+window.hubLoadLucros = hubLoadLucros;
+window.hubLoadCrescimento = hubLoadCrescimento;
+window.hubLoadSeguranca = hubLoadSeguranca;
+window.hubLoadBancario = hubLoadBancario;
+window.hubSaveBancario = hubSaveBancario;
+window.changeProject = changeProject;
+window.toggleHubPassword = toggleHubPassword;
+window.doHubLogin = doHubLogin;
+window.togglePwd = togglePwd;
+
+// Expose login functions to global scope
+window.hubLogin = hubLogin;
+window.toggleEye = toggleEye;
+window.checkHubAuth = checkHubAuth;
+window.loadSavedCredentials = loadSavedCredentials;
+window.doLogin = doLogin;
+
+console.log('All functions exposed to window');
 
 </body>
 </html>
