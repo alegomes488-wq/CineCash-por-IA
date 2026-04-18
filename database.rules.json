@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "$uid === auth.uid || root.child('config/adminUID').val() === auth.uid"
+      }
+    },
+    "withdrawals": {
+      ".indexOn": ["uid", "status"],
+      ".read": "auth != null",
+      "$withdrawalId": {
+        ".write": "auth != null && (!data.exists() || root.child('config/adminUID').val() === auth.uid)"
+      }
+    },
+    "config": {
+      ".read": "true",
+      ".write": "root.child('config/adminUID').val() === auth.uid"
+    },
+    "videos": {
+      ".read": "true",
+      ".write": "root.child('config/adminUID').val() === auth.uid"
+    }
+  }
+}
