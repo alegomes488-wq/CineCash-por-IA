@@ -1,2323 +1,740 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CineCash IA</title>
-  <!-- ✅ MONETAG: verificação de domínio (sem carregamento automático de anúncios) -->
-  <meta name="monetag" content="c9926a683e19787211bfa2f59d146b72">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Sora',sans-serif;min-height:100vh}
-    input,button,select,textarea{font-family:'Sora',sans-serif}
-    .auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 40%,#0ea5e9 100%)}
-    .auth-card{background:#fff;border-radius:24px;padding:40px 36px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
-    .auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
-    .auth-logo-icon{color:#7c3aed;font-size:28px}
-    .auth-logo h1{font-size:26px;font-weight:700;color:#111}
-    .auth-subtitle{text-align:center;color:#6b7280;font-size:14px;margin-bottom:28px}
-    .field-label{font-size:13px;font-weight:600;color:#111;margin-bottom:6px;display:block}
-    .field-hint{font-size:12px;color:#9ca3af;margin-top:4px;margin-bottom:12px}
-    .input-wrap{position:relative;margin-bottom:4px}
-    .auth-input{width:100%;padding:13px 16px;border:none;border-radius:12px;background:#f3f4f6;font-size:14px;color:#111;outline:none;transition:.2s}
-    .auth-input:focus{background:#e9ebf0;box-shadow:0 0 0 2px #7c3aed33}
-    .input-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:4px}
-    .auth-btn{width:100%;padding:14px;border:none;border-radius:12px;background:#111;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:20px;transition:.15s}
-    .auth-btn:hover{background:#222;transform:translateY(-1px)}
-    .auth-btn.red{background:#dc2626}
-    .auth-btn.red:hover{background:#b91c1c}
-    .auth-footer{text-align:center;font-size:13px;color:#6b7280;margin-top:20px}
-    .auth-footer a{color:#7c3aed;font-weight:500;cursor:pointer;text-decoration:none}
-    .auth-footer a:hover{text-decoration:underline}
-    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#9ca3af;font-size:13px}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#e5e7eb}
-    .google-btn{width:100%;padding:13px;border:1.5px solid #e5e7eb;border-radius:12px;background:#fff;color:#111;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s}
-    .google-btn:hover{background:#f9fafb;border-color:#d1d5db}
-    .google-g{font-size:16px;font-weight:700;font-family:Arial,sans-serif}
-    .field-group{margin-bottom:12px}
-    .admin-link{text-align:center;font-size:12px;color:#9ca3af;margin-top:14px;cursor:pointer}
-    .admin-link:hover{color:#6b7280;text-decoration:underline}
-    .admin-auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0d1117}
-    .admin-auth-card{background:#161b27;border:1px solid #2a2f3e;border-radius:20px;padding:40px 36px;width:100%;max-width:420px}
-    .admin-auth-card .auth-logo-icon{color:#dc2626}
-    .admin-auth-card .auth-logo h1{color:#fff}
-    .admin-auth-card .auth-subtitle,.admin-auth-card .auth-footer{color:#6b7280}
-    .admin-auth-card .field-label{color:#d1d5db}
-    .admin-auth-card .auth-input{background:#0d1117;border:1px solid #2a2f3e;color:#fff}
-    .admin-auth-card .auth-input::placeholder{color:#4b5563}
-    .admin-auth-card .auth-input:focus{background:#0d1117;box-shadow:0 0 0 2px #dc262633;border-color:#dc2626}
-    .admin-auth-card .auth-footer a{color:#6b7280;font-weight:400}
-    .admin-auth-card .auth-footer a:hover{color:#9ca3af}
-    /* ── ADMIN SIDEBAR LAYOUT ── */
-    .admin-page{display:none!important}
-    .admin-page.active{display:flex!important;height:100vh;overflow:hidden;background:#0d1117;color:#fff}
-    .admin-sidebar{width:240px;min-width:240px;background:#111827;border-right:1px solid #1f2937;display:flex;flex-direction:column;transition:width .25s;overflow:hidden;z-index:200}
-    .admin-sidebar.collapsed{width:56px;min-width:56px}
-    .admin-sidebar-top{display:flex;align-items:center;justify-content:space-between;padding:16px 14px;border-bottom:1px solid #1f2937;min-height:60px}
-    .admin-sidebar-logo{display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
-    .admin-sidebar-logo span{font-size:18px}
-    .admin-sidebar-logo h2{font-size:14px;font-weight:700;color:#fff;transition:opacity .2s}
-    .admin-sidebar.collapsed .admin-sidebar-logo h2{opacity:0;width:0}
-    .sidebar-toggle{background:none;border:none;color:#6b7280;font-size:18px;cursor:pointer;padding:4px;border-radius:6px;transition:.15s;flex-shrink:0}
-    .sidebar-toggle:hover{color:#fff;background:#1f2937}
-    .admin-nav{flex:1;padding:12px 8px;overflow-y:auto}
-    .admin-nav-item{display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:10px;cursor:pointer;color:#9ca3af;font-size:13px;font-weight:500;transition:.15s;white-space:nowrap;overflow:hidden;margin-bottom:2px;border:none;background:none;width:100%;font-family:'Sora',sans-serif}
-    .admin-nav-item:hover{background:#1f2937;color:#d1d5db}
-    .admin-nav-item.active{background:#1f2937;color:#fff;border-left:3px solid #7c3aed}
-    .admin-nav-item .nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
-    .admin-nav-item .nav-label{transition:opacity .2s;opacity:1}
-    .admin-sidebar.collapsed .nav-label{opacity:0;width:0;overflow:hidden}
-    .admin-sidebar-bottom{padding:10px 8px;border-top:1px solid #1f2937}
-    /* Main content area */
-    .admin-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-    .admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#111827;border-bottom:1px solid #1f2937;flex-shrink:0}
-    .admin-topbar-title{font-size:16px;font-weight:700;color:#fff}
-    .admin-topbar-right{display:flex;align-items:center;gap:10px}
-    .admin-content{flex:1;overflow-y:auto;padding:24px}
-    .admin-logout{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px solid #374151;border-radius:10px;background:transparent;color:#d1d5db;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .admin-logout:hover{background:#1f2937;border-color:#4b5563}
-    /* Keep old classes working */
-    .admin-shield{font-size:22px;color:#dc2626}
-    .admin-header-title{font-size:20px;font-weight:700;color:#fff}
-    .admin-header-sub{font-size:12px;color:#6b7280;margin-top:1px}
-    .admin-body{padding:0;flex:1}
-    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-    .stat-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between}
-    .stat-label{font-size:12px;color:#9ca3af;margin-bottom:8px}
-    .stat-value{font-size:28px;font-weight:700}
-    .stat-icon{font-size:32px;opacity:.8}
-    .c-blue{color:#60a5fa}.c-green{color:#34d399}.c-purple{color:#a78bfa}.c-amber{color:#fbbf24}
-    .admin-tabs{display:flex;align-items:center;gap:4px;margin-bottom:24px;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:6px}
-    .tab-btn{display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#6b7280;font-family:'Sora',sans-serif;transition:.15s;flex:1;justify-content:center}
-    .tab-btn:hover{color:#d1d5db;background:#1f2937}
-    .tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
-    .tab-panel{display:none}.tab-panel.active{display:block}
-    .panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
-    .panel-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:18px}
-    .search-input-wrap{position:relative;margin-bottom:20px}
-    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:14px}
-    .search-input{width:100%;padding:11px 16px 11px 38px;background:#0d1117;border:1px solid #1f2937;border-radius:10px;color:#fff;font-size:13px;font-family:'Sora',sans-serif;outline:none;transition:.15s}
-    .search-input:focus{border-color:#374151}.search-input::placeholder{color:#4b5563}
-    .data-table{width:100%;border-collapse:collapse;font-size:13px}
-    .data-table th{text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #1f2937;font-size:12px}
-    .data-table td{padding:12px 14px;border-bottom:1px solid #111827;color:#d1d5db;vertical-align:middle}
-    .data-table tr:last-child td{border-bottom:none}
-    .data-table tr:hover td{background:#111827}
-    .badge-active{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#052e16;color:#34d399;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #166534}
-    .badge-inactive{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#1c0000;color:#f87171;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #7f1d1d}
-    .table-footer{font-size:12px;color:#6b7280;margin-top:14px}
-    .user-names .name{font-weight:600;color:#fff}.user-names .display{font-size:11px;color:#6b7280}
-    .action-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:.15s}
-    .action-edit{background:#1e3a5f;color:#60a5fa}.action-edit:hover{background:#1d4ed8}
-    .action-del{background:#3b1212;color:#f87171;margin-left:4px}.action-del:hover{background:#7f1d1d}
-    .vid-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}.vid-form-full{grid-column:1/-1}
-    .dark-input{width:100%;padding:11px 14px;background:#0d1117;border:1px solid #1f2937;border-radius:10px;color:#fff;font-size:13px;font-family:'Sora',sans-serif;outline:none;transition:.15s}
-    .dark-input:focus{border-color:#4b5563}.dark-input::placeholder{color:#4b5563}
-    .dark-label{font-size:12px;color:#9ca3af;margin-bottom:4px;display:block;font-weight:500}
-    .add-vid-btn{padding:11px 22px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s;align-self:end}
-    .add-vid-btn:hover{background:#6d28d9}
-    .growth-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .chart-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px}
-    .chart-card h3{font-size:14px;font-weight:600;color:#fff;margin-bottom:16px}
-    .security-banner{border-radius:16px;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
-    .security-banner.safe{background:linear-gradient(135deg,#064e3b,#065f46)}
-    .security-banner-left{display:flex;align-items:center;gap:16px}
-    .security-banner-icon{font-size:40px}
-    .security-banner-title{font-size:22px;font-weight:700;color:#fff}
-    .security-banner-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
-    .security-banner-right{text-align:right}
-    .security-banner-count-label{font-size:12px;color:rgba(255,255,255,.7)}
-    .security-banner-count{font-size:36px;font-weight:700;color:#fff}
-    .priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
-    .security-features{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .sec-feature{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;background:#0d1117;border:1px solid #1f2937;border-radius:12px}
-    .sec-feature-icon{font-size:18px;color:#34d399;margin-top:1px;flex-shrink:0}
-    .sec-feature-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
-    .sec-feature-sub{font-size:12px;color:#6b7280}
-    .threat-list{background:#0d1117;border:1px solid #1f2937;border-radius:12px;padding:40px;text-align:center}
-    .threat-list-icon{font-size:48px;color:#34d399;margin-bottom:12px}
-    .threat-list h3{font-size:15px;color:#d1d5db;margin-bottom:4px}
-    .threat-list p{font-size:13px;color:#6b7280}
-    .profit-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-    .profit-card{border-radius:16px;padding:22px 20px;color:#fff;display:flex;align-items:flex-start;justify-content:space-between}
-    .pc-green{background:linear-gradient(135deg,#16a34a,#15803d)}.pc-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
-    .pc-orange{background:linear-gradient(135deg,#ea580c,#c2410c)}.pc-purple{background:linear-gradient(135deg,#9333ea,#7c3aed)}
-    .profit-card-label{font-size:12px;font-weight:500;opacity:.85;margin-bottom:8px}
-    .profit-card-value{font-size:26px;font-weight:700}.profit-card-icon{font-size:28px;opacity:.7}
-    .profits-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .converter-btn{width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:14px;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px}
-    .converter-btn:hover{background:#15803d}
-    .analysis-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #1f2937;font-size:13px}
-    .analysis-row:last-of-type{border-bottom:none}
-    .analysis-label{color:#9ca3af}.analysis-value{font-weight:600;color:#d1d5db}.analysis-value.red{color:#f87171}
-    .analysis-total{display:flex;align-items:center;justify-content:space-between;background:#052e16;border:1px solid #166534;border-radius:10px;padding:14px 16px;margin-top:12px;font-size:14px;font-weight:700}
-    .analysis-total .label,.analysis-total .value{color:#34d399}
-    .insights-box{background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;padding:14px 16px;margin-top:12px}
-    .insights-title{font-size:13px;font-weight:600;color:#93c5fd;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-    .insights-item{font-size:12px;color:#bfdbfe;margin-bottom:4px}
-    .fontes-item{display:flex;align-items:center;justify-content:space-between;background:#0d1117;border:1px solid #1f2937;border-radius:10px;padding:14px 16px}
-    .fontes-icon{width:36px;height:36px;background:#111827;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#a78bfa;margin-right:12px;flex-shrink:0}
-    .fontes-info .name{font-size:13px;font-weight:600;color:#fff}
-    .fontes-info .sub{font-size:11px;color:#6b7280;margin-top:2px}
-    .fontes-value{text-align:right}.fontes-value .amount{font-size:14px;font-weight:700;color:#34d399}
-    .fontes-value .count{font-size:11px;color:#6b7280;margin-top:2px}
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center}
-    .modal-overlay.open{display:flex}
-    .modal-box{background:#161b27;border:1px solid #2a2f3e;border-radius:20px;padding:32px;width:100%;max-width:480px;position:relative}
-    .modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:20px}
-    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1}
-    .modal-close:hover{color:#d1d5db}
-    .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
-    .modal-cancel{padding:9px 20px;background:transparent;border:1px solid #374151;border-radius:9px;color:#9ca3af;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif}
-    .modal-cancel:hover{background:#1f2937}
-    .modal-save{padding:9px 20px;background:#7c3aed;border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif}
-    .modal-save:hover{background:#6d28d9}
-    .modal-delete{padding:9px 20px;background:#dc2626;border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif}
-    .modal-delete:hover{background:#b91c1c}
-    .toast{position:fixed;bottom:28px;right:28px;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none}
-    .toast.show{opacity:1;transform:translateY(0)}
-    .toast.success{background:#065f46;border:1px solid #34d399}
-    .toast.error{background:#7f1d1d;border:1px solid #f87171}
-    .toast.info{background:#1e3a8a;border:1px solid #60a5fa}
-    @media(max-width:900px){.stat-grid,.profit-cards{grid-template-columns:1fr 1fr}.charts-grid,.profits-grid,.security-features{grid-template-columns:1fr}.priority-grid,.growth-stats{grid-template-columns:1fr}}
-    @media(max-width:600px){.stat-grid,.profit-cards{grid-template-columns:1fr}.admin-tabs{flex-wrap:wrap}.tab-btn{flex:auto;font-size:12px;padding:8px 10px}.vid-form{grid-template-columns:1fr}}
-
-    /* ── USER DASHBOARD ── */
-    .dash-bg{min-height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#fff}
-    .dash-header{background:rgba(255,255,255,.07);backdrop-filter:blur(10px);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:100}
-    .dash-logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:#fff}
-    .dash-user-info{display:flex;align-items:center;gap:12px}
-    .dash-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
-    .dash-username{font-size:13px;font-weight:600;color:#fff}
-    .dash-logout-btn{padding:7px 14px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:transparent;color:#d1d5db;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .dash-logout-btn:hover{background:rgba(255,255,255,.1)}
-    .dash-body{padding:24px;max-width:900px;margin:0 auto}
-    /* Balance bar */
-    .balance-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-    .balance-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px 20px;text-align:center}
-    .balance-card-label{font-size:11px;color:rgba(255,255,255,.6);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-    .balance-card-value{font-size:24px;font-weight:700;color:#fff}
-    .balance-card-value.green{color:#34d399}
-    .balance-card-value.amber{color:#fbbf24}
-    .balance-card-value.purple{color:#a78bfa}
-    /* Check-in */
-    .checkin-card{background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(14,165,233,.3));border:1px solid rgba(124,58,237,.4);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
-    .checkin-info h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
-    .checkin-info p{font-size:12px;color:rgba(255,255,255,.7)}
-    .checkin-btn{padding:11px 24px;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s;white-space:nowrap}
-    .checkin-btn:disabled{opacity:.5;cursor:not-allowed}
-    .checkin-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px rgba(124,58,237,.4)}
-    .streak-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);border-radius:20px;font-size:11px;color:#fbbf24;font-weight:600;margin-top:6px}
-    /* Videos section */
-    .section-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px}
-    .video-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;transition:.2s}
-    .video-card:hover{transform:translateY(-2px);border-color:rgba(124,58,237,.5)}
-    .video-thumb{width:100%;height:140px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
-    .video-reward-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
-    .video-info{padding:14px}
-    .video-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px;line-height:1.4}
-    .watch-btn{width:100%;padding:9px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s;display:flex;align-items:center;justify-content:center;gap:6px}
-    .watch-btn:hover{opacity:.9}
-    .watch-btn.watched{background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:#34d399;cursor:default}
-    .no-videos{text-align:center;padding:40px;color:rgba(255,255,255,.4);font-size:14px}
-    /* Withdrawal */
-    .withdraw-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px;margin-bottom:20px}
-    .withdraw-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .withdraw-input{width:100%;padding:11px 14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:13px;font-family:'Sora',sans-serif;outline:none;margin-bottom:10px}
-    .withdraw-input::placeholder{color:rgba(255,255,255,.3)}
-    .withdraw-input:focus{border-color:rgba(124,58,237,.6)}
-    .withdraw-btn{width:100%;padding:12px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .withdraw-btn:hover{opacity:.9;transform:translateY(-1px)}
-    .withdraw-btn:disabled{opacity:.4;cursor:not-allowed}
-    .withdraw-history-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
-    .wh-amount{font-weight:700;color:#34d399}
-    .wh-status-pending{color:#fbbf24;background:rgba(251,191,36,.1);padding:3px 8px;border-radius:20px;font-size:11px}
-    .wh-status-approved{color:#34d399;background:rgba(52,211,153,.1);padding:3px 8px;border-radius:20px;font-size:11px}
-    .wh-status-denied{color:#f87171;background:rgba(248,113,113,.1);padding:3px 8px;border-radius:20px;font-size:11px}
-    /* Video watch modal */
-    .watch-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;align-items:center;justify-content:center}
-    .watch-modal-overlay.open{display:flex}
-    .watch-modal{background:#0f0c29;border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:28px;width:100%;max-width:520px;text-align:center;position:relative;overflow:hidden}
-    .watch-modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
-    .watch-modal-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px}
-    .watch-timer{font-size:48px;font-weight:700;color:#7c3aed;margin:20px 0}
-    .watch-progress{width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:20px;overflow:hidden}
-    .watch-progress-fill{height:100%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border-radius:3px;transition:width .5s}
-    .watch-open-btn{padding:11px 28px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);border-radius:10px;color:#a78bfa;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:12px;transition:.15s}
-    .watch-open-btn:hover{background:rgba(124,58,237,.3)}
-    .watch-cancel-btn{padding:9px 20px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif}
-    /* Admin saques tab */
-    .saque-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:#0d1117;border:1px solid #1f2937;border-radius:10px;margin-bottom:10px}
-    .saque-info .name{font-weight:600;color:#fff;font-size:13px}
-    .saque-info .detail{font-size:11px;color:#6b7280;margin-top:2px}
-    .saque-amount{font-size:16px;font-weight:700;color:#34d399;margin:0 16px}
-    .saque-actions{display:flex;gap:8px}
-    .btn-approve{padding:7px 14px;background:#052e16;color:#34d399;border:1px solid #166534;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .btn-approve:hover{background:#166534}
-    .btn-deny{padding:7px 14px;background:#1c0000;color:#f87171;border:1px solid #7f1d1d;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .btn-deny:hover{background:#7f1d1d}
-    .saques-toggle{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#161b27;border:1px solid #1f2937;border-radius:12px;margin-bottom:20px}
-    .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
-    .toggle-switch input{opacity:0;width:0;height:0}
-    .toggle-slider{position:absolute;inset:0;background:#374151;border-radius:12px;transition:.3s}
-    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-    .toggle-switch input:checked+.toggle-slider{background:#16a34a}
-    .toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px)}
-    @media(max-width:600px){.balance-bar{grid-template-columns:1fr}.checkin-card{flex-direction:column;gap:14px;text-align:center}.video-grid{grid-template-columns:1fr}}
-
-
-    .dash-nav-btn{padding:9px 16px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:transparent;color:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
-    .dash-nav-btn.active{background:rgba(124,58,237,.3);border-color:rgba(124,58,237,.5);color:#fff}
-    .dash-nav-btn:hover{background:rgba(255,255,255,.08)}
-    .dash-tab-panel{display:none}.dash-tab-panel.active{display:block}
-    .reward-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;transition:.2s}
-    .reward-row.unlocked{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06)}
-    .reward-row.claimed{opacity:.5}
-    .rr-left{display:flex;align-items:center;gap:12px}
-    .rr-coins{font-size:13px;font-weight:700;color:#fbbf24}
-    .rr-arrow{font-size:16px;color:rgba(255,255,255,.3)}
-    .rr-reward{font-size:15px;font-weight:700;color:#34d399}
-    .rr-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:.15s}
-    .rr-btn.locked{background:rgba(255,255,255,.08);color:rgba(255,255,255,.3);cursor:not-allowed}
-    .rr-btn.ready{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;cursor:pointer;animation:pulse .8s infinite alternate}
-    .rr-btn.claimed{background:rgba(52,211,153,.1);color:#34d399;cursor:not-allowed}
-    @keyframes pulse{from{box-shadow:0 0 0 0 rgba(52,211,153,.4)}to{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
-    .page{display:none}.page.active{display:block}
-    .admin-page{display:none}.admin-page.active{display:flex;flex-direction:column;min-height:100vh}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineCash IA - Seu Cinema Lucrativo</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<script>
-// Debug inicial
-console.log('🚀 CineCash carregando...');
-
-// Desregistra qualquer service worker Monetag que já esteja ativo no navegador
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r=>r.unregister())
-  })
-}
-</script>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('✅ DOM carregado');
-  // Confirma que página de login está visível
-  var loginPage = document.getElementById('page-login');
-  console.log('Login page display:', loginPage ? window.getComputedStyle(loginPage).display : 'NÃO ENCONTRADO');
-});
-</script>
-
-<!-- LOGIN -->
-<div id="page-login" class="page active">
-  <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
-    <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
-    <div class="field-group">
-      <label class="field-label">Usuário ou Email</label>
-      <input id="login-email" class="auth-input" type="text" placeholder="seu@email.com ou usuário" autocomplete="username">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Senha</label>
-      <div class="input-wrap">
-        <input id="login-password" class="auth-input" type="password" placeholder="••••••••" autocomplete="current-password">
-        <button class="input-eye" onclick="togglePwd('login-password',this)">👁</button>
-      </div>
-    </div>
-    <button id="login-btn" class="auth-btn" onclick="doLogin()">Entrar</button>
-    <div class="divider">OU</div>
-    <button class="google-btn" onclick="doGoogleLogin()"><span class="google-g">G</span> Continuar com Google</button>
-    <p class="auth-footer">Não tem uma conta? <a onclick="showPage('register')">Cadastre-se</a></p>
-  </div></div>
-</div>
-
-<!-- REGISTER -->
-<div id="page-register" class="page">
-  <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
-    <p class="auth-subtitle">Crie sua conta e comece a ganhar dinheiro!</p>
-    <div class="field-group"><label class="field-label">Nome Completo</label><input id="reg-fullname" class="auth-input" type="text" placeholder="João da Silva"></div>
-    <div class="field-group"><label class="field-label">Nome de Exibição</label><input id="reg-display" class="auth-input" type="text" placeholder="João"><span class="field-hint">Este nome aparecerá na página inicial</span></div>
-    <div class="field-group"><label class="field-label">Email</label><input id="reg-email" class="auth-input" type="email" placeholder="seu@email.com"></div>
-    <div class="field-group"><label class="field-label">Senha</label><div class="input-wrap"><input id="reg-password" class="auth-input" type="password" placeholder="Mínimo 8 caracteres"><button class="input-eye" onclick="togglePwd('reg-password',this)">👁</button></div><span class="field-hint">Mínimo 8 caracteres, primeira letra maiúscula</span></div>
-    <div class="field-group"><label class="field-label">Confirmar Senha</label><div class="input-wrap"><input id="reg-confirm" class="auth-input" type="password" placeholder="Digite a senha novamente"><button class="input-eye" onclick="togglePwd('reg-confirm',this)">👁</button></div></div>
-    <button id="reg-btn" class="auth-btn" onclick="doRegister()">Criar Conta</button>
-    <p class="auth-footer">Já tem uma conta? <a onclick="showPage('login')">Faça login</a></p>
-  </div></div>
-</div>
-
-<!-- ADMIN LOGIN — hidden, accessed via main login -->
-<div id="page-admin-login" class="page" style="display:none!important"></div>
-
-<!-- ADMIN DASHBOARD -->
-<div id="page-admin-dashboard" class="admin-page">
-  <!-- SIDEBAR -->
-  <aside class="admin-sidebar" id="admin-sidebar">
-    <div class="admin-sidebar-top">
-      <div class="admin-sidebar-logo">
-        <span>🛡</span>
-        <h2>CineCash Admin</h2>
-      </div>
-      <button class="sidebar-toggle" onclick="toggleSidebar()" title="Minimizar">☰</button>
-    </div>
-    <nav class="admin-nav">
-      <button class="admin-nav-item active" onclick="switchTab('usuarios',this)" data-tab="usuarios">
-        <span class="nav-icon">👥</span><span class="nav-label">Usuários</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('videos',this)" data-tab="videos">
-        <span class="nav-icon">📹</span><span class="nav-label">Vídeos</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('crescimento',this)" data-tab="crescimento">
-        <span class="nav-icon">📈</span><span class="nav-label">Crescimento</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('seguranca',this)" data-tab="seguranca">
-        <span class="nav-icon">🛡</span><span class="nav-label">Segurança</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('lucros',this)" data-tab="lucros">
-        <span class="nav-icon">💰</span><span class="nav-label">Lucros</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('saques',this)" data-tab="saques">
-        <span class="nav-icon">💸</span><span class="nav-label">Saques</span>
-      </button>
-      <button class="admin-nav-item" onclick="switchTab('ia',this)" data-tab="ia">
-        <span class="nav-icon">🤖</span><span class="nav-label">IA Monitor</span>
-      </button>
-    </nav>
-    <div class="admin-sidebar-bottom">
-      <button class="admin-nav-item" onclick="doAdminLogout()">
-        <span class="nav-icon">↩</span><span class="nav-label">Sair</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <div class="admin-main">
-    <!-- Top bar -->
-    <div class="admin-topbar">
-      <div id="admin-topbar-title" class="admin-topbar-title">👥 Usuários</div>
-      <div class="admin-topbar-right">
-        <button id="offline-btn" onclick="toggleOfflineMode()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid #374151;background:#1f2937;color:#60a5fa">🔒 <span id="offline-status">OFF</span></button>
-        <button id="maintenance-btn" onclick="toggleMaintenance()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid #374151;background:#1f2937;color:#fbbf24">🔧 <span id="maint-status">OFF</span></button>
-      </div>
-    </div>
-
-    <!-- Scrollable content -->
-    <div class="admin-content">
-      <div class="stat-grid">
-        <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value" id="stat-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
-        <div class="stat-card"><div><div class="stat-label">Usuários Ativos</div><div class="stat-value c-green" id="stat-active">0</div></div><span class="stat-icon c-green">📈</span></div>
-        <div class="stat-card"><div><div class="stat-label">Vídeos Assistidos</div><div class="stat-value c-purple" id="stat-videos">0</div></div><span class="stat-icon c-purple">📹</span></div>
-        <div class="stat-card"><div><div class="stat-label">Saques Pendentes</div><div class="stat-value c-amber" id="stat-saques">0</div></div><span class="stat-icon c-amber">💸</span></div>
-      </div>
-    <div id="tab-usuarios" class="tab-panel active">
-      <div class="panel-card">
-        <div class="panel-title">Gerenciamento de Usuários</div>
-        <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
-        <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ID Único</th><th>Nome</th><th>Email</th><th>Vídeos</th><th>Saldo</th><th>Cadastro</th><th>Status</th><th>Ações</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
-        <div class="table-footer" id="users-footer">Mostrando 0 usuários</div>
-      </div>
-    </div>
-    <div id="tab-videos" class="tab-panel">
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">Adicionar Novo Vídeo</div>
-        <div class="vid-form">
-          <div><label class="dark-label">Título do Vídeo</label><input id="vid-title" class="dark-input" type="text" placeholder="Ex: Aprenda Python em 10 min"></div>
-          <div><label class="dark-label">Recompensa (R$)</label><input id="vid-reward" class="dark-input" type="number" step="0.01" placeholder="0.10"></div>
-          <div class="vid-form-full"><label class="dark-label">URL do Vídeo</label><input id="vid-url" class="dark-input" type="text" placeholder="https://youtube.com/watch?v=..."></div>
-        </div>
-        <button class="add-vid-btn" onclick="addVideo()">+ Adicionar Vídeo</button>
-      </div>
-      <div class="panel-card">
-        <div class="panel-title">Vídeos Cadastrados</div>
-        <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ID</th><th>Título</th><th>URL</th><th>Recompensa</th><th>Data</th><th>Ações</th></tr></thead><tbody id="videos-tbody"></tbody></table></div>
-        <div class="table-footer" id="videos-footer">Nenhum vídeo cadastrado</div>
-      </div>
-    </div>
-    <div id="tab-crescimento" class="tab-panel">
-      <div class="growth-stats">
-        <div class="stat-card"><div><div class="stat-label">Total de Usuários</div><div class="stat-value c-blue" id="g-total">0</div></div><span class="stat-icon c-blue">👥</span></div>
-        <div class="stat-card"><div><div class="stat-label">Novos Este Mês</div><div class="stat-value c-green" id="g-month">0</div></div><span class="stat-icon c-green">📅</span></div>
-        <div class="stat-card"><div><div class="stat-label">Taxa de Crescimento</div><div class="stat-value c-purple" id="g-rate">0.0%</div></div><span class="stat-icon c-purple">📈</span></div>
-      </div>
-      <div class="charts-grid">
-        <div class="chart-card"><h3>Crescimento Mensal de Usuários</h3><canvas id="chart-growth" height="200"></canvas></div>
-        <div class="chart-card"><h3>Atividade Semanal (Vídeos)</h3><canvas id="chart-weekly" height="200"></canvas></div>
-      </div>
-    </div>
-    <div id="tab-seguranca" class="tab-panel">
-      <div class="security-banner safe"><div class="security-banner-left"><span class="security-banner-icon">✅</span><div><div class="security-banner-title">Sistema Seguro</div><div class="security-banner-sub">Nenhuma ameaça detectada. Sistema operando normalmente.</div></div></div><div class="security-banner-right"><div class="security-banner-count-label">Ameaças Detectadas</div><div class="security-banner-count">0</div></div></div>
-      <div class="priority-grid" style="margin-bottom:20px">
-        <div class="stat-card"><div><div class="stat-label">Alta Prioridade</div><div class="stat-value" style="color:#f87171">0</div></div><span style="font-size:28px">⚠️</span></div>
-        <div class="stat-card"><div><div class="stat-label">Média Prioridade</div><div class="stat-value c-amber">0</div></div><span style="font-size:28px">📊</span></div>
-        <div class="stat-card"><div><div class="stat-label">Baixa Prioridade</div><div class="stat-value c-blue">0</div></div><span style="font-size:28px">🛡</span></div>
-      </div>
-      <div class="panel-card" style="margin-bottom:16px"><div class="panel-title">⚠️ Ameaças Detectadas pela IA</div><div class="threat-list"><div class="threat-list-icon">✅</div><h3>Nenhuma ameaça detectada</h3><p>O sistema está operando com segurança</p></div></div>
-      <div class="panel-card"><div class="panel-title">Recursos de Segurança Ativos</div><div class="security-features">
-        <div class="sec-feature"><span class="sec-feature-icon">✅</span><div><div class="sec-feature-title">Monitoramento em Tempo Real</div><div class="sec-feature-sub">Sistema de IA analisando atividades 24/7</div></div></div>
-        <div class="sec-feature"><span class="sec-feature-icon">✅</span><div><div class="sec-feature-title">Detecção de Padrões Anormais</div><div class="sec-feature-sub">Algoritmos detectam comportamentos suspeitos</div></div></div>
-        <div class="sec-feature"><span class="sec-feature-icon">✅</span><div><div class="sec-feature-title">Proteção Anti-Fraude</div><div class="sec-feature-sub">Validação de transações e saques</div></div></div>
-        <div class="sec-feature"><span class="sec-feature-icon">✅</span><div><div class="sec-feature-title">Logs de Auditoria</div><div class="sec-feature-sub">Registro completo de todas as atividades</div></div></div>
-      </div></div>
-    </div>
-    <div id="tab-lucros" class="tab-panel">
-      <div class="profit-cards">
-        <div class="profit-card pc-green"><div><div class="profit-card-label">Receita Total (USD)</div><div class="profit-card-value" id="p-usd">$0.00</div></div><span class="profit-card-icon">$</span></div>
-        <div class="profit-card pc-blue"><div><div class="profit-card-label">Receita Total (BRL)</div><div class="profit-card-value" id="p-brl">R$ 0.00</div></div><span class="profit-card-icon">📈</span></div>
-        <div class="profit-card pc-orange"><div><div class="profit-card-label">Pagamentos Realizados</div><div class="profit-card-value" id="p-pag">R$ 0.00</div></div><span class="profit-card-icon">💳</span></div>
-        <div class="profit-card pc-purple"><div><div class="profit-card-label">Lucro Líquido</div><div class="profit-card-value" id="p-lucro">R$ 0.00</div></div><span class="profit-card-icon">📈</span></div>
-      </div>
-      <div class="profits-grid">
-        <div class="panel-card">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="color:#34d399;font-size:16px">$</span><span style="font-size:14px;font-weight:600;color:#fff">Conversor USD → BRL</span></div>
-          <label class="dark-label">Taxa de Câmbio (1 USD = ? BRL)</label><input id="conv-taxa" class="dark-input" type="number" value="5.25" step="0.01">
-          <label class="dark-label" style="margin-top:12px">Valor em Dólares (USD)</label><input id="conv-valor" class="dark-input" type="number" placeholder="$ 0.00">
-          <button class="converter-btn" onclick="doConversion()">💳 Converter e Transferir para Minha Conta</button>
-        </div>
-        <div class="panel-card">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="color:#60a5fa;font-size:16px">📈</span><span style="font-size:14px;font-weight:600;color:#fff">Análise de Lucros</span></div>
-          <div class="analysis-row"><span class="analysis-label">Receita Bruta:</span><span class="analysis-value" id="an-bruta">R$ 0.00</span></div>
-          <div class="analysis-row"><span class="analysis-label">Pagamentos Realizados:</span><span class="analysis-value red" id="an-pag">- R$ 0.00</span></div>
-          <div class="analysis-row"><span class="analysis-label">Saldo Pendente:</span><span class="analysis-value red" id="an-pend">- R$ 0.00</span></div>
-          <div class="analysis-total"><span class="label">Lucro Líquido:</span><span class="value" id="an-liquido">R$ 0.00</span></div>
-          <div class="insights-box"><div class="insights-title">💡 Insights</div><div class="insights-item" id="ins-margem">• Margem de lucro: 0%</div><div class="insights-item" id="ins-pervideo">• Receita por vídeo: R$0.00</div><div class="insights-item" id="ins-totalvid">• Total de vídeos: 0</div></div>
-        </div>
-      </div>
-      <div class="panel-card" style="margin-top:16px">
-        <div class="panel-title">Fontes de Receita</div>
-        <div class="fontes-item"><div style="display:flex;align-items:center"><div class="fontes-icon">📹</div><div class="fontes-info"><div class="name">Monetização de Vídeos</div><div class="sub">Receita principal do site</div></div></div><div class="fontes-value"><div class="amount" id="fontes-amount">R$ 0.00</div><div class="count" id="fontes-count">0 vídeos</div></div></div>
-      </div>
-    </div>
-
-    <div id="tab-saques" class="tab-panel">
-      <div class="saques-toggle">
-        <label class="toggle-switch"><input type="checkbox" id="withdrawals-toggle" onchange="toggleWithdrawals(this)"><span class="toggle-slider"></span></label>
-        <div><div style="font-size:13px;font-weight:600;color:#fff">Saques abertos para usuários</div><div style="font-size:11px;color:#6b7280">Quando desativado, usuários não podem solicitar saque</div></div>
-      </div>
-      <div class="panel-card">
-        <div class="panel-title">💸 Solicitações de Saque Pendentes</div>
-        <div id="saques-pending-list"><div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhuma solicitação pendente</div></div>
-      </div>
-      <div class="panel-card" style="margin-top:16px">
-        <div class="panel-title">📋 Histórico de Saques</div>
-        <div id="saques-history-list"><div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico ainda</div></div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-    <!-- TAB: IA MONITOR -->
-    <div id="tab-ia" class="tab-panel">
-      <div class="panel-card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-          <div class="panel-title" style="margin:0">🤖 IA de Monitoramento</div>
-          <button onclick="runAICheck()" style="padding:9px 18px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">🔍 Analisar agora</button>
-        </div>
-        <div id="ia-report" style="background:#0d1117;border:1px solid #1f2937;border-radius:12px;padding:20px;min-height:200px">
-          <div style="text-align:center;color:#6b7280;font-size:13px;padding:40px 0">
-            Clique em "Analisar agora" para a IA verificar seus usuários 🤖
-          </div>
-        </div>
-      </div>
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">🚨 Alertas de Fraude</div>
-        <div id="ia-alerts" style="display:flex;flex-direction:column;gap:10px">
-          <div style="text-align:center;padding:20px;color:#6b7280;font-size:13px">Nenhum alerta detectado</div>
-        </div>
-      </div>
-      <div class="panel-card">
-        <div class="panel-title">💬 Suporte via WhatsApp</div>
-        <div style="display:flex;align-items:center;gap:16px;padding:14px;background:#0d1117;border:1px solid #1f2937;border-radius:12px;margin-bottom:14px">
-          <div style="font-size:32px">📱</div>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:4px">Botão de Suporte para Usuários</div>
-            <div style="font-size:12px;color:#6b7280">Aparece no site para seus usuários pedirem ajuda</div>
-          </div>
-          <div style="margin-left:auto">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="support-toggle" onchange="toggleSupport(this)" style="width:18px;height:18px;cursor:pointer">
-              <span style="font-size:12px;color:#d1d5db">Ativo</span>
-            </label>
-          </div>
-        </div>
-        <div style="margin-bottom:12px">
-          <label class="dark-label">Seu número de WhatsApp (com DDD e +55)</label>
-          <input id="support-phone" class="dark-input" type="text" placeholder="+5585999999999" style="margin-bottom:8px">
-          <label class="dark-label">Mensagem inicial do bot</label>
-          <textarea id="support-msg" class="dark-input" rows="3" placeholder="Olá! Sou o suporte do CineCash IA. Como posso ajudar?"></textarea>
-        </div>
-        <button onclick="saveSupport()" style="padding:10px 20px;background:#16a34a;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">💾 Salvar configurações</button>
-      </div>
-    </div>
-
-<!-- USER DASHBOARD -->
-<div id="page-dashboard" class="page">
-<div class="dash-bg">
-  <header class="dash-header">
-    <div class="dash-logo">📹 CineCash IA</div>
-    <div class="dash-user-info">
-      <div class="dash-avatar" id="dash-avatar">?</div>
-      <span class="dash-username" id="dash-username">Usuário</span>
-      <button class="dash-logout-btn" onclick="doUserLogout()">Sair</button>
-    </div>
-  </header>
-  <div class="dash-body">
-    <!-- Nav tabs -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="dash-nav-btn active" onclick="showDashTab('videos',this)">📹 Vídeos</button>
-      <button class="dash-nav-btn" onclick="showDashTab('moedas',this)">🪙 Minhas Moedas</button>
-      <button class="dash-nav-btn" onclick="showDashTab('saque',this)">💸 Sacar</button>
-      <button class="dash-nav-btn" onclick="showDashTab('indicacoes',this)">🔗 Indicações</button>
-    </div>
-
-    <!-- Balance cards -->
-    <div class="balance-bar">
-      <div class="balance-card"><div class="balance-card-label">Saldo disponível</div><div class="balance-card-value green" id="dash-balance">R$ 0,00</div></div>
-      <div class="balance-card"><div class="balance-card-label">🪙 Moedas</div><div class="balance-card-value amber" id="dash-coins">0</div></div>
-      <div class="balance-card"><div class="balance-card-label">Vídeos assistidos</div><div class="balance-card-value purple" id="dash-videos">0</div></div>
-    </div>
-
-    <!-- Check-in -->
-    <div class="checkin-card">
-      <div class="checkin-info">
-        <h3>Check-in diário</h3>
-        <p>Entre todo dia e ganhe recompensa!</p>
-        <div class="streak-badge" id="streak-badge">🔥 0 dias seguidos</div>
-      </div>
-      <button id="checkin-btn" class="checkin-btn" onclick="doCheckIn()">🎁 Fazer Check-in</button>
-    </div>
-
-    <!-- TAB: VÍDEOS -->
-    <div id="dash-tab-videos" class="dash-tab-panel active">
-      <div class="section-title">📹 Vídeos disponíveis</div>
-      <div class="video-grid" id="user-video-grid"><div class="no-videos">Carregando vídeos...</div></div>
-    </div>
-
-    <!-- TAB: MOEDAS -->
-    <div id="dash-tab-moedas" class="dash-tab-panel" style="display:none">
-      <div class="section-title">🪙 Minhas Moedas & Recompensas</div>
-      <div id="coins-progress-card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:15px;font-weight:700;color:#fff">🪙 <span id="coins-display">0</span> moedas</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.5)">1 vídeo = 1 moeda</div>
-        </div>
-        <div id="next-reward-info" style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px">Próxima recompensa em breve...</div>
-        <div style="width:100%;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
-          <div id="coins-progress-bar" style="height:100%;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:4px;transition:width .5s;width:0%"></div>
-        </div>
-      </div>
-      <div class="section-title" style="margin-top:8px">🎁 Tabela de recompensas</div>
-      <div id="rewards-table" style="display:flex;flex-direction:column;gap:10px">
-        <div class="reward-row" data-vids="50" data-val="0.50"><div class="rr-left"><span class="rr-coins">🪙 50 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 0,50</span></div><div id="rr-btn-50" class="rr-btn locked">🔒</div></div>
-        <div class="reward-row" data-vids="100" data-val="1.00"><div class="rr-left"><span class="rr-coins">🪙 100 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 1,00</span></div><div id="rr-btn-100" class="rr-btn locked">🔒</div></div>
-        <div class="reward-row" data-vids="500" data-val="3.00"><div class="rr-left"><span class="rr-coins">🪙 500 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 3,00</span></div><div id="rr-btn-500" class="rr-btn locked">🔒</div></div>
-        <div class="reward-row" data-vids="1000" data-val="5.00"><div class="rr-left"><span class="rr-coins">🪙 1.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 5,00</span></div><div id="rr-btn-1000" class="rr-btn locked">🔒</div></div>
-        <div class="reward-row" data-vids="3000" data-val="10.00"><div class="rr-left"><span class="rr-coins">🪙 3.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 10,00</span></div><div id="rr-btn-3000" class="rr-btn locked">🔒</div></div>
-        <div class="reward-row" data-vids="9000" data-val="50.00"><div class="rr-left"><span class="rr-coins">🪙 9.000 vídeos</span><span class="rr-arrow">→</span><span class="rr-reward">R$ 50,00</span></div><div id="rr-btn-9000" class="rr-btn locked">🔒</div></div>
-      </div>
-    </div>
-
-    <!-- TAB: SAQUE -->
-    <div id="dash-tab-saque" class="dash-tab-panel" style="display:none">
-      <div class="withdraw-card">
-        <div class="withdraw-title">💸 Solicitar Saque</div>
-        <div id="withdraw-closed-msg" style="display:none;padding:12px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;color:#f87171;font-size:13px;margin-bottom:12px">⚠️ Saques temporariamente fechados pelo administrador.</div>
-        <input id="withdraw-pix" class="withdraw-input" type="text" placeholder="Sua chave PIX (CPF, email, telefone ou aleatória)">
-        <input id="withdraw-amount" class="withdraw-input" type="number" step="0.01" placeholder="Valor a sacar (mínimo R$ 10,00)">
-        <button id="withdraw-btn" class="withdraw-btn" onclick="requestWithdrawal()">💸 Solicitar Saque</button>
-        <div style="margin-top:20px">
-          <div class="withdraw-title" style="margin-bottom:12px">📋 Meus saques</div>
-          <div id="user-withdrawals-list"><div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: INDICAÇÕES -->
-    <div id="dash-tab-indicacoes" class="dash-tab-panel" style="display:none">
-      <div style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(14,165,233,.25));border:1px solid rgba(124,58,237,.3);border-radius:16px;padding:22px 24px;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px">🔗 Programa de Indicações</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px;line-height:1.6">Indique amigos e <strong style="color:#34d399">ambos ganham R$ 1,00</strong> quando o indicado assistir 30 vídeos!</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:8px">Seu link de indicação:</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <div id="referral-link-box" style="flex:1;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-size:12px;color:#a78bfa;word-break:break-all;font-family:monospace">Carregando...</div>
-          <button onclick="copyReferralLink()" style="padding:10px 16px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap">📋 Copiar</button>
-        </div>
-        <button onclick="shareReferral()" style="width:100%;margin-top:10px;padding:11px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📤 Compartilhar via WhatsApp</button>
-      </div>
-      <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 24px">
-        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px">📊 Minhas indicações</div>
-        <div class="balance-bar" style="margin-bottom:14px">
-          <div class="balance-card"><div class="balance-card-label">Total indicados</div><div class="balance-card-value purple" id="ref-total">0</div></div>
-          <div class="balance-card"><div class="balance-card-label">Indicações concluídas</div><div class="balance-card-value green" id="ref-completed">0</div></div>
-          <div class="balance-card"><div class="balance-card-label">Ganhos por indicação</div><div class="balance-card-value amber" id="ref-earned">R$ 0,00</div></div>
-        </div>
-        <div id="referral-list"><div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhuma indicação ainda</div></div>
-      </div>
-      <div style="margin-top:14px;padding:14px 18px;background:rgba(255,255,255,.05);border-radius:12px">
-        <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">📋 Como funciona:</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.8">
-          1. Compartilhe seu link único<br>
-          2. Amigo entra pelo link e se cadastra<br>
-          3. Amigo assiste 30 vídeos<br>
-          4. Ambos ganham R$ 1,00 automaticamente! 🎉
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- Watch Video Modal -->
-<div class="watch-modal-overlay" id="modal-watch">
-  <div class="watch-modal">
-    <!-- AD COUNTDOWN OVERLAY (shown after video) -->
-    <div id="ad-overlay" style="display:none;position:absolute;inset:0;background:#0a0a1a;border-radius:20px;z-index:10;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center">
-      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px">Anúncio do patrocinador</div>
-      <div style="font-size:40px;margin-bottom:12px">📢</div>
-      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Aguarde o anúncio finalizar</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:20px">Você receberá sua recompensa em instantes!</div>
-      <div style="font-size:52px;font-weight:700;color:#7c3aed;margin-bottom:12px" id="ad-countdown">30</div>
-      <div style="width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:16px">
-        <div id="ad-progress" style="height:100%;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border-radius:3px;width:0%;transition:width .5s"></div>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.3)">O vídeo está aberto em outra aba — não feche ainda!</div>
-    </div>
-    <div id="watch-main-content">
-      <div class="watch-modal-title" id="watch-modal-title">Assistindo vídeo</div>
-      <div class="watch-modal-sub" id="watch-modal-sub">Assista pelo menos 30 segundos para ganhar</div>
-      <div class="watch-timer" id="watch-timer">30</div>
-      <div class="watch-progress"><div class="watch-progress-fill" id="watch-progress-fill" style="width:0%"></div></div>
-      <a id="watch-video-link" href="#" target="_blank" rel="noopener"><button class="watch-open-btn">▶ Abrir vídeo no YouTube</button></a>
-      <br>
-      <button class="watch-cancel-btn" onclick="cancelWatch()">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modais -->
-<div class="modal-overlay" id="modal-edit">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
-    <div class="modal-title">Editar Usuário</div>
-    <input type="hidden" id="edit-user-id">
-    <div style="margin-bottom:12px"><label class="dark-label">Nome Completo</label><input id="edit-fullname" class="dark-input" type="text"></div>
-    <div style="margin-bottom:12px"><label class="dark-label">Nome de Exibição</label><input id="edit-display" class="dark-input" type="text"></div>
-    <div style="margin-bottom:12px"><label class="dark-label">Email</label><input id="edit-email" class="dark-input" type="email"></div>
-    <div style="margin-bottom:12px"><label class="dark-label">Status</label><select id="edit-status" class="dark-input"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
-    <div class="modal-actions"><button class="modal-cancel" onclick="closeModal('modal-edit')">Cancelar</button><button class="modal-save" onclick="saveEditUser()">Salvar</button></div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-delete">
-  <div class="modal-box" style="max-width:380px">
-    <button class="modal-close" onclick="closeModal('modal-delete')">✕</button>
-    <div class="modal-title">Remover Usuário</div>
-    <p style="font-size:13px;color:#9ca3af">Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.</p>
-    <input type="hidden" id="delete-user-id">
-    <div class="modal-actions"><button class="modal-cancel" onclick="closeModal('modal-delete')">Cancelar</button><button class="modal-delete" onclick="confirmDelete()">Remover</button></div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
-
-<script type="module">
-import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAnalytics }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-import {
-  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  getDatabase, ref, set, get, update, remove, onValue, push, off
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
-  authDomain:"playearn-b001b.firebaseapp.com",
-  databaseURL:"https://playearn-b001b-default-rtdb.firebaseio.com",
-  projectId:"playearn-b001b",
-  storageBucket:"playearn-b001b.firebasestorage.app",
-  messagingSenderId:"563829659490",
-  appId:"1:563829659490:web:88e1f869db48b1df41fe3b",
-  measurementId:"G-YDPS46ZDEZ"
-};
-
-const app  = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app); // Desativado temporariamente
-const auth = getAuth(app);
-const db   = getDatabase(app);
-
-const ADMIN_CREDS = null; // credentials stored securely in Firebase
-let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-function fmtDate(ts){return new Date(ts).toLocaleDateString('pt-BR')}
-function fmt(v){return 'R$ '+Number(v||0).toFixed(2)}
-function fmtU(v){return '$'+Number(v||0).toFixed(2)}
-function setLoading(id,on,label){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.textContent=on?'⏳ Aguarde...':label}
-function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
-function showPage(name){document.querySelectorAll('.page,.admin-page').forEach(p=>p.classList.remove('active'));const el=document.getElementById('page-'+name);if(el)el.classList.add('active')}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
-function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
-
-// auth state handled in dashboard section below
-
-// ── ✅ register ───────────────────────────────────────────────────────────────
-async function doRegister(){
-  const fullname=document.getElementById('reg-fullname').value.trim()
-  const display=document.getElementById('reg-display').value.trim()
-  const email=document.getElementById('reg-email').value.trim()
-  const pass=document.getElementById('reg-password').value
-  const confirm=document.getElementById('reg-confirm').value
-  if(!fullname||!display||!email||!pass||!confirm)return showToast('Preencha todos os campos!','error')
-  if(pass.length<8)return showToast('A senha deve ter no mínimo 8 caracteres!','error')
-  if(pass[0]!==pass[0].toUpperCase())return showToast('A senha deve começar com letra maiúscula!','error')
-  if(pass!==confirm)return showToast('As senhas não coincidem!','error')
-  setLoading('reg-btn',true,'Criar Conta')
-  try{
-    const cred=await createUserWithEmailAndPassword(auth,email,pass)
-    await set(ref(db,'users/'+cred.user.uid),{fullname,display,email,createdAt:Date.now(),status:'ativo',balance:0,videosWatched:0})
-    showToast('Conta criada com sucesso! ✅','success')
-    setTimeout(()=>showPage('login'),1000)
-  }catch(err){showToast(fbError(err),'error')}
-  finally{setLoading('reg-btn',false,'Criar Conta')}
-}
-
-// ── ✅ login (corrigido — estava com o corpo cortado) ─────────────────────────
-async function doLogin(){
-  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado. Aguarde.','error')
-  if(_fraudLog) antiFraud_checkLogin()
-
-  const input = document.getElementById('login-email').value.trim()
-  const pass  = document.getElementById('login-password').value
-  if(!input || !pass) return showToast('Preencha usuário/email e senha!','error')
-
-  // Verificar modo offline antes de fazer login
-  try {
-    const offlineSnap = await get(ref(db, 'config/offlineMode'))
-    if(offlineSnap.val() === true){
-      // Se for admin, permite
-      const isAdmin = input.toLowerCase().includes('admin')
-      // Se for usuarioteste (por email ou nome de usuário)
-      const isTestUser = input.toLowerCase().includes('teste')
-      
-      if(!isAdmin && !isTestUser){
-        return showToast('🔧 Estamos em manutenção. Tente novamente mais tarde.','error')
-      }
-    }
-  } catch(e){}
-
-  setLoading('login-btn', true, '⏳ Entrando...')
-  try {
-    // ── Resolve email: se digitou admin16 → admin@cinecash.com.br ──────────
-    let emailToUse = input
-    if(!input.includes('@')){
-      // Could be username → check Firebase mapping
-      emailToUse = input.toLowerCase() + '@cinecash.com.br'
-    }
-
-    // ── Firebase Auth login ────────────────────────────────────────────────
-    const cred = await signInWithEmailAndPassword(auth, emailToUse, pass)
-    const uid  = cred.user.uid
-
-    // ── Check if this UID is the admin ─────────────────────────────────────
-    const adminSnap = await get(ref(db, 'config/adminUID'))
-    if(adminSnap.exists() && adminSnap.val() === uid){
-      // ✅ IS ADMIN
-      _cachedUsers = []; _cachedVideos = []
-      showPage('admin-dashboard')
-      attachRealtimeListeners()
-      loadMaintenanceState()
-      setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
-      showToast('🛡 Bem-vindo, Admin!', 'success')
-      return
-    }
-
-    // ── Regular user handled by onAuthStateChanged ─────────────────────────
-
-  } catch(err) {
-    // If email not found, try looking up by display name
-    if(!input.includes('@') && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential')){
-      try {
-        const usersSnap = await get(ref(db,'users'))
-        if(usersSnap.exists()){
-          const found = Object.values(usersSnap.val()).find(u =>
-            (u.display||'').toLowerCase() === input.toLowerCase() ||
-            (u.fullname||'').toLowerCase() === input.toLowerCase()
-          )
-          if(found && found.email){
-            const cred2 = await signInWithEmailAndPassword(auth, found.email, pass)
-            // onAuthStateChanged handles the redirect
-            return
-          }
-        }
-      } catch(_){}
-    }
-    showToast(fbError(err), 'error')
-  } finally {
-    setLoading('login-btn', false, 'Entrar')
-  }
-}
-
-// ── ✅ google login (corrigido — estava duplicado e com syntax error) ─────────
-async function doGoogleLogin(){
-  const provider=new GoogleAuthProvider()
-  try{
-    const result=await signInWithPopup(auth,provider)
-    const user=result.user
-    const snap=await get(ref(db,'users/'+user.uid))
-    if(!snap.exists()){
-      await set(ref(db,'users/'+user.uid),{
-        fullname:user.displayName||'Usuário Google',
-        display:(user.displayName||'').split(' ')[0]||'Usuário',
-        email:user.email,
-        createdAt:Date.now(),
-        status:'ativo',
-        balance:0,
-        videosWatched:0
-      })
-    }
-    showToast('Login com Google realizado! ✅','success')
-  }catch(err){showToast(fbError(err),'error')}
-}
-
-// ── admin login — now handled by doLogin ─────────
-async function doAdminLogin(){}
-
-function doAdminLogout(){
-  try{off(ref(db,'users'));off(ref(db,'videos'))}catch(_){}
-  _cachedUsers=[];_cachedVideos=[]
-  showPage('login')
-}
-
-// ── realtime ──────────────────────────────────────────────────────────────────
-function attachRealtimeListeners(){
-  onValue(ref(db,'users'),snap=>{
-    _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
-    updateStats();renderUsersTable();updateLucros()
-  })
-  onValue(ref(db,'videos'),snap=>{
-    _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
-    renderVideosTable();updateLucros()
-  })
-}
-
-// ── tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'))
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'))
-  document.getElementById('tab-'+name).classList.add('active')
-  btn.classList.add('active')
-  if(name==='crescimento')setTimeout(renderCharts,50)
-  if(name==='lucros')updateLucros()
-}
-
-// ── stats ──────────────────────────────────────────────────────────────────────
-function updateStats(){
-  const users=_cachedUsers
-  const totalVid=users.reduce((a,u)=>a+(u.videosWatched||0),0)
-  document.getElementById('stat-total').textContent=users.length
-  document.getElementById('stat-active').textContent=users.filter(u=>u.status==='ativo').length
-  document.getElementById('stat-videos').textContent=totalVid
-  document.getElementById('stat-saques').textContent=0
-  document.getElementById('g-total').textContent=users.length
-  const now=new Date(),m=now.getMonth(),y=now.getFullYear()
-  const newM=users.filter(u=>{const d=new Date(u.createdAt);return d.getMonth()===m&&d.getFullYear()===y}).length
-  document.getElementById('g-month').textContent=newM
-  const prev=users.length-newM
-  document.getElementById('g-rate').textContent=(prev===0?'0.0':((newM/prev)*100).toFixed(1))+'%'
-}
-
-// ── users table ────────────────────────────────────────────────────────────────
-function renderUsersTable(){
-  const query=(document.getElementById('user-search')||{}).value||''
-  const all=_cachedUsers
-  const users=all.filter(u=>{if(!query)return true;const q=query.toLowerCase();return(u.fullname||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)||(u.uid||'').toLowerCase().includes(q)})
-  const tbody=document.getElementById('users-tbody')
-  if(!tbody)return
-  if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>';document.getElementById('users-footer').textContent='Nenhum usuário encontrado';return}
-  tbody.innerHTML=users.map(u=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td><td><div class="user-names"><div class="name">${u.fullname||'-'}</div><div class="display">${u.display||''}</div></div></td><td>${u.email||'-'}</td><td style="color:#a78bfa">${u.videosWatched||0}</td><td style="color:#34d399">R$ ${Number(u.balance||0).toFixed(2)}</td><td>${fmtDate(u.createdAt)}</td><td>${u.status==='ativo'?'<span class="badge-active">✓ Ativo</span>':'<span class="badge-inactive">✗ Inativo</span>'}</td><td><button class="action-btn action-edit" onclick="window.openEditModal('${u.uid}')">Editar</button><button class="action-btn action-del" onclick="window.openDeleteModal('${u.uid}')">Remover</button></td></tr>`).join('')
-  document.getElementById('users-footer').textContent='Mostrando '+users.length+' de '+all.length+' usuário'+(all.length!==1?'s':'')
-}
-
-function openEditModal(uid){
-  const user=_cachedUsers.find(u=>u.uid===uid);if(!user)return
-  document.getElementById('edit-user-id').value=uid
-  document.getElementById('edit-fullname').value=user.fullname||''
-  document.getElementById('edit-display').value=user.display||''
-  document.getElementById('edit-email').value=user.email||''
-  document.getElementById('edit-status').value=user.status||'ativo'
-  document.getElementById('modal-edit').classList.add('open')
-}
-
-async function saveEditUser(){
-  const uid=document.getElementById('edit-user-id').value
-  try{await update(ref(db,'users/'+uid),{fullname:document.getElementById('edit-fullname').value.trim(),display:document.getElementById('edit-display').value.trim(),email:document.getElementById('edit-email').value.trim(),status:document.getElementById('edit-status').value});closeModal('modal-edit');showToast('Usuário atualizado! ✅','success')}
-  catch(err){showToast('Erro: '+err.message,'error')}
-}
-
-function openDeleteModal(uid){document.getElementById('delete-user-id').value=uid;document.getElementById('modal-delete').classList.add('open')}
-
-async function confirmDelete(){
-  const uid=document.getElementById('delete-user-id').value
-  try{await remove(ref(db,'users/'+uid));closeModal('modal-delete');showToast('Usuário removido!','success')}
-  catch(err){showToast('Erro: '+err.message,'error')}
-}
-
-// ── videos ────────────────────────────────────────────────────────────────────
-async function addVideo(){
-  const title=document.getElementById('vid-title').value.trim()
-  const url=document.getElementById('vid-url').value.trim()
-  const reward=parseFloat(document.getElementById('vid-reward').value)||0
-  if(!title||!url)return showToast('Preencha título e URL!','error')
-  try{await push(ref(db,'videos'),{title,url,reward,createdAt:Date.now()});document.getElementById('vid-title').value='';document.getElementById('vid-url').value='';document.getElementById('vid-reward').value='';showToast('Vídeo adicionado! ✅','success')}
-  catch(err){showToast('Erro: '+err.message,'error')}
-}
-
-function renderVideosTable(){
-  const videos=_cachedVideos;const tbody=document.getElementById('videos-tbody');if(!tbody)return
-  if(!videos.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:24px">Nenhum vídeo cadastrado</td></tr>';document.getElementById('videos-footer').textContent='Nenhum vídeo cadastrado';return}
-  tbody.innerHTML=videos.map(v=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${v.id.substring(0,12)}...</td><td style="color:#fff;font-weight:500">${v.title}</td><td><a href="${v.url}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${v.url.substring(0,38)}${v.url.length>38?'...':''}</a></td><td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td><td>${fmtDate(v.createdAt)}</td><td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td></tr>`).join('')
-  document.getElementById('videos-footer').textContent=videos.length+' vídeo'+(videos.length!==1?'s':'')+' cadastrado'+(videos.length!==1?'s':'')
-}
-
-async function deleteVideo(id){
-  try{await remove(ref(db,'videos/'+id));showToast('Vídeo removido!','success')}
-  catch(err){showToast('Erro: '+err.message,'error')}
-}
-
-// ── charts ────────────────────────────────────────────────────────────────────
-function renderCharts(){
-  const users=_cachedUsers;const months=[],counts=[]
-  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}));counts.push(users.filter(u=>{const ud=new Date(u.createdAt);return ud.getMonth()===d.getMonth()&&ud.getFullYear()===d.getFullYear()}).length)}
-  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
-  const weekCounts=days.map((_,i)=>{const t=new Date();t.setDate(t.getDate()-(t.getDay()-i+7)%7);return _cachedVideos.filter(v=>new Date(v.createdAt).toDateString()===t.toDateString()).length})
-  const opts={responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1f2937'},ticks:{color:'#6b7280',font:{size:11}}},y:{grid:{color:'#1f2937'},ticks:{color:'#6b7280',font:{size:11}},beginAtZero:true}}}
-  const c1=document.getElementById('chart-growth');if(chartGrowth)chartGrowth.destroy()
-  chartGrowth=new Chart(c1,{type:'line',data:{labels:months,datasets:[{data:counts,borderColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.1)',tension:.4,pointBackgroundColor:'#60a5fa',pointRadius:4,fill:true}]},options:opts})
-  const c2=document.getElementById('chart-weekly');if(chartWeekly)chartWeekly.destroy()
-  chartWeekly=new Chart(c2,{type:'line',data:{labels:days,datasets:[{data:weekCounts,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',tension:.4,pointBackgroundColor:'#a78bfa',pointRadius:4,fill:true}]},options:opts})
-}
-
-// ── lucros ────────────────────────────────────────────────────────────────────
-function updateLucros(){
-  const users=_cachedUsers;const totalVid=users.reduce((a,u)=>a+(u.videosWatched||0),0);const totalBal=users.reduce((a,u)=>a+Number(u.balance||0),0)
-  const taxa=parseFloat(document.getElementById('conv-taxa')?.value)||5.25;const bruto=totalBal,pag=0,pend=totalBal,lucro=bruto-pag-pend
-  document.getElementById('p-usd').textContent=fmtU(bruto/taxa);document.getElementById('p-brl').textContent=fmt(bruto);document.getElementById('p-pag').textContent=fmt(pag);document.getElementById('p-lucro').textContent=fmt(lucro)
-  document.getElementById('an-bruta').textContent=fmt(bruto);document.getElementById('an-pag').textContent='- '+fmt(pag);document.getElementById('an-pend').textContent='- '+fmt(pend);document.getElementById('an-liquido').textContent=fmt(lucro)
-  document.getElementById('ins-margem').textContent='• Margem de lucro: '+(bruto===0?'0':((lucro/bruto)*100).toFixed(1))+'%'
-  document.getElementById('ins-pervideo').textContent='• Receita por vídeo: R$'+(totalVid===0?'0.000':(bruto/totalVid).toFixed(3))
-  document.getElementById('ins-totalvid').textContent='• Total de vídeos: '+totalVid
-  document.getElementById('fontes-amount').textContent=fmt(bruto);document.getElementById('fontes-count').textContent=totalVid+' vídeos'
-}
-
-function doConversion(){
-  const taxa=parseFloat(document.getElementById('conv-taxa').value)||5.25;const valor=parseFloat(document.getElementById('conv-valor').value)||0
-  if(!valor)return showToast('Digite um valor para converter!','error')
-  showToast(fmtU(valor)+' = '+fmt(valor*taxa)+' registrado!','success');document.getElementById('conv-valor').value=''
-}
-
-// ── expõe funções globais ──────────────────────────────────────────────────────
-
-// ═══════════════════════════════════════════════════════════
-//  MODO MANUTENÇÃO — Firebase Realtime
-// ═══════════════════════════════════════════════════════════
-let _isMaintenance = false
-let _isTestMode = false
-
-// Verifica modo manutenção ao carregar a página (para usuários normais)
-async function checkMaintenance(){
-  try {
-    const snap = await get(ref(db, 'config/maintenance'))
-    if(snap.exists() && snap.val() === true){
-      _isMaintenance = true
-      const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
-      const msg = msgSnap.exists() ? msgSnap.val() : 'Estamos realizando melhorias. Voltamos em breve!'
-      document.getElementById('maintenance-msg').textContent = msg
-      const mp = document.getElementById('maintenance-page')
-      mp.style.display = 'flex'
-    }
-  } catch(_){}
-}
-
-async function toggleMaintenance(){
-  const newState = !_isMaintenance
-  const btn = document.getElementById('maintenance-btn')
-  btn.disabled = true
-  try {
-    await set(ref(db, 'config/maintenance'), newState)
-    await set(ref(db, 'config/maintenanceMessage'), 'Estamos realizando melhorias. Voltamos em breve!')
-    _isMaintenance = newState
-    updateMaintenanceBtn()
-    showToast(newState ? '🔧 Modo manutenção ATIVADO!' : '✅ Site voltou ao ar!', newState ? 'info' : 'success')
-  } catch(err){
-    showToast('Erro: '+err.message, 'error')
-  } finally {
-    btn.disabled = false
-  }
-}
-
-function updateMaintenanceBtn(){
-  const span = document.getElementById('maint-status')
-  const btn  = document.getElementById('maintenance-btn')
-  if(!span || !btn) return
-  if(_isMaintenance){
-    span.textContent = 'ON'
-    btn.style.background = '#dc2626'
-    btn.style.borderColor = '#ef4444'
-    btn.style.color = '#fff'
-  } else {
-    span.textContent = 'OFF'
-    btn.style.background = '#1f2937'
-    btn.style.borderColor = '#374151'
-    btn.style.color = '#fbbf24'
-  }
-}
-
-function updateTestModeBtn(){
-  const span = document.getElementById('testmode-status')
-  const btn  = document.getElementById('testmode-btn')
-  if(!span || !btn) return
-  if(_isTestMode){
-    span.textContent = 'ON'
-    btn.style.background = '#2563eb'
-    btn.style.borderColor = '#3b82f6'
-    btn.style.color = '#fff'
-  } else {
-    span.textContent = 'OFF'
-    btn.style.background = '#1f2937'
-    btn.style.borderColor = '#374151'
-    btn.style.color = '#60a5fa'
-  }
-}
-
-async function toggleTestMode(){
-  const newState = !_isTestMode
-  const btn = document.getElementById('testmode-btn')
-  btn.disabled = true
-  try {
-    await set(ref(db, 'config/testMode'), newState)
-    _isTestMode = newState
-    updateTestModeBtn()
-    showToast(newState ? '🔓 Modo Teste ATIVADO!' : '🔒 Modo Teste DESATIVADO!', newState ? 'info' : 'success')
-  } catch(err){
-    showToast('Erro: '+err.message, 'error')
-  } finally {
-    btn.disabled = false
-  }
-}
-
-// Ao abrir o painel admin, carrega estado atual de manutenção e modo teste
-async function loadMaintenanceState(){
-  try {
-    const maintSnap = await get(ref(db, 'config/maintenance'))
-    _isMaintenance = maintSnap.exists() && maintSnap.val() === true
-    updateMaintenanceBtn()
-
-    const testSnap = await get(ref(db, 'config/testMode'))
-    _isTestMode = testSnap.exists() && testSnap.val() === true
-    updateTestModeBtn()
-  } catch(_){}
-}
-
-// ── Admin access URLs ────────────────────────────────────────
-// cinecash.com.br/#admin  ← URL secreta
-// cinecash.com.br/?adm=1  ← URL alternativa
-// Duplo clique no logo    ← acesso discreto
-// ── Admin access — checked synchronously BEFORE Firebase ─────────────────
-// Detects: cinecash.com.br/#admin OR cinecash.com.br/?adm=1
-// Admin access: via login form only (secure)
-
-function checkAdminHash(){ return false }
-
-// Escuta manutenção e modo teste em TEMPO REAL via Firebase Realtime Database
-function initMaintenanceListener(){
-  try {
-    // Listener de manutenção - desconecta todos os usuários
-    onValue(ref(db, 'config/maintenance'), async (snapshot) => {
-      const isMaintenance = snapshot.val() === true
-      const wasMaintenance = _isMaintenance
-      _isMaintenance = isMaintenance
-      
-      const mp = document.getElementById('maintenance-page')
-      if(mp){
-        mp.style.display = isMaintenance ? 'flex' : 'none'
-      }
-      updateMaintenanceBtn()
-      console.log('[Realtime] Manutenção:', isMaintenance ? 'ATIVA' : 'Desativada')
-      
-      // Se manutenção foi ATIVADA, desconectar todos os usuários
-      if(isMaintenance && !wasMaintenance){
-        console.log('[Manutenção] Desconectando todos os usuários...')
-        try {
-          await signOut(auth)
-          localStorage.removeItem('cinecash_user')
-          localStorage.removeItem('cinecash_token')
-          showPage('page-login')
-          showToast('🔧 Site em manutenção. Volte mais tarde!', 'info')
-        } catch(e){ console.error('Erro ao desconectar:', e) }
-      }
-    }, (err) => console.error('Erro manutenção:', err))
-
-    // Listener de modo offline - bloqueia todos exceto admin e usuarioteste
-    onValue(ref(db, 'config/offlineMode'), (snapshot) => {
-      const isOffline = snapshot.val() === true
-      _isTestMode = isOffline
-      console.log('[Realtime] Modo Offline:', isOffline ? 'ATIVO' : 'Desativado')
-      if(isOffline){
-        updateOfflineBtn()
-        console.log('[Offline] Apenas admin e usuarioteste podem acessar')
-      } else {
-        updateOfflineBtn()
-      }
-    }, (err) => console.error('Erro offline:', err))
-
-  } catch(e){
-    console.error('Falha ao inicializar listeners:', e)
-  }
-}
-
-// Verifica se usuário pode acessar em modo offline
-async function canAccessInOfflineMode() {
-  try {
-    const currentUser = auth.currentUser
-    if(!currentUser) return false
-    
-    const email = currentUser.email || currentUser.providerData?.[0]?.email || ''
-    
-    // Admin sempre pode acessar
-    if(email === 'admin@cinecash.com.br' || email === 'admin16@meuhub.com.br'){
-      return true
-    }
-    
-    // Usuário especial "usuarioteste" pode acessar
-    const userSnap = await get(ref(db, 'users/' + currentUser.uid))
-    if(userSnap.exists()){
-      const userData = userSnap.val()
-      if(userData.name && userData.name.toLowerCase().includes('teste')){
-        return true
-      }
-      if(userData.email && userData.email.toLowerCase().includes('teste')){
-        return true
-      }
-    }
-    
-    return false
-  } catch(e){
-    return false
-  }
-}
-
-// Verifica se está em modo offline e bloqueia login
-async function checkOfflineModeBlock(email, password) {
-  try {
-    const snap = await get(ref(db, 'config/offlineMode'))
-    if(snap.val() === true){
-      // Se for admin ou email含有teste, permite
-      if(email && (email === 'admin@cinecash.com.br' || email === 'admin16@meuhub.com.br' || email.toLowerCase().includes('teste'))){
-        return { allowed: true }
-      }
-      return { allowed: false, message: '🔧 Estamos em manutenção. Tente novamente mais tarde.' }
-    }
-    return { allowed: true }
-  } catch(e){
-    return { allowed: true }
-  }
-}
-
-function updateOfflineBtn(){
-  const span = document.getElementById('offline-status')
-  const btn  = document.getElementById('offline-btn')
-  if(!span || !btn) return
-  if(_isTestMode){
-    span.textContent = 'ON'
-    btn.style.background = '#dc2626'
-    btn.style.borderColor = '#ef4444'
-    btn.style.color = '#fff'
-  } else {
-    span.textContent = 'OFF'
-    btn.style.background = '#1f2937'
-    btn.style.borderColor = '#374151'
-    btn.style.color = '#60a5fa'
-  }
-}
-
-async function toggleOfflineMode(){
-  const newState = !_isTestMode
-  const btn = document.getElementById('offline-btn')
-  if(btn) btn.disabled = true
-  try {
-    await set(ref(db, 'config/offlineMode'), newState)
-    _isTestMode = newState
-    updateOfflineBtn()
-    showToast(newState ? '🔒 Modo Offline ATIVADO - Apenas admin pode acessar' : '🔓 Modo Offline DESATIVADO - Site liberado!', newState ? 'warning' : 'success')
-    
-    // Se ativou offline, desconectar todos usuários comuns
-    if(newState){
-      try { await signOut(auth) } catch(e){}
-    }
-  } catch(err){
-    showToast('Erro: '+err.message, 'error')
-  } finally {
-    if(btn) btn.disabled = false
-  }
-}
-
-// Inicializa listener em tempo real e também verifica ao carregar
-// Temporariamente desativado para teste - descomente após teste
-// initMaintenanceListener()
-// setTimeout(checkMaintenance, 500)
-
-// ── Anti-fraude: detecta tentativas suspeitas ─────────────
-const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
-
-function antiFraud_checkLogin(){
-  const now = Date.now()
-  // Reset contador se passou mais de 5 minutos
-  if(now - _fraudLog.lastAttempt > 5 * 60 * 1000) _fraudLog.attempts = 0
-  _fraudLog.attempts++
-  _fraudLog.lastAttempt = now
-  if(_fraudLog.attempts > 5){
-    _fraudLog.blocked = true
-    showToast('Muitas tentativas. Aguarde 5 minutos.', 'error')
-    setTimeout(()=>{ _fraudLog.blocked = false; _fraudLog.attempts = 0 }, 5*60*1000)
-    return false
-  }
-  return true
-}
-
-function antiFraud_checkVideoWatch(uid, videoId){
-  // Chave local para evitar duplo clique
-  const key = `watched_${uid}_${videoId}`
-  if(sessionStorage.getItem(key)){
-    showToast('Você já assistiu este vídeo nesta sessão!', 'error')
-    return false
-  }
-  sessionStorage.setItem(key, '1')
-  return true
-}
-
-
-// ═══════════════════════════════════════════════════════════
-//  USER DASHBOARD
-// ═══════════════════════════════════════════════════════════
-let _currentUser = null
-let _watchTimer = null
-let _watchVideoId = null
-let _watchDuration = 30
-
-// Auth state - handles user login/logout
-onAuthStateChanged(auth, async user => {
-  // ❌ Never interfere with admin pages
-  const adminActive = document.getElementById('page-admin-login')?.classList.contains('active')
-    || document.getElementById('page-admin-dashboard')?.classList.contains('active')
-  if(adminActive) return
-
-  // ❌ Never interfere if admin mode was triggered via URL
-  if(user){
-    const snap = await get(ref(db, 'users/'+user.uid))
-    if(!snap.exists()) return
-    const profile = snap.val()
-    if(profile.status === 'inativo'){
-      showToast('Conta inativa. Contate o suporte.','error')
-      await signOut(auth); return
-    }
-    _currentUser = { uid: user.uid, ...profile }
-    const onLoginPage = ['page-login','page-register','page-maintenance'].some(
-      id => document.getElementById(id)?.classList.contains('active')
-    )
-    const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
-    if(onLoginPage || (!onDash)){
-      showToast('Bem-vindo, '+profile.display+'! ✅','success')
-      showPage('dashboard')
-      loadMonetag()
-      loadUserDashboard()
-      initSupportWidget()
-    }
-  } else {
-    const onDash = document.getElementById('page-dashboard')?.classList.contains('active')
-    if(onDash){ _currentUser=null; showPage('login') }
-  }
-})
-
-// Reward thresholds
-const REWARD_LEVELS = [
-  { vids:50,   val:0.50 },
-  { vids:100,  val:1.00 },
-  { vids:500,  val:3.00 },
-  { vids:1000, val:5.00 },
-  { vids:3000, val:10.00},
-  { vids:9000, val:50.00}
-]
-
-function showDashTab(name, btn){
-  document.querySelectorAll('.dash-tab-panel').forEach(p=>{ p.style.display='none'; p.classList.remove('active') })
-  document.querySelectorAll('.dash-nav-btn').forEach(b=>b.classList.remove('active'))
-  const el = document.getElementById('dash-tab-'+name)
-  if(el){ el.style.display='block'; el.classList.add('active') }
-  if(btn) btn.classList.add('active')
-  if(name==='indicacoes') loadReferralTab()
-}
-
-async function loadUserDashboard(){
-  if(!_currentUser) return
-  const snap = await get(ref(db,'users/'+_currentUser.uid))
-  if(!snap.exists()) return
-  const u = snap.val()
-  _currentUser = { ..._currentUser, ...u }
-
-  const avatar = document.getElementById('dash-avatar')
-  const username = document.getElementById('dash-username')
-  if(avatar) avatar.textContent = (u.display||'U')[0].toUpperCase()
-  if(username) username.textContent = u.display||'Usuário'
-
-  const bal = document.getElementById('dash-balance')
-  const coins = document.getElementById('dash-coins')
-  const vids = document.getElementById('dash-videos')
-  const streak = document.getElementById('dash-streak')
-  const streakBadge = document.getElementById('streak-badge')
-  const coinsDisp = document.getElementById('coins-display')
-
-  const totalVids = u.videosWatched||0
-  if(bal) bal.textContent = 'R$ '+Number(u.balance||0).toFixed(2).replace('.',',')
-  if(coins) coins.textContent = totalVids
-  if(coinsDisp) coinsDisp.textContent = totalVids
-  if(vids) vids.textContent = totalVids
-  if(streak) streak.textContent = (u.checkInStreak||0)+' 🔥'
-  if(streakBadge) streakBadge.textContent = '🔥 '+(u.checkInStreak||0)+' dias seguidos'
-
-  updateCheckInBtn(u)
-  updateRewardButtons(totalVids, u.claimedRewards||{})
-  fetchYouTubeVideos() // auto-fetch videos daily
-  loadUserVideos()
-  loadWithdrawalsConfig()
-  loadUserWithdrawals()
-  loadReferralStats()
-}
-
-function updateRewardButtons(totalVids, claimedRewards){
-  // Find next level
-  let nextLevel = null
-  for(const lvl of REWARD_LEVELS){
-    if(totalVids < lvl.vids){ nextLevel = lvl; break }
-  }
-  const pct = nextLevel ? Math.min((totalVids/nextLevel.vids)*100, 100) : 100
-  const bar = document.getElementById('coins-progress-bar')
-  const info = document.getElementById('next-reward-info')
-  if(bar) bar.style.width = pct+'%'
-  if(info && nextLevel) info.textContent = `Faltam ${nextLevel.vids - totalVids} vídeos para ganhar R$ ${nextLevel.val.toFixed(2)}!`
-  else if(info) info.textContent = '🏆 Você atingiu o nível máximo!'
-
-  for(const lvl of REWARD_LEVELS){
-    const btn = document.getElementById('rr-btn-'+lvl.vids)
-    const row = btn?.closest('.reward-row')
-    if(!btn) continue
-    const claimed = claimedRewards && claimedRewards[lvl.vids]
-    if(claimed){
-      btn.textContent='✅ Resgatado'; btn.className='rr-btn claimed'
-      row?.classList.add('claimed')
-    } else if(totalVids >= lvl.vids){
-      btn.textContent='🎁 Resgatar'; btn.className='rr-btn ready'
-      btn.onclick = ()=>claimReward(lvl.vids, lvl.val)
-      row?.classList.add('unlocked')
-    } else {
-      btn.textContent='🔒'; btn.className='rr-btn locked'
-    }
-  }
-}
-
-async function claimReward(vids, val){
-  if(!_currentUser) return
-  const snap = await get(ref(db,'users/'+_currentUser.uid))
-  const u = snap.val()
-  if(Number(u.videosWatched||0) < vids) return showToast('Assista mais vídeos!','error')
-  if(u.claimedRewards && u.claimedRewards[vids]) return showToast('Recompensa já resgatada!','error')
-
-  // Admin earns 10% of reward
-  const adminEarn = val * 0.10
-  const adminBal = Number((await get(ref(db,'config/adminBalance'))).val()||0)
-  await set(ref(db,'config/adminBalance'), adminBal + adminEarn)
-
-  await update(ref(db,'users/'+_currentUser.uid),{
-    balance: Number(u.balance||0)+val,
-    totalEarned: Number(u.totalEarned||0)+val,
-    ['claimedRewards/'+vids]: Date.now()
-  })
-  showToast('🎉 R$ '+val.toFixed(2)+' adicionado ao seu saldo!','success')
-  loadUserDashboard()
-}
-
-function updateCheckInBtn(u){
-  const btn = document.getElementById('checkin-btn')
-  if(!btn) return
-  const today = new Date().toDateString()
-  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
-  if(lastCI === today){
-    btn.disabled = true
-    btn.textContent = '✅ Check-in feito hoje!'
-  } else {
-    btn.disabled = false
-    btn.textContent = '🎁 Fazer Check-in'
-  }
-}
-
-// _pendingCheckIn: set to true when user clicks check-in, cleared after watching
-let _pendingCheckIn = false
-
-async function doCheckIn(){
-  if(!_currentUser) return
-  const snap = await get(ref(db,'users/'+_currentUser.uid))
-  const u = snap.val()
-  const today = new Date().toDateString()
-  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
-  if(lastCI === today){ showToast('Você já fez check-in hoje! ✅','error'); return }
-
-  // Must watch a video first!
-  _pendingCheckIn = true
-  showToast('📹 Assista um vídeo para resgatar seu bônus diário!','info')
-  // Scroll to videos section
-  document.getElementById('user-video-grid')?.scrollIntoView({ behavior:'smooth' })
-  const btn = document.getElementById('checkin-btn')
-  if(btn){ btn.textContent = '⏳ Assista um vídeo para resgatar...'; btn.disabled = true }
-}
-
-async function completeCheckIn(){
-  if(!_currentUser || !_pendingCheckIn) return
-  _pendingCheckIn = false
-  const snap = await get(ref(db,'users/'+_currentUser.uid))
-  const u = snap.val()
-  const today = new Date().toDateString()
-  const lastCI = u.lastCheckIn ? new Date(u.lastCheckIn).toDateString() : null
-  if(lastCI === today) return // already done
-
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
-  const wasYesterday = lastCI === yesterday.toDateString()
-  const newStreak = wasYesterday ? (u.checkInStreak||0)+1 : 1
-  const cfgSnap = await get(ref(db,'config/dailyCheckInReward'))
-  const reward = cfgSnap.exists() ? Number(cfgSnap.val()) : 0.05
-
-  await update(ref(db,'users/'+_currentUser.uid),{
-    balance: Number(u.balance||0)+reward,
-    lastCheckIn: Date.now(),
-    checkInStreak: newStreak,
-    totalEarned: Number(u.totalEarned||0)+reward
-  })
-  const adminBal2 = Number((await get(ref(db,'config/adminBalance'))).val()||0)
-  await set(ref(db,'config/adminBalance'), adminBal2 + reward*0.10)
-  showToast('🎁 Bônus diário resgatado! +R$'+reward.toFixed(2)+' • '+newStreak+' dias 🔥','success')
-  loadUserDashboard()
-}
-
-async function loadUserVideos(){
-  const snap = await get(ref(db,'videos'))
-  const grid = document.getElementById('user-video-grid')
-  if(!grid) return
-
-  if(!snap.exists()){
-    grid.innerHTML='<div class="no-videos">📹 Nenhum vídeo disponível ainda. Volte em breve!</div>'
-    return
-  }
-
-  const videos = Object.entries(snap.val()).map(([id,v])=>({...v,id}))
-  const u = _currentUser
-  const watchedList = u.watchedVideos || {}
-
-  grid.innerHTML = videos.map(v=>{
-    const watched = watchedList[v.id]
-    const thumb = v.thumbnail ? `<img src="${v.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:0">` : '📹'
-    const catBadge = v.category ? `<span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px">${v.category}</span>` : ''
-    return `<div class="video-card">
-      <div class="video-thumb" style="${v.thumbnail?'padding:0;':''}">
-        ${thumb}
-        ${catBadge}
-        <span class="video-reward-badge">+R$ ${Number(v.reward||0).toFixed(2)}</span>
-      </div>
-      <div class="video-info">
-        <div class="video-title">${v.title}</div>
-        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})" ${watched?'disabled':''}>
-          ${watched ? '✅ Já assistido' : '▶ Assistir e ganhar'}
-        </button>
-      </div>
-    </div>`
-  }).join('')
-}
-
-async function startWatch(videoId, title, url, reward){
-  if(!antiFraud_checkVideoWatch(_currentUser.uid, videoId)) return
-
-  // Check if already watched in DB
-  const snap = await get(ref(db,'users/'+_currentUser.uid+'/watchedVideos/'+videoId))
-  if(snap.exists()){
-    showToast('Você já assistiu este vídeo!','error'); return
-  }
-
-  _watchVideoId = videoId
-  _watchDuration = 30
-  document.getElementById('watch-modal-title').textContent = title
-  document.getElementById('watch-modal-sub').textContent = 'Assista pelo menos 30 segundos para ganhar R$'+Number(reward).toFixed(2)
-  document.getElementById('watch-video-link').href = url
-  document.getElementById('watch-timer').textContent = _watchDuration
-  document.getElementById('watch-progress-fill').style.width = '0%'
-  document.getElementById('modal-watch').classList.add('open')
-
-  let elapsed = 0
-  _watchTimer = setInterval(async ()=>{
-    elapsed++
-    const remaining = _watchDuration - elapsed
-    const pct = (elapsed/_watchDuration)*100
-    document.getElementById('watch-timer').textContent = remaining > 0 ? remaining : '✅'
-    document.getElementById('watch-progress-fill').style.width = Math.min(pct,100)+'%'
-
-    if(elapsed >= _watchDuration){
-      clearInterval(_watchTimer)
-      _watchTimer = null
-      await creditVideoReward(videoId, reward)
-    }
-  }, 1000)
-}
-
-async function creditVideoReward(videoId, reward){
-  const u = _currentUser
-  const userSnap = await get(ref(db,'users/'+u.uid))
-  const userData = userSnap.val()
-  const newVidsWatched = Number(userData.videosWatched||0)+1
-
-  // Credit user
-  await update(ref(db,'users/'+u.uid),{
-    balance: Number(userData.balance||0)+Number(reward),
-    videosWatched: newVidsWatched,
-    totalEarned: Number(userData.totalEarned||0)+Number(reward),
-    ['watchedVideos/'+videoId]: Date.now()
-  })
-
-  // Admin earns per video (5%)
-  const adminEarn = Number(reward) * 0.05
-  const adminBal = Number((await get(ref(db,'config/adminBalance'))).val()||0)
-  await set(ref(db,'config/adminBalance'), adminBal + adminEarn)
-  await set(ref(db,'config/totalVideosWatched'), Number((await get(ref(db,'config/totalVideosWatched'))).val()||0)+1)
-
-  // Check referral completion (30 videos milestone)
-  if(newVidsWatched === 30 && userData.referredBy){
-    await completeReferral(userData.referredBy, u.uid)
-  }
-
-  // Show Monetag ad after video
-  showAdAfterVideo(Number(reward))
-  // Complete check-in if pending
-  if(_pendingCheckIn) await completeCheckIn()
-}
-
-async function completeReferral(referrerId, newUserId){
-  try {
-    // Give R$1.00 to referrer
-    const refSnap = await get(ref(db,'users/'+referrerId))
-    if(refSnap.exists()){
-      const rd = refSnap.val()
-      await update(ref(db,'users/'+referrerId),{
-        balance: Number(rd.balance||0)+1,
-        totalEarned: Number(rd.totalEarned||0)+1,
-        referralEarnings: Number(rd.referralEarnings||0)+1,
-        ['completedReferrals/'+newUserId]: Date.now()
-      })
-    }
-    // Give R$1.00 to new user
-    const nuSnap = await get(ref(db,'users/'+newUserId))
-    if(nuSnap.exists()){
-      const nu = nuSnap.val()
-      await update(ref(db,'users/'+newUserId),{
-        balance: Number(nu.balance||0)+1,
-        totalEarned: Number(nu.totalEarned||0)+1,
-        referralBonusReceived: true
-      })
-    }
-    // Mark referral as complete
-    await update(ref(db,'referrals/'+referrerId+'/'+newUserId),{ status:'completed', completedAt: Date.now() })
-    showToast('🎉 Bônus de R$ 1,00 de indicação adicionado!','success')
-  } catch(e){ console.error(e) }
-}
-
-function cancelWatch(){
-  if(_watchTimer){ clearInterval(_watchTimer); _watchTimer=null }
-  document.getElementById('modal-watch').classList.remove('open')
-  showToast('Vídeo cancelado. Assista completo para ganhar!','info')
-}
-
-async function loadWithdrawalsConfig(){
-  const snap = await get(ref(db,'config/withdrawalsOpen'))
-  const open = !snap.exists() || snap.val()===true
-  const msg = document.getElementById('withdraw-closed-msg')
-  const btn = document.getElementById('withdraw-btn')
-  if(msg) msg.style.display = open ? 'none' : 'block'
-  if(btn) btn.disabled = !open
-}
-
-async function requestWithdrawal(){
-  if(!_currentUser) return
-  const pix    = document.getElementById('withdraw-pix').value.trim()
-  const amount = parseFloat(document.getElementById('withdraw-amount').value)||0
-
-  if(!pix) return showToast('Digite sua chave PIX!','error')
-  if(amount < 10) return showToast('Valor mínimo de saque: R$ 10,00!','error')
-
-  const snap = await get(ref(db,'users/'+_currentUser.uid))
-  const u = snap.val()
-  if(Number(u.balance||0) < amount) return showToast('Saldo insuficiente!','error')
-
-  // Verify minimum videos watched
-  const minVidsSnap = await get(ref(db,'config/minVideosForWithdrawal'))
-  const minVids = minVidsSnap.exists() ? Number(minVidsSnap.val()) : 5
-  if(Number(u.videosWatched||0) < minVids){
-    return showToast('Você precisa assistir pelo menos '+minVids+' vídeos para sacar!','error')
-  }
-
-  // Create withdrawal request
-  const wRef = push(ref(db,'withdrawals'))
-  await set(wRef,{
-    uid: _currentUser.uid,
-    userName: u.fullname||u.display,
-    userEmail: u.email,
-    pixKey: pix,
-    amount: amount,
-    videosWatched: u.videosWatched||0,
-    balance: u.balance||0,
-    status: 'pending',
-    requestedAt: Date.now()
-  })
-
-  // Deduct from balance (hold)
-  await update(ref(db,'users/'+_currentUser.uid),{
-    balance: Number(u.balance||0)-amount
-  })
-
-  document.getElementById('withdraw-pix').value=''
-  document.getElementById('withdraw-amount').value=''
-  showToast('✅ Saque solicitado! O admin irá verificar e aprovar em breve.','success')
-  loadUserDashboard()
-}
-
-async function loadUserWithdrawals(){
-  const list = document.getElementById('user-withdrawals-list')
-  if(!list) return
-  const snap = await get(ref(db,'withdrawals'))
-  if(!snap.exists()){ list.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div>'; return }
-
-  const all = Object.entries(snap.val())
-    .filter(([,w])=>w.uid===_currentUser.uid)
-    .sort(([,a],[,b])=>b.requestedAt-a.requestedAt)
-
-  if(!all.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhum saque ainda</div>'; return }
-
-  list.innerHTML = all.map(([id,w])=>`
-    <div class="withdraw-history-item">
-      <div>
-        <div style="color:#fff;font-weight:600;font-size:12px">R$ ${Number(w.amount).toFixed(2)}</div>
-        <div style="color:rgba(255,255,255,.4);font-size:11px">${new Date(w.requestedAt).toLocaleDateString('pt-BR')} • PIX: ${w.pixKey}</div>
-      </div>
-      <span class="wh-status-${w.status}">${w.status==='pending'?'⏳ Pendente':w.status==='approved'?'✅ Aprovado':'❌ Negado'}</span>
-    </div>
-  `).join('')
-}
-
-async function doUserLogout(){
-  await signOut(auth)
-  _currentUser = null
-  showPage('login')
-  showToast('Até logo!','info')
-}
-
-
-// ═══════════════════════════════════════════════════════════
-//  AD AFTER VIDEO — shows Monetag ad for 30s after each video
-// ═══════════════════════════════════════════════════════════
-let _adTimer = null
-const AD_DURATION = 30 // seconds
-
-function showAdAfterVideo(reward){
-  const overlay = document.getElementById('ad-overlay')
-  const mainContent = document.getElementById('watch-main-content')
-  if(!overlay || !mainContent) {
-    showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
-    loadUserDashboard()
-    return
-  }
-
-  // Exibe overlay bloqueando toda a tela
-  overlay.style.display = 'flex'
-  mainContent.style.opacity = '0'
-
-  // ✅ Carrega script Monetag SOMENTE agora (após vídeo concluído)
-  // Remove instância anterior para evitar duplicatas
-  const oldAd = document.getElementById('_monetag_post_video')
-  if(oldAd) oldAd.remove()
-  const adScript = document.createElement('script')
-  adScript.id = '_monetag_post_video'
-  adScript.src = 'https://al5sm.com/tag.min.js'
-  adScript.setAttribute('data-zone', '10828297')
-  adScript.setAttribute('data-cfasync', 'false')
-  adScript.async = true
-  document.body.appendChild(adScript)
-
-  // Countdown 30 segundos
-  let elapsed = 0
-  document.getElementById('ad-countdown').textContent = AD_DURATION
-  document.getElementById('ad-progress').style.width = '0%'
-
-  _adTimer = setInterval(()=>{
-    elapsed++
-    const remaining = AD_DURATION - elapsed
-    const pct = (elapsed/AD_DURATION)*100
-    const countEl = document.getElementById('ad-countdown')
-    const progEl  = document.getElementById('ad-progress')
-    if(countEl) countEl.textContent = remaining > 0 ? remaining : '✅'
-    if(progEl)  progEl.style.width = Math.min(pct,100)+'%'
-
-    if(elapsed >= AD_DURATION){
-      clearInterval(_adTimer); _adTimer = null
-      overlay.style.display = 'none'
-      mainContent.style.opacity = '1'
-      document.getElementById('modal-watch').classList.remove('open')
-      // Remove script após uso para não continuar disparando
-      document.getElementById('_monetag_post_video')?.remove()
-      showToast('🎉 +R$'+reward.toFixed(2)+' adicionado ao saldo! 🪙 +1 moeda','success')
-      loadUserDashboard()
-    }
-  }, 1000)
-}
-
-// ═══════════════════════════════════════════════════════════
-//  YOUTUBE AUTO-FETCH — busca vídeos automaticamente
-// ═══════════════════════════════════════════════════════════
-const YT_API_KEY = 'AIzaSyDx0jwyezPxW02LnvJ51vEkjNw-IZRbXYQ'
-const YT_CATEGORIES = [
-  { q:'entretenimento brasil', label:'Entretenimento' },
-  { q:'culinária receitas fáceis', label:'Culinária' },
-  { q:'humor comédia brasil', label:'Humor' },
-  { q:'música brasileira popular', label:'Música' },
-  { q:'esportes futebol brasil', label:'Esportes' },
-  { q:'tecnologia dicas tutorial', label:'Tecnologia' },
-]
-const DEFAULT_REWARD = 0.02
-
-async function fetchYouTubeVideos(){
-  const lastFetch = localStorage.getItem('_yt_last_fetch')
-  const now = Date.now()
-  // Only fetch once per 6 hours
-  if(lastFetch && now - Number(lastFetch) < 6*60*60*1000) return
-
-  try {
-    // Fetch from random category
-    const cat = YT_CATEGORIES[Math.floor(Math.random()*YT_CATEGORIES.length)]
-    const maxDuration = 'long' // PT30M or less handled by maxResults filter
-    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=10&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
-
-    const res = await fetch(url)
-    const data = await res.json()
-
-    if(!data.items || !data.items.length) return
-
-    // Get video details (duration check)
-    const ids = data.items.map(i=>i.id.videoId).join(',')
-    const detailUrl = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id='+ids+'&key='+YT_API_KEY
-    const detailRes = await fetch(detailUrl)
-    const detailData = await detailRes.json()
-
-    const validVideos = (detailData.items||[]).filter(v=>{
-      const dur = v.contentDetails?.duration || ''
-      // Parse ISO 8601 duration — accept up to PT30M
-      const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-      if(!match) return false
-      const hours = Number(match[1]||0)
-      const mins  = Number(match[2]||0)
-      if(hours > 0) return false // skip videos over 1h
-      if(mins > 30) return false // skip over 30min
-      if(mins < 1)  return false // skip under 1min
-      return true
-    })
-
-    if(!validVideos.length) return
-
-    // Save to Firebase (replace old auto-fetched videos)
-    const existingSnap = await get(ref(db,'videos'))
-    const existing = existingSnap.exists() ? existingSnap.val() : {}
-
-    // Remove old auto-fetched videos (keep manually added ones)
-    const toDelete = Object.entries(existing)
-      .filter(([,v])=>v.autoFetched)
-      .map(([id])=>id)
-    for(const id of toDelete){
-      await remove(ref(db,'videos/'+id))
-    }
-
-    // Add new videos
-    for(const v of validVideos.slice(0,5)){
-      const newRef = push(ref(db,'videos'))
-      await set(newRef,{
-        title: v.snippet.title.substring(0,80),
-        url: 'https://www.youtube.com/watch?v='+v.id,
-        thumbnail: v.snippet.thumbnails?.medium?.url || '',
-        category: cat.label,
-        reward: DEFAULT_REWARD,
-        createdAt: Date.now(),
-        autoFetched: true
-      })
-    }
-
-    localStorage.setItem('_yt_last_fetch', String(now))
-    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
-  } catch(e){
-    console.warn('YouTube fetch error:', e)
-  }
-}
-
-// Run auto-fetch when user opens dashboard
-
-// ═══════════════════════════════════════════════════════════
-//  ADMIN — SAQUES
-// ═══════════════════════════════════════════════════════════
-async function loadSaquesTab(){
-  // Load pending
-  const snap = await get(ref(db,'withdrawals'))
-  const pendingList = document.getElementById('saques-pending-list')
-  const historyList = document.getElementById('saques-history-list')
-  if(!pendingList) return
-
-  if(!snap.exists()){
-    pendingList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhuma solicitação</div>'
-    historyList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico</div>'
-    return
-  }
-
-  const all = Object.entries(snap.val()).sort(([,a],[,b])=>b.requestedAt-a.requestedAt)
-  const pending = all.filter(([,w])=>w.status==='pending')
-  const history = all.filter(([,w])=>w.status!=='pending')
-
-  if(!pending.length){
-    pendingList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">✅ Nenhuma pendente</div>'
-  } else {
-    pendingList.innerHTML = pending.map(([id,w])=>`
-      <div class="saque-item">
-        <div class="saque-info">
-          <div class="name">${w.userName||'Usuário'}</div>
-          <div class="detail">${w.userEmail} • PIX: ${w.pixKey} • ${w.videosWatched} vídeos assistidos</div>
-          <div class="detail">${new Date(w.requestedAt).toLocaleDateString('pt-BR')}</div>
-        </div>
-        <span class="saque-amount">R$ ${Number(w.amount).toFixed(2)}</span>
-        <div class="saque-actions">
-          <button class="btn-approve" onclick="approveWithdrawal('${id}','${w.uid}',${w.amount})">✅ Aprovar</button>
-          <button class="btn-deny" onclick="denyWithdrawal('${id}','${w.uid}',${w.amount})">❌ Negar</button>
-        </div>
-      </div>
-    `).join('')
-  }
-
-  if(!history.length){
-    historyList.innerHTML='<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px">Nenhum histórico</div>'
-  } else {
-    historyList.innerHTML = history.map(([id,w])=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0d1117;border-radius:8px;margin-bottom:8px;font-size:12px">
-        <div>
-          <span style="font-weight:600;color:#fff">${w.userName}</span>
-          <span style="color:#6b7280"> • R$ ${Number(w.amount).toFixed(2)} • ${w.pixKey}</span>
-        </div>
-        <span class="${w.status==='approved'?'badge-active':'badge-inactive'}">${w.status==='approved'?'✅ Aprovado':'❌ Negado'}</span>
-      </div>
-    `).join('')
-  }
-
-  // Load withdrawal toggle state
-  const cfgSnap = await get(ref(db,'config/withdrawalsOpen'))
-  const toggle = document.getElementById('withdrawals-toggle')
-  if(toggle) toggle.checked = !cfgSnap.exists() || cfgSnap.val()===true
-
-  // Load admin balance
-  document.getElementById('stat-saques').textContent = pending.length
-}
-
-async function approveWithdrawal(id, uid, amount){
-  if(!confirm('Confirmar aprovação de R$ '+Number(amount).toFixed(2)+'? Lembre-se de enviar o PIX antes de aprovar!')) return
-  try {
-    await update(ref(db,'withdrawals/'+id),{ status:'approved', processedAt: Date.now() })
-    showToast('✅ Saque aprovado! Lembre-se de enviar o PIX.','success')
-    loadSaquesTab()
-  } catch(err){ showToast('Erro: '+err.message,'error') }
-}
-
-async function denyWithdrawal(id, uid, amount){
-  if(!confirm('Negar este saque? O valor será devolvido ao usuário.')) return
-  try {
-    await update(ref(db,'withdrawals/'+id),{ status:'denied', processedAt: Date.now() })
-    // Refund user
-    const snap = await get(ref(db,'users/'+uid))
-    if(snap.exists()){
-      await update(ref(db,'users/'+uid),{ balance: Number(snap.val().balance||0)+Number(amount) })
-    }
-    showToast('Saque negado. Saldo devolvido ao usuário.','info')
-    loadSaquesTab()
-  } catch(err){ showToast('Erro: '+err.message,'error') }
-}
-
-async function toggleWithdrawals(checkbox){
-  await set(ref(db,'config/withdrawalsOpen'), checkbox.checked)
-  showToast(checkbox.checked ? '✅ Saques abertos!' : '🔒 Saques fechados!', checkbox.checked?'success':'info')
-}
-
-
-
-// ═══════════════════════════════════════════════════════════
-//  REFERRAL SYSTEM
-// ═══════════════════════════════════════════════════════════
-function getReferralLink(){
-  const base = window.location.origin + window.location.pathname
-  return base + '?ref=' + (_currentUser?.uid||'').substring(0,8)
-}
-
-function copyReferralLink(){
-  const link = getReferralLink()
-  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success'))
-}
-
-function shareReferral(){
-  const link = getReferralLink()
-  const msg = encodeURIComponent('🎬 Assista vídeos e ganhe dinheiro real no CineCash IA!\n\nUse meu link e ganhe R$ 1,00 de bônus: '+link)
-  window.open('https://wa.me/?text='+msg,'_blank')
-}
-
-async function loadReferralTab(){
-  const box = document.getElementById('referral-link-box')
-  if(box) box.textContent = getReferralLink()
-  loadReferralStats()
-}
-
-async function loadReferralStats(){
-  if(!_currentUser) return
-  const snap = await get(ref(db,'referrals/'+_currentUser.uid))
-  const totalEl = document.getElementById('ref-total')
-  const compEl = document.getElementById('ref-completed')
-  const earnEl = document.getElementById('ref-earned')
-  const listEl = document.getElementById('referral-list')
-
-  if(!snap.exists()){
-    if(totalEl) totalEl.textContent='0'
-    if(compEl) compEl.textContent='0'
-    if(earnEl) earnEl.textContent='R$ 0,00'
-    if(listEl) listEl.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nenhuma indicação ainda</div>'
-    return
-  }
-
-  const refs = Object.entries(snap.val())
-  const total = refs.length
-  const completed = refs.filter(([,r])=>r.status==='completed').length
-  if(totalEl) totalEl.textContent = total
-  if(compEl) compEl.textContent = completed
-  if(earnEl) earnEl.textContent = 'R$ '+completed.toFixed(2).replace('.',',')
-
-  if(listEl) listEl.innerHTML = refs.map(([uid,r])=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px">
-      <div style="color:rgba(255,255,255,.7)">${r.userName||'Usuário'}</div>
-      <span style="padding:3px 10px;border-radius:20px;font-size:11px;${r.status==='completed'?'background:rgba(52,211,153,.1);color:#34d399':'background:rgba(251,191,36,.1);color:#fbbf24'}">
-        ${r.status==='completed'?'✅ Concluído':'⏳ Assistindo vídeos ('+( r.videosWatched||0)+'/30)'}
-      </span>
-    </div>
-  `).join('')
-}
-
-// Check referral param on registration
-function checkReferralParam(){
-  const params = new URLSearchParams(window.location.search)
-  return params.get('ref') || null
-}
-
-async function registerReferral(newUid, newName, referrerId){
-  if(!referrerId) return
-  // Find full referrer UID from short ID
-  const usersSnap = await get(ref(db,'users'))
-  if(!usersSnap.exists()) return
-  const entries = Object.entries(usersSnap.val())
-  const referrer = entries.find(([uid])=>uid.startsWith(referrerId))
-  if(!referrer) return
-  const [fullReferrerId] = referrer
-
-  await set(ref(db,'users/'+newUid+'/referredBy'), fullReferrerId)
-  await set(ref(db,'referrals/'+fullReferrerId+'/'+newUid),{
-    userName: newName,
-    status: 'pending',
-    videosWatched: 0,
-    joinedAt: Date.now()
-  })
-}
-
-
-// ═══════════════════════════════════════════════════════════
-//  DEVICE TRACKING — ID único por usuário/dispositivo
-// ═══════════════════════════════════════════════════════════
-function getDeviceId(){
-  let did = localStorage.getItem('_cc_did')
-  if(!did){
-    did = 'DEV_'+Date.now()+'_'+Math.random().toString(36).substr(2,9)
-    localStorage.setItem('_cc_did', did)
-  }
-  return did
-}
-
-async function registerDevice(uid){
-  const did = getDeviceId()
-  const now = Date.now()
-  const devSnap = await get(ref(db,'devices/'+uid))
-  if(devSnap.exists()){
-    const devs = devSnap.val()
-    const devList = Object.keys(devs)
-    // If this device is already registered, just update lastSeen
-    if(devs[did]){ 
-      await update(ref(db,'devices/'+uid+'/'+did),{ lastSeen: now })
-      return
-    }
-    // Block if more than 2 different devices
-    if(devList.length >= 2){
-      showToast('⚠️ Acesso bloqueado: muitos dispositivos detectados. Contate o suporte.','error')
-      await signOut(auth)
-      return
-    }
-  }
-  await set(ref(db,'devices/'+uid+'/'+did),{ 
-    registered: now, lastSeen: now,
-    ua: navigator.userAgent.substring(0,100)
-  })
-}
-
-// ═══════════════════════════════════════════════════════════
-//  IA MONITOR — Analisa usuários suspeitos
-// ═══════════════════════════════════════════════════════════
-async function runAICheck(){
-  const report = document.getElementById('ia-report')
-  const alerts = document.getElementById('ia-alerts')
-  if(!report) return
-  report.innerHTML = '<div style="text-align:center;color:#a78bfa;font-size:13px;padding:40px 0">🤖 IA analisando usuários... aguarde</div>'
-
-  const usersSnap = await get(ref(db,'users'))
-  const devicesSnap = await get(ref(db,'devices'))
-  const withdrawalsSnap = await get(ref(db,'withdrawals'))
-
-  if(!usersSnap.exists()){ report.innerHTML='<div style="text-align:center;color:#6b7280;padding:40px">Nenhum usuário para analisar</div>'; return }
-
-  const users = Object.entries(usersSnap.val()).map(([uid,u])=>({...u,uid}))
-  const devices = devicesSnap.exists() ? devicesSnap.val() : {}
-  const withdrawals = withdrawalsSnap.exists() ? Object.values(withdrawalsSnap.val()) : []
-
-  let suspicious = []
-  let reportHtml = []
-  let alertsHtml = []
-
-  const now = Date.now()
-  const dayMs = 24*60*60*1000
-
-  for(const u of users){
-    const issues = []
-    const devList = devices[u.uid] ? Object.keys(devices[u.uid]) : []
-
-    // Check 1: Multiple devices
-    if(devList.length > 2) issues.push({ type:'error', msg:`🚨 ${devList.length} dispositivos detectados` })
-    else if(devList.length > 1) issues.push({ type:'warn', msg:`⚠️ ${devList.length} dispositivos` })
-
-    // Check 2: Too many videos in short time (more than 50 in one day)
-    const watched = u.videosWatched || 0
-    const joinedDays = Math.max(1, Math.floor((now - u.createdAt) / dayMs))
-    const vidsPerDay = watched / joinedDays
-    if(vidsPerDay > 100) issues.push({ type:'error', msg:`🚨 ${vidsPerDay.toFixed(0)} vídeos/dia (suspeito)` })
-    else if(vidsPerDay > 50) issues.push({ type:'warn', msg:`⚠️ ${vidsPerDay.toFixed(0)} vídeos/dia (alto)` })
-
-    // Check 3: Large balance without withdrawals
-    const bal = Number(u.balance||0)
-    const userWithdrawals = withdrawals.filter(w=>w.uid===u.uid && w.status==='approved')
-    if(bal > 50 && userWithdrawals.length === 0) issues.push({ type:'warn', msg:`⚠️ Saldo R$${bal.toFixed(2)} sem saques` })
-
-    // Check 4: Check-in streak too long without videos
-    const streak = u.checkInStreak || 0
-    if(streak > 30 && watched < 10) issues.push({ type:'warn', msg:`⚠️ ${streak} dias streak sem assistir vídeos` })
-
-    const status = issues.some(i=>i.type==='error') ? '🚨' : issues.length > 0 ? '⚠️' : '✅'
-    const color = issues.some(i=>i.type==='error') ? '#f87171' : issues.length > 0 ? '#fbbf24' : '#34d399'
-
-    reportHtml.push(`
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1f2937;font-size:12px">
-        <div>
-          <div style="font-weight:600;color:#fff">${status} ${u.fullname||u.display||'Usuário'}</div>
-          <div style="color:#6b7280;margin-top:2px">${u.email} • ${watched} vídeos • R$${Number(u.balance||0).toFixed(2)} • ${devList.length} dispositivo(s)</div>
-          ${issues.map(i=>`<div style="color:${i.type==='error'?'#f87171':'#fbbf24'};margin-top:2px">${i.msg}</div>`).join('')}
-        </div>
-        <span style="color:${color};font-size:16px">${status}</span>
-      </div>
-    `)
-
-    if(issues.some(i=>i.type==='error')){
-      alertsHtml.push(`
-        <div style="padding:12px 16px;background:#1c0000;border:1px solid #7f1d1d;border-radius:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:#f87171">🚨 ${u.fullname||u.display}</div>
-              <div style="font-size:11px;color:#9ca3af;margin-top:2px">${u.email}</div>
-              ${issues.filter(i=>i.type==='error').map(i=>`<div style="font-size:12px;color:#f87171;margin-top:4px">${i.msg}</div>`).join('')}
+    <div class="bg-overlay"></div>
+    <div class="gradient-mesh"></div>
+
+    <div class="bg-overlay"></div>
+    <div class="gradient-mesh"></div>
+
+    <!-- MAINTENANCE SCREEN -->
+    <div id="maintenance-overlay" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-color);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;">
+        <div class="glass-card" style="max-width:500px;">
+            <div style="font-size:80px;margin-bottom:20px;">🛠️</div>
+            <h1 style="color:var(--primary);">Sistema em Manutenção</h1>
+            <p class="subtitle" style="margin-bottom:20px;">Estamos realizando atualizações importantes para melhorar sua inteligência lucrativa.</p>
+            <div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:12px;border:1px solid var(--glass-border);font-size:14px;color:var(--text-dim);">
+                Previsão de retorno em breve. Acompanhe as novidades no nosso grupo oficial.
             </div>
-            <button onclick="blockUser('${u.uid}')" style="padding:7px 14px;background:#dc2626;border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">Bloquear</button>
-          </div>
+            <button onclick="location.reload()" class="btn-primary" style="margin-top:20px;">Tentar Recarregar</button>
         </div>
-      `)
-    }
-  }
-
-  const total = users.length
-  const clean = users.filter(u=>!suspicious.includes(u.uid)).length
-  report.innerHTML = `
-    <div style="display:flex;gap:12px;margin-bottom:16px">
-      <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#34d399">${total}</div>
-        <div style="font-size:11px;color:#6b7280">Total usuários</div>
-      </div>
-      <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#f87171">${alertsHtml.length}</div>
-        <div style="font-size:11px;color:#6b7280">Alertas críticos</div>
-      </div>
-      <div style="background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#60a5fa">${new Date().toLocaleTimeString('pt-BR')}</div>
-        <div style="font-size:11px;color:#6b7280">Última análise</div>
-      </div>
     </div>
-    ${reportHtml.join('')}
-  `
-  alerts.innerHTML = alertsHtml.length ? alertsHtml.join('') : '<div style="text-align:center;padding:20px;color:#34d399;font-size:13px">✅ Nenhum alerta crítico detectado</div>'
-  showToast('🤖 Análise concluída!','success')
-}
 
-async function blockUser(uid){
-  if(!confirm('Bloquear este usuário?')) return
-  try{
-    await update(ref(db,'users/'+uid),{ status:'inativo' })
-    showToast('Usuário bloqueado!','success')
-    runAICheck()
-  }catch(err){ showToast('Erro: '+err.message,'error') }
-}
+    <!-- NAVBAR -->
+    <nav class="navbar hidden" id="main-nav">
+        <div class="user-badge">
+            <div class="avatar" id="user-avatar">U</div>
+            <span id="user-name-display">Carregando...</span>
+        </div>
+        <div class="nav-links">
+            <a class="nav-item active" data-page="inicio">Início</a>
+            <a class="nav-item" data-page="intercambio">Intercâmbio</a>
+            <a class="nav-item" data-page="indicacoes">Indicações</a>
+        </div>
+        <button id="logout-btn" style="background:none;border:none;color:var(--error);cursor:pointer;font-weight:700;">Sair</button>
+    </nav>
 
-// ═══════════════════════════════════════════════════════════
-//  WHATSAPP SUPPORT
-// ═══════════════════════════════════════════════════════════
-async function toggleSupport(checkbox){
-  await set(ref(db,'config/supportEnabled'), checkbox.checked)
-  showToast(checkbox.checked?'💬 Suporte ativado!':'Suporte desativado','info')
-  if(checkbox.checked) loadSupportWidget()
-  else removeSupportWidget()
-}
+    <!-- DASHBOARD PAGE -->
+    <main id="page-dashboard" class="hidden">
+        
+        <!-- SECTION: INICIO -->
+        <section id="section-inicio" class="tab-content">
+            <div class="stat-grid">
+                <div class="stat-balloon">
+                    <span class="stat-icon">💎</span>
+                    <span class="stat-label">Performance IA</span>
+                    <div class="stat-value" id="stats-coins">0.00 Moedas</div>
+                    <span class="stat-desc">Ganhos por anúncio processado</span>
+                </div>
+                <div class="stat-balloon">
+                    <span class="stat-icon">🎯</span>
+                    <span class="stat-label">Meta de Saque</span>
+                    <div class="stat-value" id="stats-progress">0/15</div>
+                    <span class="stat-desc">Anúncios para o próximo nível</span>
+                </div>
+                <div class="stat-balloon">
+                    <span class="stat-icon">⚡</span>
+                    <span class="stat-label">Multiplicador IA</span>
+                    <button id="watch-btn" class="btn-primary" style="margin-top:5px;padding:10px;">Gerar Lucro</button>
+                    <span class="stat-desc">Processe anúncios em 30s</span>
+                </div>
+            </div>
 
-async function saveSupport(){
-  const phone = document.getElementById('support-phone')?.value.trim()
-  const msg   = document.getElementById('support-msg')?.value.trim()
-  if(!phone) return showToast('Digite o número do WhatsApp!','error')
-  await set(ref(db,'config/supportPhone'), phone)
-  await set(ref(db,'config/supportMsg'), msg)
-  showToast('✅ Suporte salvo!','success')
-}
+            <!-- AI Processing Overlay -->
+            <div id="video-overlay" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);">
+                <div id="video-container" style="width:95%;max-width:500px;aspect-ratio:1/1;background:var(--bg-color);border-radius:50%;overflow:hidden;position:relative;box-shadow:0 0 50px var(--primary-glow);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;">
+                    <div id="ai-scanner-ui" style="text-align:center;position:relative;z-index:2;">
+                        <div class="ai-brain-icon" style="font-size:80px;margin-bottom:20px;">🧠</div>
+                        <div class="scan-line"></div>
+                        <h3 id="ai-status-text" style="color:var(--primary);letter-spacing:2px;font-weight:700;">INICIALIZANDO IA...</h3>
+                    </div>
+                    <div id="ad-overlay" class="hidden" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:10;">
+                        <div class="loader-ring" style="margin-bottom:20px;"></div>
+                        <h2 style="color:var(--primary);margin-bottom:10px;">Processando Anúncio...</h2>
+                        <p style="color:var(--text-dim);">O seu crédito será enviado em <span id="ad-timer" style="color:white;font-weight:700;font-size:1.2em;">30</span>s</p>
+                    </div>
+                </div>
+                <div id="reward-action-container" class="hidden" style="margin-top:30px;text-align:center;animation: fadeIn 0.5s ease-out;">
+                    <p style="margin-bottom:15px;color:var(--success);font-weight:600;">✅ Tarefa concluída com sucesso!</p>
+                    <button id="collect-reward-btn" class="btn-primary" style="width:250px;padding:18px;font-size:18px;box-shadow:0 0 30px var(--primary-glow);">Coletar Saldo</button>
+                    <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">Confirme o anúncio para receber.</p>
+                </div>
+            </div>
+        </section>
 
-async function loadSupportWidget(){
-  const [enabledSnap, phoneSnap, msgSnap] = await Promise.all([
-    get(ref(db,'config/supportEnabled')),
-    get(ref(db,'config/supportPhone')),
-    get(ref(db,'config/supportMsg'))
-  ])
-  if(!enabledSnap.exists() || !enabledSnap.val()) return
-  const phone = phoneSnap.exists() ? phoneSnap.val() : ''
-  const msg   = msgSnap.exists() ? msgSnap.val() : 'Olá! Preciso de ajuda com o CineCash IA.'
-  if(!phone) return
-  removeSupportWidget()
-  const btn = document.createElement('a')
-  btn.id = 'wa-support-btn'
-  btn.href = 'https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)
-  btn.target = '_blank'
-  btn.rel = 'noopener'
-  btn.innerHTML = '💬'
-  btn.style.cssText = 'position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;z-index:9997;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:.2s'
-  btn.onmouseover = ()=>btn.style.transform='scale(1.1)'
-  btn.onmouseout  = ()=>btn.style.transform='scale(1)'
-  document.body.appendChild(btn)
-}
+        <!-- SECTION: INTERCAMBIO -->
+        <section id="section-intercambio" class="tab-content hidden">
+            <div class="stat-grid">
+                <div class="stat-balloon">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-label">Saldo Convertido</span>
+                    <div class="stat-value" id="stats-money">R$ 0,00</div>
+                    <span class="stat-desc">Valor pronto para saque</span>
+                </div>
+                <div class="stat-balloon">
+                    <span class="stat-icon">💸</span>
+                    <span class="stat-label">Forma de Saque</span>
+                    <select id="pix-type" style="width:100%;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:8px;border-radius:8px;margin-top:10px;">
+                        <option value="aleatoria">Chave Aleatória</option>
+                        <option value="cpf">CPF</option>
+                        <option value="celular">Celular</option>
+                    </select>
+                    <input type="text" id="pix-key" placeholder="Digite sua chave PIX" style="width:100%;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:8px;border-radius:8px;margin-top:10px;">
+                    <button class="btn-primary" style="margin-top:10px;padding:10px;">Solicitar PIX</button>
+                </div>
+                <div class="stat-balloon">
+                    <span class="stat-icon">📜</span>
+                    <span class="stat-label">Histórico</span>
+                    <div id="withdraw-history" style="font-size:11px;text-align:left;margin-top:10px;max-height:100px;overflow-y:auto;color:var(--text-dim);">
+                        Nenhum saque realizado ainda.
+                    </div>
+                    <span class="stat-desc">Progresso de ganhos reais</span>
+                </div>
+            </div>
+        </section>
 
-function removeSupportWidget(){
-  document.getElementById('wa-support-btn')?.remove()
-}
+        <!-- SECTION: INDICACOES -->
+        <section id="section-indicacoes" class="tab-content hidden">
+            <div class="glass-card" style="max-width:100%;text-align:center;">
+                <span class="stat-icon">🔗</span>
+                <h2>Seu Link de Convite</h2>
+                <p class="subtitle">Ganhe R$ 0,50 por cada amigo que se cadastrar e processar 15 anúncios.</p>
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <input type="text" id="ref-link" readonly style="flex:1;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:12px;border-radius:8px;">
+                    <button id="copy-ref" class="btn-primary" style="width:auto;margin:0;padding:12px 20px;">Copiar</button>
+                </div>
+                <div style="margin-top:20px;display:flex;justify-content:center;gap:15px;">
+                    <!-- WhatsApp Share -->
+                    <button onclick="window.open('https://wa.me/?text=' + encodeURIComponent('Ganhe dinheiro processando anúncios comigo! Acesse: ' + document.getElementById('ref-link').value))" 
+                            style="background:#25d366; border:none; padding:12px; border-radius:50%; cursor:pointer; width:45px; height:45px; display:flex; align-items:center; justify-content:center; transition:0.3s; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);" 
+                            onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.438 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    </button>
+                    <!-- Facebook Share -->
+                    <button onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(document.getElementById('ref-link').value))" 
+                            style="background:#1877f2; border:none; padding:12px; border-radius:50%; cursor:pointer; width:45px; height:45px; display:flex; align-items:center; justify-content:center; transition:0.3s; box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);" 
+                            onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </button>
+                </div>
+            </div>
 
-// Load support widget for users on dashboard
-async function initSupportWidget(){
-  await loadSupportWidget()
-  // Load support config for admin
-  const [enabledSnap, phoneSnap, msgSnap] = await Promise.all([
-    get(ref(db,'config/supportEnabled')),
-    get(ref(db,'config/supportPhone')),
-    get(ref(db,'config/supportMsg'))
-  ])
-  const tog = document.getElementById('support-toggle')
-  const ph  = document.getElementById('support-phone')
-  const ms  = document.getElementById('support-msg')
-  if(tog && enabledSnap.exists()) tog.checked = enabledSnap.val()
-  if(ph  && phoneSnap.exists())  ph.value  = phoneSnap.val()
-  if(ms  && msgSnap.exists())    ms.value  = msgSnap.val()
-}
+            <!-- TABELA DE CONVIDADOS -->
+            <div class="glass-card" style="margin-top:20px; max-width:100%;">
+                <h3 style="text-align:left; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">👥</span> Seus Convidados
+                </h3>
+                <div id="referrals-list" style="display:flex; flex-direction:column; gap:10px;">
+                    <p style="color:var(--text-dim); font-size:13px; text-align:center; padding:20px;">Você ainda não convidou ninguém. Compartilhe seu link!</p>
+                </div>
+            </div>
+        </section>
 
+    </main>
 
-// Monetag: anúncios SOMENTE após cada vídeo (via showAdAfterVideo)
-// Multitag removido — disparava anúncios em qualquer clique da página
-function loadMonetag(){
-  // Service Worker de anúncios removido — não registrar mais
-}
+    <!-- CHAT IA -->
+    <div id="chat-ia-trigger" class="chat-trigger hidden">🤖</div>
+    <div id="chat-ia-window" class="chat-window hidden">
+        <div class="chat-header">
+            <span>Suporte CineCash IA</span>
+            <button id="close-chat" style="background:none;border:none;color:white;cursor:pointer;">✕</button>
+        </div>
+        <div class="chat-content" id="chat-msgs">
+            <div class="msg-ai">Olá! Sou o <b>Agente CineCash IA</b>. Posso te ajudar com:<br><br>
+            • Como ganhar processando anúncios<br>
+            • Regras de saque e milhas PIX<br>
+            • Bônus de indicação e convites<br>
+            • Segurança e monitoramento do sistema</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" placeholder="Pergunte sobre saques, vídeos...">
+            <button id="send-chat" style="padding:8px 12px;background:var(--primary);border:none;border-radius:8px;color:white;cursor:pointer;">➤</button>
+        </div>
+    </div>
+    <div id="page-login" class="glass-card">
+        <h1>CineCash IA</h1>
+        <p class="subtitle">Faça login para começar a lucrar processando anúncios com IA.</p>
+        
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">E-mail ou Usuário</label>
+                <input type="text" id="email" placeholder="nome@exemplo.com" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" id="login-btn" class="btn-primary">
+                <span class="btn-text">Entrar na Plataforma</span>
+                <div class="spinner"></div>
+            </button>
+            <button type="button" id="test-login-btn" style="display:none;width:100%;background:rgba(255,255,255,0.05);border:1px dashed var(--primary);color:var(--primary);margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;font-weight:600;transition:0.3s;">
+                🚀 Acessar Conta de Teste
+            </button>
+        </form>
 
-window.showPage=showPage;window.togglePwd=togglePwd;window.doLogin=doLogin;window.doRegister=doRegister
-window.doGoogleLogin=doGoogleLogin;window.doAdminLogin=doAdminLogin;window.doAdminLogout=doAdminLogout
+        <div class="footer-text">
+            Não tem uma conta? <a href="#" id="go-register">Cadastre-se</a>
+        </div>
+    </div>
 
-function toggleSidebar(){
-  const sb = document.getElementById('admin-sidebar')
-  if(sb) sb.classList.toggle('collapsed')
-}
+    <!-- REGISTER PAGE (HIDDEN) -->
+    <div id="page-register" class="glass-card hidden">
+        <h1>Criar Conta</h1>
+        <p class="subtitle">Junte-se à maior comunidade de lucros por anúncios IA.</p>
+        
+        <form id="register-form">
+            <div class="input-group">
+                <label for="reg-fullname">Nome Completo</label>
+                <input type="text" id="reg-fullname" placeholder="Como devemos te chamar?" required>
+            </div>
 
-window.switchTab=switchTab
-window.toggleSidebar=toggleSidebar;window.openEditModal=openEditModal;window.saveEditUser=saveEditUser
-window.openDeleteModal=openDeleteModal;window.confirmDelete=confirmDelete;window.closeModal=closeModal
-window.addVideo=addVideo;window.deleteVideo=deleteVideo;window.doConversion=doConversion;window.renderUsersTable=renderUsersTable
-window.toggleMaintenance=toggleMaintenance
-window.fetchYouTubeVideos=fetchYouTubeVideos
-window.showAdAfterVideo=showAdAfterVideo
-window.runAICheck=runAICheck
-window.blockUser=blockUser
-window.toggleSupport=toggleSupport
-window.saveSupport=saveSupport
-window.approveWithdrawal=approveWithdrawal
-window.denyWithdrawal=denyWithdrawal
-window.toggleWithdrawals=toggleWithdrawals
-window.startWatch=startWatch
-window.cancelWatch=cancelWatch
-window.doCheckIn=doCheckIn
-window.doUserLogout=doUserLogout
-window.requestWithdrawal=requestWithdrawal
-window.showDashTab=showDashTab
-window.claimReward=claimReward
-window.copyReferralLink=copyReferralLink
-window.shareReferral=shareReferral
-window.antiFraud_checkVideoWatch=antiFraud_checkVideoWatch
+            <div class="input-group">
+                <label for="reg-email">E-mail</label>
+                <input type="email" id="reg-email" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="reg-password">Crie uma Senha</label>
+                <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            
+            <button type="submit" id="register-btn" class="btn-primary">
+                <span class="btn-text">Criar Minha Conta</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
 
-// init
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
-</script>
+        <div class="footer-text">
+            Já possui acesso? <a href="#" id="go-login">Fazer Login</a>
+        </div>
+    </div>
 
-<!-- ═══ MAINTENANCE PAGE ═══ -->
-<div id="maintenance-page" style="display:none;position:fixed;inset:0;z-index:99999;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px">
-  <div style="font-size:64px;margin-bottom:24px">🔧</div>
-  <h1 style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px">Site em Manutenção</h1>
-  <p style="font-size:15px;color:#9ca3af;max-width:400px;line-height:1.6" id="maintenance-msg">Estamos realizando melhorias para você. Voltamos em breve!</p>
-  <div style="margin-top:32px;padding:14px 24px;background:#161b27;border:1px solid #1f2937;border-radius:12px;font-size:13px;color:#6b7280">
-    Se você é admin, acesse normalmente através do link de admin.
-  </div>
-</div>
+    <!-- SCRIPTS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+        // FIREBASE CONFIG (PLAYEARN-B001B)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
+            authDomain: "playearn-b001b.firebaseapp.com",
+            databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
+            projectId: "playearn-b001b",
+            storageBucket: "playearn-b001b.firebasestorage.app",
+            messagingSenderId: "563829659490",
+            appId: "1:563829659490:web:88e1f869db48b1df41fe3b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // REGRAS DE GANHOS
+        const EARNING_RULES = [
+            { vids: 1000, cash: 20.00 },
+            { vids: 500, cash: 10.00 },
+            { vids: 100, cash: 5.00 },
+            { vids: 70, cash: 3.00 },
+            { vids: 30, cash: 1.00 },
+            { vids: 15, cash: 0.50 }
+        ];
+
+        let _currentUserData = null;
+
+        // UI HELPERS
+        const showPage = (id) => {
+            // Esconde apenas as telas de login/cadastro
+            document.getElementById('page-login').classList.add('hidden');
+            document.getElementById('page-register').classList.add('hidden');
+            
+            const dash = document.getElementById('page-dashboard');
+            const nav = document.getElementById('main-nav');
+            const chat = document.getElementById('chat-ia-trigger');
+            
+            if(dash) dash.classList.add('hidden');
+            if(nav) nav.classList.add('hidden');
+            if(chat) chat.classList.add('hidden');
+            
+            const target = document.getElementById(id);
+            if(target) target.classList.remove('hidden');
+            
+            if (id === 'page-dashboard') {
+                if(nav) nav.classList.remove('hidden');
+                if(chat) chat.classList.remove('hidden');
+            }
+        };
+
+        const setLoading = (btnId, on) => {
+            const btn = document.getElementById(btnId);
+            if(!btn) return;
+            const text = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.spinner');
+            btn.disabled = on;
+            if(text) text.style.display = on ? 'none' : 'block';
+            if(spinner) spinner.style.display = on ? 'block' : 'none';
+        };
+
+        const switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const targetSec = document.getElementById('section-' + tabId);
+            if(targetSec) targetSec.classList.remove('hidden');
+            const navItem = document.querySelector(`[data-page="${tabId}"]`);
+            if(navItem) navItem.classList.add('active');
+        };
+
+        const updateUI = () => {
+            if (!_currentUserData) return;
+            const vids = _currentUserData.videosWatched || 0;
+            
+            // Stats Início
+            document.getElementById('stats-coins').textContent = (vids * 0.1).toFixed(2) + " Moedas";
+            
+            // Calculo de Dinheiro e Próximo Nível
+            let currentCash = 0;
+            let nextMilestone = 15;
+            for (let rule of EARNING_RULES) {
+                if (vids >= rule.vids) {
+                    currentCash = rule.cash;
+                    break;
+                }
+            }
+            for (let rule of [...EARNING_RULES].reverse()) {
+                if (vids < rule.vids) {
+                    nextMilestone = rule.vids;
+                    break;
+                }
+            }
+            
+            document.getElementById('stats-money').textContent = "R$ " + currentCash.toFixed(2).replace('.', ',');
+            document.getElementById('stats-progress').textContent = `${vids}/${nextMilestone}`;
+            document.getElementById('user-name-display').textContent = _currentUserData.fullname;
+            document.getElementById('user-avatar').textContent = _currentUserData.fullname[0].toUpperCase();
+            const origin = window.location.origin === "null" ? "https://cinecash-ia.web.app" : window.location.origin;
+            document.getElementById('ref-link').value = `${origin}${window.location.pathname}?ref=${auth.currentUser.uid}`;
+            
+            loadReferrals();
+            checkReferralPayout();
+        };
+
+        const loadReferrals = async () => {
+            const list = document.getElementById('referrals-list');
+            const refRef = ref(db, `referrals/${auth.currentUser.uid}`);
+            const snapshot = await get(refRef);
+            
+            if (!snapshot.exists()) return;
+            
+            list.innerHTML = '';
+            const referrals = snapshot.val();
+            
+            for (let guestUid in referrals) {
+                const guestData = await get(ref(db, `users/${guestUid}`));
+                if (!guestData.exists()) continue;
+                
+                const data = guestData.val();
+                const progress = data.videosWatched || 0;
+                const isCompleted = progress >= 15;
+                const status = referrals[guestUid].paid ? '✅ Pago' : (isCompleted ? '⌛ Processando' : '🚀 Em progressso');
+                
+                list.innerHTML += `
+                    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; border:1px solid var(--glass-border); display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600; font-size:14px;">${data.fullname}</span>
+                            <span style="font-size:12px; color:${isCompleted ? 'var(--success)' : 'var(--primary)'}">${status}</span>
+                        </div>
+                        <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; overflow:hidden;">
+                            <div style="width:${Math.min((progress/15)*100, 100)}%; height:100%; background:var(--primary); transition:0.3s;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim);">
+                            <span>Progresso: ${progress}/15 anúncios</span>
+                            <span>Bônus: R$ 0,50</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        const checkReferralPayout = async () => {
+            if (!_currentUserData) return;
+            
+            // 1. Check if I am a guest and hit 15 ads
+            if (_currentUserData.referredBy && (_currentUserData.videosWatched >= 15) && !_currentUserData.referralBonusClaimed) {
+                const newBalance = (_currentUserData.balance || 0) + 0.50;
+                await update(ref(db, `users/${auth.currentUser.uid}`), { 
+                    balance: newBalance,
+                    referralBonusClaimed: true 
+                });
+                
+                // Mark in referrer's list
+                await update(ref(db, `referrals/${_currentUserData.referredBy}/${auth.currentUser.uid}`), {
+                    status: 'completed'
+                });
+                alert("🎁 Parabéns! Você atingiu a meta de indicação e ganhou R$ 0,50 de bônus!");
+            }
+
+            // 2. Check if my guests hit 15 ads and I need to be paid
+            const refRef = ref(db, `referrals/${auth.currentUser.uid}`);
+            const snapshot = await get(refRef);
+            if (snapshot.exists()) {
+                const referrals = snapshot.val();
+                let extraBalance = 0;
+                let updates = {};
+
+                for (let guestUid in referrals) {
+                    if (referrals[guestUid].status === 'completed' && !referrals[guestUid].paid) {
+                        extraBalance += 0.50;
+                        updates[`referrals/${auth.currentUser.uid}/${guestUid}/paid`] = true;
+                    }
+                }
+
+                if (extraBalance > 0) {
+                    const newBalance = (_currentUserData.balance || 0) + extraBalance;
+                    await update(ref(db, `users/${auth.currentUser.uid}`), { balance: newBalance });
+                    for (const path in updates) {
+                        await update(ref(db, path), { paid: true });
+                    }
+                    alert(`💰 Você recebeu R$ ${extraBalance.toFixed(2)} em bônus por seus convidados terem atingido a meta!`);
+                }
+            }
+        };
+
+        // NAVIGATION EVENTS
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => switchTab(item.dataset.page));
+        });
+
+        const goRegister = document.getElementById('go-register');
+        if(goRegister) goRegister.addEventListener('click', (e) => { e.preventDefault(); showPage('page-register'); });
+        const goLogin = document.getElementById('go-login');
+        if(goLogin) goLogin.addEventListener('click', (e) => { e.preventDefault(); showPage('page-login'); });
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+
+        const copyRefBtn = document.getElementById('copy-ref');
+        if(copyRefBtn) copyRefBtn.addEventListener('click', () => {
+            const input = document.getElementById('ref-link');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            copyRefBtn.textContent = 'Copiado!';
+            setTimeout(() => copyRefBtn.textContent = 'Copiar', 2000);
+        });
+
+        // AUTH LOGIC
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            setLoading('login-btn', true);
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao entrar: ' + err.message);
+            } finally {
+                setLoading('login-btn', false);
+            }
+        });
+
+        document.getElementById('test-login-btn').addEventListener('click', async () => {
+            const email = "teste@cinecash.com";
+            const pass = "123456";
+            setLoading('login-btn', true);
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                // Se o usuário não existir, cria ele automaticamente
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    await set(ref(db, 'users/' + cred.user.uid), {
+                        fullname: "Usuário de Teste",
+                        display: "Teste",
+                        email,
+                        balance: 0,
+                        videosWatched: 0,
+                        createdAt: Date.now(),
+                        status: 'ativo'
+                    });
+                } catch (regErr) {
+                    console.error(regErr);
+                    alert('Erro no acesso rápido: ' + regErr.message);
+                }
+            } finally {
+                setLoading('login-btn', false);
+            }
+        });
+
+        // Clique Secreto: 5 cliques no H1 para mostrar o botão de teste
+        let secretClicks = 0;
+        document.querySelector('#page-login h1').addEventListener('click', () => {
+            secretClicks++;
+            if (secretClicks >= 5) {
+                document.getElementById('test-login-btn').style.display = 'block';
+                secretClicks = 0;
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullname = document.getElementById('reg-fullname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-password').value;
+            setLoading('register-btn', true);
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                const uid = cred.user.uid;
+                await set(ref(db, 'users/' + uid), {
+                    fullname,
+                    display: fullname.split(' ')[0],
+                    email,
+                    balance: 0,
+                    videosWatched: 0,
+                    createdAt: Date.now(),
+                    status: 'ativo'
+                });
+                await checkReferral(uid);
+            } finally {
+                setLoading('register-btn', false);
+            }
+        });
+
+        // CHAT IA LOGIC
+        const chatIA = (msg) => {
+            const input = msg.toLowerCase();
+            let reply = "<b>Desculpe, não consegui identificar essa dúvida.</b><br><br>Tente perguntar de forma simples sobre: <i>ganhos, como funciona, saque, indicação ou segurança</i>.";
+            
+            if (input.includes('ganhar') || input.includes('funciona') || input.includes('como') || input.includes('inicio')) {
+                reply = `<b>Como Lucrar:</b><br>
+                1. Vá na aba <b>Início</b>.<br>
+                2. Clique em <b>Gerar Lucro</b>.<br>
+                3. Aguarde 4s de conexão e 30s de processamento.<br>
+                4. Clique em <b>Coletar Saldo</b> e confirme o anúncio para creditar sua conta.`;
+            } 
+            else if (input.includes('regra') || input.includes('tabela') || input.includes('meta')) {
+                reply = `<b>Regras de Ganhos:</b><br>
+                • 15 anúncios: R$ 0,50<br>
+                • 30 anúncios: R$ 1,00<br>
+                • 70 anúncios: R$ 3,00<br>
+                • 100 anúncios: R$ 5,00<br>
+                • 1000 anúncios: R$ 20,00`;
+            } 
+            else if (input.includes('saque') || input.includes('pix') || input.includes('retirar')) {
+                const ads = _currentUserData.videosWatched || 0;
+                let cashValue = 0;
+                for (let rule of EARNING_RULES) {
+                    if (ads >= rule.vids) {
+                        cashValue = rule.cash;
+                        break;
+                    }
+                }
+
+                if (ads >= 15) {
+                    reply = `<b>Análise de Saque Liberada!</b><br>
+                    Você já processou <b>${ads} anúncios</b>.<br>
+                    🎁 Saldo Disponível: <b>R$ ${cashValue.toFixed(2).replace('.', ',')}</b>.<br><br>
+                    Vá na aba <b>Intercâmbio</b> para solicitar seu PIX agora!`;
+                } else {
+                    reply = `<b>Análise de Saque Pendente:</b><br>
+                    Você possui ${ads} anúncios. O primeiro saque libera com <b>15 anúncios</b>.<br>
+                    Faltam apenas <b>${15 - ads} anúncios</b> para você receber seus primeiros R$ 0,50!`;
+                }
+            } 
+            else if (input.includes('indica') || input.includes('convid') || input.includes('amigo')) {
+                reply = `<b>Sistema de Indicações:</b><br>
+                • Ganhe <b>R$ 0,50</b> por cada amigo indicado.<br>
+                • Seu amigo também ganha <b>R$ 0,50</b> ao completar 15 anúncios.<br>
+                • Acompanhe o progresso na lista <b>Seus Convidados</b>.`;
+            }
+            else if (input.includes('segur') || input.includes('fraude') || input.includes('monitor')) {
+                reply = `<b>Monitoramento CineCash IA:</b><br>
+                Nossa IA monitoria em tempo real a validade dos anúncios processados. Cliques inválidos ou bots são detectados automaticamente para garantir que todos os saques legítimos sejam pagos via PIX em tempo recorde.`;
+            }
+
+            const chatMsgs = document.getElementById('chat-msgs');
+            chatMsgs.innerHTML += `<div class="msg-user">${msg}</div>`;
+            setTimeout(() => {
+                chatMsgs.innerHTML += `<div class="msg-ai">${reply}</div>`;
+                chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            }, 600);
+        };
+
+        const chatIATrigger = document.getElementById('chat-ia-trigger');
+        if(chatIATrigger) chatIATrigger.addEventListener('click', () => document.getElementById('chat-ia-window').classList.toggle('hidden'));
+        document.getElementById('close-chat').addEventListener('click', () => document.getElementById('chat-ia-window').classList.add('hidden'));
+        document.getElementById('send-chat').addEventListener('click', () => {
+            const input = document.getElementById('chat-input');
+            if (input.value.trim()) {
+                chatIA(input.value);
+                input.value = '';
+            }
+        });
+
+        // AD PROCESSING LOGIC
+        let adInterval = null;
+
+        document.getElementById('watch-btn').addEventListener('click', () => {
+            const overlay = document.getElementById('video-overlay');
+            const adOverlay = document.getElementById('ad-overlay');
+            const rewardAction = document.getElementById('reward-action-container');
+            const timerDisplay = document.getElementById('ad-timer');
+            const statusText = document.getElementById('ai-status-text');
+            
+            // Reset UI
+            adOverlay.classList.add('hidden');
+            rewardAction.classList.add('hidden');
+            statusText.textContent = "INICIALIZANDO IA...";
+            overlay.classList.remove('hidden');
+            
+            // AI Simulation Phases
+            setTimeout(() => statusText.textContent = "CONECTANDO AO SERVIDOR...", 1000);
+            setTimeout(() => statusText.textContent = "VERIFICANDO METADADOS...", 2500);
+            
+            // Timer for the reward (30s)
+            setTimeout(() => {
+                statusText.textContent = "ANÚNCIO EM EXECUÇÃO";
+                adOverlay.classList.remove('hidden');
+                let count = 30;
+                timerDisplay.textContent = count;
+                
+                if (adInterval) clearInterval(adInterval);
+                adInterval = setInterval(() => {
+                    count--;
+                    timerDisplay.textContent = count;
+                    if (count <= 0) {
+                        clearInterval(adInterval);
+                        adOverlay.classList.add('hidden');
+                        rewardAction.classList.remove('hidden');
+                        statusText.textContent = "RECOMPENSA LIBERADA!";
+                    }
+                }, 1000);
+            }, 4000); 
+        });
+
+        document.getElementById('collect-reward-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('collect-reward-btn');
+            if (btn.disabled) return;
+
+            btn.disabled = true;
+            btn.textContent = "Processando...";
+ 
+            try {
+                if (!auth.currentUser) throw new Error("Sessão expirada. Faça login novamente.");
+                
+                const currentVids = (_currentUserData && typeof _currentUserData.videosWatched !== 'undefined') ? _currentUserData.videosWatched : 0;
+                const newCount = currentVids + 1;
+                
+                await update(ref(db, 'users/' + auth.currentUser.uid), { 
+                    videosWatched: newCount,
+                    lastUpdate: Date.now()
+                });
+                
+                // Dispara o anúncio especificamente aqui (Popunder sob demanda)
+                window.open('https://al5sm.com/tag.min.js?data-zone=10902829', '_blank');
+
+                setTimeout(() => {
+                    document.getElementById('video-overlay').classList.add('hidden');
+                    btn.disabled = false;
+                    btn.textContent = "Coletar Saldo";
+                }, 1500);
+            } catch (err) {
+                console.error("Erro ao coletar recompensa:", err);
+                alert("Erro ao validar recompensa: " + (err.message || "Tente novamente mais tarde."));
+                btn.disabled = false;
+                btn.textContent = "Coletar Saldo";
+            }
+        });
+
+        // REFERRAL CHECK
+        const checkReferral = async (newUid) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refId = urlParams.get('ref');
+            if (refId && refId !== newUid) {
+                await set(ref(db, `referrals/${refId}/${newUid}`), { status: 'pending', createdAt: Date.now() });
+                await update(ref(db, `users/${newUid}`), { referredBy: refId });
+            }
+        };
+
+        // AUTH STATE
+        onAuthStateChanged(auth, (user) => {
+            // Monitora modo manutenção
+            onValue(ref(db, 'config'), (snap) => {
+                const config = snap.exists() ? snap.val() : {};
+                const isUnderMaintenance = config.maintenance === true;
+                const isAdmin = user && config.adminUID === user.uid;
+
+                if (isUnderMaintenance && !isAdmin) {
+                    document.getElementById('maintenance-overlay').classList.remove('hidden');
+                } else {
+                    document.getElementById('maintenance-overlay').classList.add('hidden');
+                }
+            });
+
+            if (user) {
+                showPage('page-dashboard');
+                onValue(ref(db, 'users/' + user.uid), async (snapshot) => {
+                    if (!snapshot.exists()) {
+                        // Caso o perfil não exista no DB (usuário manual ou erro no registro)
+                        // inicializamos com dados padrão para evitar crash
+                        const defaultData = {
+                            fullname: user.displayName || "Usuário CineCash",
+                            display: (user.displayName || "Usuário").split(' ')[0],
+                            email: user.email,
+                            balance: 0,
+                            videosWatched: 0,
+                            createdAt: Date.now(),
+                            status: 'ativo'
+                        };
+                        try {
+                            await set(ref(db, 'users/' + user.uid), defaultData);
+                        } catch(e) { console.error("Erro ao criar perfil fallback:", e); }
+                        _currentUserData = defaultData;
+                    } else {
+                        _currentUserData = snapshot.val();
+                    }
+                    updateUI();
+                });
+            } else {
+                showPage('page-login');
+                _currentUserData = null;
+            }
+        });
+
+        if (window.location.protocol === 'file:') {
+            console.warn("⚠️ CineCash IA: Sistema rodando localmente via protocolo file://. Algumas funcionalidades de anúncios e Firebase podem ser bloqueadas pelo navegador. Use um servidor local (http://localhost) para testes completos.");
+        }
+
+    </script>
 </body>
 </html>
