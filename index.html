@@ -2,9 +2,14 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineCash IA - Seu Cinema Lucrativo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="description" content="CineCash IA — Processe anúncios com inteligência artificial e converta em dinheiro real via PIX. Plataforma segura e transparente.">
+    <title>CineCash IA — Plataforma de Lucros por Anúncios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%237c3aed'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E">
 </head>
 <body>
     <div class="bg-overlay"></div>
@@ -30,14 +35,14 @@
     <nav class="navbar hidden" id="main-nav">
         <div class="user-badge">
             <div class="avatar" id="user-avatar">U</div>
-            <span id="user-name-display">Carregando...</span>
+            <span id="user-name-display" style="font-size:0.8125rem;">Carregando...</span>
         </div>
         <div class="nav-links">
             <a class="nav-item active" data-page="inicio">Início</a>
             <a class="nav-item" data-page="intercambio">Intercâmbio</a>
             <a class="nav-item" data-page="indicacoes">Indicações</a>
         </div>
-        <button id="logout-btn" style="background:none;border:none;color:var(--error);cursor:pointer;font-weight:700;">Sair</button>
+        <button id="logout-btn" style="background:hsla(0,72%,51%,0.12);border:1px solid hsla(0,72%,51%,0.2);color:hsl(0,72%,65%);cursor:pointer;font-weight:600;font-family:'Sora',sans-serif;padding:6px 12px;border-radius:var(--radius);font-size:0.8125rem;transition:0.15s;" onmouseover="this.style.background='hsla(0,72%,51%,0.22)'" onmouseout="this.style.background='hsla(0,72%,51%,0.12)'">Sair</button>
     </nav>
 
     <!-- DASHBOARD PAGE -->
@@ -100,18 +105,18 @@
                 <div class="stat-balloon">
                     <span class="stat-icon">💸</span>
                     <span class="stat-label">Forma de Saque</span>
-                    <select id="pix-type" style="width:100%;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:8px;border-radius:8px;margin-top:10px;">
+                    <select id="pix-type">
                         <option value="aleatoria">Chave Aleatória</option>
                         <option value="cpf">CPF</option>
                         <option value="celular">Celular</option>
                     </select>
-                    <input type="text" id="pix-key" placeholder="Digite sua chave PIX" style="width:100%;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:8px;border-radius:8px;margin-top:10px;">
+                    <input type="text" id="pix-key" placeholder="Digite sua chave PIX">
                     <button class="btn-primary" style="margin-top:10px;padding:10px;">Solicitar PIX</button>
                 </div>
                 <div class="stat-balloon">
                     <span class="stat-icon">📜</span>
                     <span class="stat-label">Histórico</span>
-                    <div id="withdraw-history" style="font-size:11px;text-align:left;margin-top:10px;max-height:100px;overflow-y:auto;color:var(--text-dim);">
+                    <div id="withdraw-history" style="font-size:0.75rem;text-align:left;margin-top:10px;max-height:120px;overflow-y:auto;color:var(--muted-fg);">
                         Nenhum saque realizado ainda.
                     </div>
                     <span class="stat-desc">Progresso de ganhos reais</span>
@@ -123,11 +128,11 @@
         <section id="section-indicacoes" class="tab-content hidden">
             <div class="glass-card" style="max-width:100%;text-align:center;">
                 <span class="stat-icon">🔗</span>
-                <h2>Seu Link de Convite</h2>
-                <p class="subtitle">Ganhe R$ 0,50 por cada amigo que se cadastrar e processar 15 anúncios.</p>
-                <div style="display:flex;gap:10px;margin-top:20px;">
-                    <input type="text" id="ref-link" readonly style="flex:1;background:rgba(0,0,0,0.2);color:white;border:1px solid var(--glass-border);padding:12px;border-radius:8px;">
-                    <button id="copy-ref" class="btn-primary" style="width:auto;margin:0;padding:12px 20px;">Copiar</button>
+                <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:6px;">Seu Link de Convite</h2>
+                <p class="subtitle">Ganhe <strong style="color:hsl(162,56%,60%);">R$ 0,50</strong> por cada amigo que se cadastrar e processar 15 anúncios.</p>
+                <div style="display:flex;gap:8px;margin-top:16px;">
+                    <input type="text" id="ref-link" readonly style="flex:1;background:var(--muted);color:var(--foreground);border:1px solid var(--border);padding:11px 14px;border-radius:var(--radius);font-family:'Sora',sans-serif;font-size:0.8125rem;outline:none;">
+                    <button id="copy-ref" class="btn-primary" style="width:auto;margin:0;padding:11px 18px;flex-shrink:0;">Copiar</button>
                 </div>
                 <div style="margin-top:20px;display:flex;justify-content:center;gap:15px;">
                     <!-- WhatsApp Share -->
@@ -146,12 +151,12 @@
             </div>
 
             <!-- TABELA DE CONVIDADOS -->
-            <div class="glass-card" style="margin-top:20px; max-width:100%;">
-                <h3 style="text-align:left; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:20px;">👥</span> Seus Convidados
+            <div class="glass-card" style="margin-top:16px; max-width:100%;">
+                <h3 style="text-align:left; margin-bottom:14px; display:flex; align-items:center; gap:10px; font-size:1rem; font-weight:700;">
+                    <span>👥</span> Seus Convidados
                 </h3>
                 <div id="referrals-list" style="display:flex; flex-direction:column; gap:10px;">
-                    <p style="color:var(--text-dim); font-size:13px; text-align:center; padding:20px;">Você ainda não convidou ninguém. Compartilhe seu link!</p>
+                    <p style="color:var(--muted-fg); font-size:0.8125rem; text-align:center; padding:24px 0;">Você ainda não convidou ninguém. Compartilhe seu link!</p>
                 </div>
             </div>
         </section>
@@ -178,53 +183,65 @@
         </div>
     </div>
     <div id="page-login" class="glass-card">
-        <h1>CineCash IA</h1>
+        <!-- Logo -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">
+            <div style="width:40px;height:40px;background:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--primary-glow);font-size:22px;font-weight:700;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            </div>
+            <h1 style="margin-bottom:0;">CineCash IA</h1>
+        </div>
         <p class="subtitle">Faça login para começar a lucrar processando anúncios com IA.</p>
         
         <form id="login-form">
             <div class="input-group">
-                <label for="email">E-mail ou Usuário</label>
-                <input type="text" id="email" placeholder="nome@exemplo.com" required>
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="nome@exemplo.com" required autocomplete="email">
             </div>
             
             <div class="input-group">
                 <label for="password">Senha</label>
-                <input type="password" id="password" placeholder="••••••••" required>
+                <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
             </div>
             
             <button type="submit" id="login-btn" class="btn-primary">
                 <span class="btn-text">Entrar na Plataforma</span>
                 <div class="spinner"></div>
             </button>
-            <button type="button" id="test-login-btn" style="display:none;width:100%;background:rgba(255,255,255,0.05);border:1px dashed var(--primary);color:var(--primary);margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;font-weight:600;transition:0.3s;">
+            <button type="button" id="test-login-btn" style="display:none;width:100%;background:rgba(255,255,255,0.04);border:1px dashed hsla(262,83%,58%,0.5);color:hsl(262,83%,72%);margin-top:10px;padding:12px;border-radius:var(--radius);cursor:pointer;font-weight:600;font-family:'Sora',sans-serif;transition:0.2s;font-size:0.875rem;">
                 🚀 Acessar Conta de Teste
             </button>
         </form>
 
         <div class="footer-text">
-            Não tem uma conta? <a href="#" id="go-register">Cadastre-se</a>
+            Não tem uma conta? <a href="#" id="go-register">Cadastre-se grátis</a>
         </div>
     </div>
 
     <!-- REGISTER PAGE (HIDDEN) -->
     <div id="page-register" class="glass-card hidden">
-        <h1>Criar Conta</h1>
-        <p class="subtitle">Junte-se à maior comunidade de lucros por anúncios IA.</p>
+        <!-- Logo -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">
+            <div style="width:40px;height:40px;background:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--primary-glow);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            </div>
+            <h1 style="margin-bottom:0;">Criar Conta</h1>
+        </div>
+        <p class="subtitle">Junte-se à maior rede de lucros por anúncios IA do Brasil.</p>
         
         <form id="register-form">
             <div class="input-group">
                 <label for="reg-fullname">Nome Completo</label>
-                <input type="text" id="reg-fullname" placeholder="Como devemos te chamar?" required>
+                <input type="text" id="reg-fullname" placeholder="Como devemos te chamar?" required autocomplete="name">
             </div>
 
             <div class="input-group">
                 <label for="reg-email">E-mail</label>
-                <input type="email" id="reg-email" placeholder="seu@email.com" required>
+                <input type="email" id="reg-email" placeholder="seu@email.com" required autocomplete="email">
             </div>
             
             <div class="input-group">
                 <label for="reg-password">Crie uma Senha</label>
-                <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required>
+                <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
             </div>
             
             <button type="submit" id="register-btn" class="btn-primary">
@@ -352,7 +369,10 @@
             const refRef = ref(db, `referrals/${auth.currentUser.uid}`);
             const snapshot = await get(refRef);
             
-            if (!snapshot.exists()) return;
+            if (!snapshot.exists()) {
+                list.innerHTML = '<p style="color:var(--muted-fg);font-size:0.8125rem;text-align:center;padding:24px 0;">Você ainda não convidou ninguém. Compartilhe seu link!</p>';
+                return;
+            }
             
             list.innerHTML = '';
             const referrals = snapshot.val();
@@ -364,20 +384,31 @@
                 const data = guestData.val();
                 const progress = data.videosWatched || 0;
                 const isCompleted = progress >= 15;
-                const status = referrals[guestUid].paid ? '✅ Pago' : (isCompleted ? '⌛ Processando' : '🚀 Em progressso');
+                const isPaid = referrals[guestUid].paid;
+                
+                let badgeClass, badgeText;
+                if (isPaid) {
+                    badgeClass = 'badge badge-success'; badgeText = '✅ Pago';
+                } else if (isCompleted) {
+                    badgeClass = 'badge badge-warning'; badgeText = '⌛ Processando';
+                } else {
+                    badgeClass = 'badge badge-primary'; badgeText = '🚀 Em progresso';
+                }
+                
+                const pct = Math.min((progress / 15) * 100, 100).toFixed(1);
                 
                 list.innerHTML += `
-                    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; border:1px solid var(--glass-border); display:flex; flex-direction:column; gap:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:600; font-size:14px;">${data.fullname}</span>
-                            <span style="font-size:12px; color:${isCompleted ? 'var(--success)' : 'var(--primary)'}">${status}</span>
+                    <div class="referral-item">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-weight:600;font-size:0.875rem;">${data.fullname}</span>
+                            <span class="${badgeClass}">${badgeText}</span>
                         </div>
-                        <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; overflow:hidden;">
-                            <div style="width:${Math.min((progress/15)*100, 100)}%; height:100%; background:var(--primary); transition:0.3s;"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${pct}%;"></div>
                         </div>
-                        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim);">
-                            <span>Progresso: ${progress}/15 anúncios</span>
-                            <span>Bônus: R$ 0,50</span>
+                        <div style="display:flex;justify-content:space-between;font-size:0.6875rem;color:var(--muted-fg);">
+                            <span>${progress}/15 anúncios</span>
+                            <span style="color:hsl(162,56%,60%);font-weight:600;">Bônus: R$ 0,50</span>
                         </div>
                     </div>
                 `;
