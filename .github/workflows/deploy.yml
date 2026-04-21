@@ -1,0 +1,41 @@
+name: Deploy CineCash IA to Firebase
+
+on:
+  # Permite acionar manualmente pelo GitHub UI
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Motivo do deploy (ex: correcao bug, nova feature)'
+        required: false
+        default: 'Deploy via Hub Global'
+  # Permite acionar via GitHub API (pelo Hub)
+  repository_dispatch:
+    types: [deploy-cinecash]
+
+jobs:
+  deploy:
+    name: Firebase Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔧 Instalar Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: 🚀 Deploy no Firebase Hosting & Database Rules
+        run: firebase deploy --token "${{ secrets.FIREBASE_TOKEN }}" --project playearn-b001b --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: ✅ Notificar Hub do sucesso
+        if: success()
+        run: |
+          echo "Deploy de CineCash IA concluído com sucesso!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Acionado por: ${{ github.event.inputs.reason || github.event.action }}"
