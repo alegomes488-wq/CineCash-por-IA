@@ -6,11 +6,16 @@
         ".write": "$uid === auth.uid || root.child('config/adminUID').val() === auth.uid"
       }
     },
-    "withdrawals": {
-      ".indexOn": ["uid", "status"],
+    "referrals": {
       ".read": "auth != null",
-      "$withdrawalId": {
-        ".write": "auth != null && (!data.exists() || root.child('config/adminUID').val() === auth.uid)"
+      "$uid": {
+        ".write": "auth != null"
+      }
+    },
+    "devices": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null"
       }
     },
     "config": {
@@ -20,6 +25,17 @@
     "videos": {
       ".read": "true",
       ".write": "root.child('config/adminUID').val() === auth.uid"
+    },
+    "withdrawals": {
+      ".indexOn": ["uid", "status"],
+      ".read": "auth != null",
+      "$withdrawalId": {
+        ".write": "auth != null && (!data.exists() || root.child('config/adminUID').val() === auth.uid)"
+      }
+    },
+    "security_logs": {
+      ".read": "root.child('config/adminUID').val() === auth.uid",
+      ".write": "true"
     }
   }
 }
