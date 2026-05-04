@@ -1,0 +1,16 @@
+{
+  "name": "cinecash",
+  "version": "1.0.0",
+  "description": "CineCash IA - Assista e Ganhe",
+  "main": "index.js",
+  "scripts": {
+    "sync": "npx cap sync",
+    "copy": "npx cap copy",
+    "open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  }
+}

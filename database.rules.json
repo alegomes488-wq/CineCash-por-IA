@@ -1,40 +1,35 @@
 {
   "rules": {
-    "users": {
-      ".read": "auth != null",
-      "$uid": {
-        ".write": "$uid === auth.uid || root.child('config/adminUID').val() === auth.uid"
-      }
-    },
-    "referrals": {
-      ".read": "auth != null",
-      "$uid": {
-        ".write": "auth != null"
-      }
-    },
-    "devices": {
-      ".read": "auth != null",
-      "$uid": {
-        ".write": "auth != null"
-      }
-    },
     "config": {
       ".read": "true",
-      ".write": "root.child('config/adminUID').val() === auth.uid"
+      ".write": "auth != null && auth.token.email === 'alegomes488@gmail.com'"
     },
-    "videos": {
-      ".read": "true",
-      ".write": "root.child('config/adminUID').val() === auth.uid"
-    },
-    "withdrawals": {
-      ".indexOn": ["uid", "status"],
-      ".read": "auth != null",
-      "$withdrawalId": {
-        ".write": "auth != null && (!data.exists() || root.child('config/adminUID').val() === auth.uid)"
+    "users": {
+      ".indexOn": "referralCount",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'alegomes488@gmail.com')",
+        // O usuário NÃO pode mais alterar seu saldo ou vídeos. Só o Admin/Python.
+        ".write": "auth != null && auth.token.email === 'alegomes488@gmail.com'",
+
+        "risk_score": { ".write": "auth != null && auth.token.email === 'alegomes488@gmail.com'" }
       }
     },
-    "security_logs": {
-      ".read": "root.child('config/adminUID').val() === auth.uid",
+    "withdrawals": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'alegomes488@gmail.com')",
+        "$wid": {
+          // Usuário pode CRIAR um saque, mas nunca EDITAR ou APAGAR um existente
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.child('status').val() === 'pending'"
+        }
+      }
+    },
+    "admin": {
+      ".read": "auth != null && auth.token.email === 'alegomes488@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'alegomes488@gmail.com'"
+    },
+    "logs": {
+      ".read": "auth != null && auth.token.email === 'alegomes488@gmail.com'",
       ".write": "true"
     }
   }
