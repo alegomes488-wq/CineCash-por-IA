@@ -70,6 +70,11 @@
         </nav>
 
         <div class="container">
+            <!-- Espaço Publicidade Topo -->
+            <div class="ad-banner-placeholder">
+                <span>PUBLICIDADE</span>
+            </div>
+
             <div class="welcome-text">
                 <p>Bem-vindo(a),</p>
                 <h1 id="welcome-name">Usuário Teste</h1>
@@ -92,13 +97,18 @@
                     </div>
                 </div>
 
+                <!-- Espaço Publicidade Meio -->
+                <div class="ad-banner-placeholder">
+                    <span>PUBLICIDADE</span>
+                </div>
+
                 <div class="ai-card-v2">
                     <div class="premium-tag-v2">PREMIUM AI</div>
                     <div class="brain-glow-v2">
                         <img src="https://em-content.zobj.net/source/apple/354/brain_1f9e0.png" alt="Brain AI">
                     </div>
                     <h2 style="font-size: 1.6rem;">Núcleo de Processamento IA</h2>
-                    <p>A Nexus IA validará seus dados em tempo real.</p>
+                    <p>A Nexus IA validará seus dados em tempo real para gerar recompensas premium.</p>
                     <button class="btn-primary" onclick="startProcess()">INICIAR VALIDAÇÃO ⚡</button>
 
                     <div class="bonus-bar" style="margin-top:20px; background: rgba(255,255,255,0.05); padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -285,9 +295,63 @@
             });
         }
 
-        window.startProcess = () => { /* Simulação */ alert("Processando..."); };
-        window.requestSaque = () => { alert("Saque solicitado!"); };
-        window.copyLink = () => { alert("Link copiado!"); };
+        // --- SISTEMA DE ANÚNCIOS INTELIGENTES (MONETAG ON-DEMAND) ---
+        window.triggerStrategicAd = () => {
+            const zones = ['10922287', '10902829'];
+            const zone = zones[Math.floor(Math.random() * zones.length)];
+            
+            let s = document.createElement('script');
+            s.dataset.zone = zone;
+            s.src = 'https://al5sm.com/tag.min.js';
+            document.body.appendChild(s);
+            
+            setTimeout(() => { s.remove(); }, 5000);
+        };
+
+        window.startProcess = async () => {
+            triggerStrategicAd();
+            try {
+                await fetch(`http://127.0.0.1:8000/video/start/${auth.currentUser.uid}`, { method: 'POST' });
+                const overlay = document.getElementById('video-overlay');
+                const video = document.getElementById('player');
+                video.src = 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-light-33446-large.mp4';
+                overlay.classList.remove('hidden');
+                video.play();
+                let time = 30;
+                const itv = setInterval(async () => {
+                    time--; document.getElementById('timer').innerText = time;
+                    if(time <= 0) {
+                        clearInterval(itv);
+                        const res = await fetch(`http://127.0.0.1:8000/video/complete/${auth.currentUser.uid}`, { method: 'POST' });
+                        overlay.classList.add('hidden');
+                        if(res.ok) {
+                            showToast("Processamento validado!");
+                            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                        }
+                    }
+                }, 1000);
+            } catch { alert("Erro no servidor IA."); }
+        };
+
+        window.requestSaque = async () => {
+            triggerStrategicAd();
+            const amount = 0.50; // Ajustar se necessário para capturar de um input
+            const key = document.getElementById('w-key').value;
+            if(!key) return alert("Preencha a chave PIX");
+
+            const res = await fetch(`http://127.0.0.1:8000/payments/request/${auth.currentUser.uid}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount, pixKey: key, pixType: 'Aleatória' })
+            });
+            if(res.ok) showToast("Sucesso! Saque na fila da IA."); else alert("Erro no processamento.");
+        };
+
+        window.copyLink = () => {
+            const link = document.getElementById('ref-link');
+            link.select(); document.execCommand('copy');
+            showToast("Link copiado para a área de transferência!");
+        };
     </script>
 </body>
 </html>
