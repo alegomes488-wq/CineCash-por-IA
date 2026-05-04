@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "playearn-b001b"
+  },
+  "targets": {
+    "playearn-b001b": {
+      "hosting": {
+        "cinecash-app": [
+          "playearn-b001b"
+        ],
+        "hub-admin": [
+          "hub-playearn"
+        ]
+      }
+    }
   }
 }

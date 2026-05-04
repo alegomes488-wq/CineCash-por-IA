@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CineCash - Sua Jornada Premium</title>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0d">
+
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="premium-theme">
+    <div class="projector-glow"></div>
+    <div class="cyber-grid"></div>
+    <div class="cyber-scanlines"></div>
+
+    <!-- Barra de Status IA (Inspirada no Painel) -->
+    <div id="ai-status-indicator" class="glass-premium" style="position: fixed; top: 10px; right: 10px; padding: 5px 15px; z-index: 2000; display: flex; align-items: center; gap: 8px; border-radius: 50px; font-size: 0.6rem; font-weight: 800; border: 1px solid var(--accent);">
+        <div class="dot-green-v2"></div>
+        <span>SISTEMA IA: OPERACIONAL</span>
+    </div>
+    <div id="toast" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #1a1a1e; border: 1px solid var(--primary); color: white; padding: 12px 25px; border-radius: 50px; z-index: 9999; transition: 0.4s; font-weight: 700; font-size: 0.85rem;">Operação realizada!</div>
+
+    <!-- TELA DE LOGIN -->
+    <div id="page-login">
+        <div class="login-box">
+            <div class="login-logo">
+                <svg viewBox="0 0 100 100" style="width: 60px; height: 60px;">
+                    <circle cx="50" cy="50" r="20" fill="#a855f7" filter="drop-shadow(0 0 10px #a855f7)"/>
+                    <path d="M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="5 5"/>
+                </svg>
+            </div>
+            <h1 class="glitch-text" data-text="CineCash" style="font-size: 2.8rem; font-weight: 800; margin-bottom: 5px;">CineCash</h1>
+            <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 40px; font-size: 0.9rem;">Sua jornada premium no cinema digital</p>
+
+            <div class="input-group">
+                <label>E-mail de Acesso</label>
+                <input type="email" id="email" placeholder="nome@exemplo.com">
+            </div>
+            <div class="input-group" style="margin-bottom: 30px;">
+                <label>Sua Senha Secreta</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" placeholder="••••••••">
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="handleLogin()">ENTRAR NA PLATAFORMA</button>
+        </div>
+    </div>
+
+    <!-- APP PRINCIPAL -->
+    <div id="app-container" class="hidden">
+        <nav class="navbar">
+            <div class="user-badge">
+                <div class="avatar" id="user-avatar">U</div>
+                <span id="user-name-display">Usuário</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-item active" onclick="switchTab('dashboard', this)">Início</button>
+                <button class="nav-item" onclick="switchTab('withdraw', this)">Intercâmbio</button>
+                <button class="nav-item" onclick="switchTab('referrals', this)">Convites</button>
+                <button class="nav-item" onclick="switchTab('leaders', this)">Líderes</button>
+            </div>
+            <div class="logout-btn" onclick="location.reload()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="welcome-text">
+                <p>Bem-vindo(a),</p>
+                <h1 id="welcome-name">Usuário Teste</h1>
+            </div>
+
+            <!-- ABA INÍCIO -->
+            <div id="tab-dashboard" class="tab-content">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">SALDO ATUAL</span>
+                        <div class="stat-value" id="balance-txt">R$ 0,00</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">ANÚNCIOS ASSISTIDOS</span>
+                        <div class="stat-value" id="ads-txt">0/150</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">MILHAS ACUMULADAS</span>
+                        <div class="stat-value purple" id="miles-txt">0 Milhas</div>
+                    </div>
+                </div>
+
+                <div class="ai-card-v2">
+                    <div class="premium-tag-v2">PREMIUM AI</div>
+                    <div class="brain-glow-v2">
+                        <img src="https://em-content.zobj.net/source/apple/354/brain_1f9e0.png" alt="Brain AI">
+                    </div>
+                    <h2 style="font-size: 1.6rem;">Núcleo de Processamento IA</h2>
+                    <p>A Nexus IA validará seus dados em tempo real.</p>
+                    <button class="btn-primary" onclick="startProcess()">INICIAR VALIDAÇÃO ⚡</button>
+
+                    <div class="bonus-bar" style="margin-top:20px; background: rgba(255,255,255,0.05); padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8rem; font-weight:700;">BÔNUS EXTRA DIÁRIO</span>
+                        <button class="btn-claim-small" style="background:var(--primary); border:none; color:white; padding:8px 15px; border-radius:10px; cursor:pointer; font-weight:700;">RESGATAR R$ 0,20</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA INTERCÂMBIO -->
+            <div id="tab-withdraw" class="tab-content hidden">
+                <div class="withdraw-card">
+                    <span class="stat-label">SALDO DISPONÍVEL</span>
+                    <div class="stat-value green" id="avail-txt" style="font-size: 2.5rem;">R$ 0,00</div>
+                    <div class="input-group">
+                        <label>Chave PIX</label>
+                        <input type="text" id="w-key" placeholder="Sua chave...">
+                    </div>
+                    <button class="btn-primary" onclick="requestSaque()">SOLICITAR RESGATE</button>
+                </div>
+            </div>
+
+            <!-- ABA CONVITES -->
+            <div id="tab-referrals" class="tab-content hidden">
+                <div class="referral-card">
+                    <h2>Programa de Convites</h2>
+                    <p>Indique amigos e ganhe bônus!</p>
+                    <div class="input-group">
+                        <input type="text" id="ref-link" readonly>
+                        <button class="btn-primary" onclick="copyLink()">Copiar</button>
+                    </div>
+                    <div style="margin-top:20px;">Amigos: <span id="ref-count">0</span></div>
+                </div>
+            </div>
+
+            <!-- ABA LÍDERES (NOVA) -->
+            <div id="tab-leaders" class="tab-content hidden">
+                <div class="ranking-header">
+                    <h1>Ranking de Líderes</h1>
+                    <p>Os maiores visionários da rede CineCash.</p>
+                </div>
+
+                <div class="podium-container">
+                    <div class="podium-item silver" id="rank-2">
+                        <div class="podium-rank">2</div>
+                        <div class="podium-name">---</div>
+                        <div class="podium-base">PRATA</div>
+                    </div>
+                    <div class="podium-item gold" id="rank-1">
+                        <div class="podium-crown">👑</div>
+                        <div class="podium-rank">1</div>
+                        <div class="podium-name">---</div>
+                        <div class="podium-base">OURO</div>
+                    </div>
+                    <div class="podium-item bronze" id="rank-3">
+                        <div class="podium-rank">3</div>
+                        <div class="podium-name">---</div>
+                        <div class="podium-base">BRONZE</div>
+                    </div>
+                </div>
+
+                <div class="ranking-table-container glass-premium">
+                    <div class="table-header">
+                        <span>POSIÇÃO / USUÁRIO</span>
+                        <span>INDICADOS</span>
+                    </div>
+                    <div id="leaders-list" class="table-body">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="video-overlay" class="hidden">
+        <div style="position: absolute; top: 40px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--primary); font-weight: 800; font-size: 0.9rem; z-index: 5001;">
+            Validando: <span id="timer">30</span>s
+        </div>
+        <video id="player" style="width: 100%; height: 100%; object-fit: cover;" playsinline muted></video>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, push, set, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAodV-dw-p0UP7pqneDZaowOZLRmw6GVBA",
+            authDomain: "playearn-b001b.firebaseapp.com",
+            databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
+            projectId: "playearn-b001b",
+            storageBucket: "playearn-b001b.appspot.com",
+            messagingSenderId: "563829659490",
+            appId: "1:563829659490:web:a2f4a40d4a3d165541fe3b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let _user = null;
+
+        window.handleLogin = async () => {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, e, p); } catch { alert("Erro no login"); }
+        };
+
+        onAuthStateChanged(auth, u => {
+            if (u) {
+                document.getElementById('page-login').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                onValue(ref(db, `users/${u.uid}`), s => { _user = s.val(); if(_user) updateUI(); });
+                loadLeaders();
+            }
+        });
+
+        const updateUI = () => {
+            const name = _user.fullname || "Usuário";
+            const firstName = name.split(' ')[0];
+            document.getElementById('user-name-display').innerText = firstName;
+            document.getElementById('welcome-name').innerText = name;
+            document.getElementById('user-avatar').innerText = firstName[0].toUpperCase();
+            document.getElementById('balance-txt').innerText = `R$ ${_user.balance.toFixed(2)}`;
+            document.getElementById('avail-txt').innerText = `R$ ${_user.balance.toFixed(2)}`;
+            document.getElementById('ads-txt').innerText = `${_user.videosWatched % 150}/150`;
+            document.getElementById('miles-txt').innerText = `${Math.floor(_user.videosWatched / 1.5)} Milhas`;
+            document.getElementById('ref-count').innerText = _user.referralCount || 0;
+            document.getElementById('ref-link').value = `https://cinecash.app/?ref=${auth.currentUser.uid}`;
+        };
+
+        window.switchTab = (id, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`tab-${id}`).classList.remove('hidden');
+            el.classList.add('active');
+        };
+
+        function loadLeaders() {
+            const leadersRef = query(ref(db, 'users'), orderByChild('referralCount'), limitToLast(10));
+            onValue(leadersRef, (snapshot) => {
+                const data = [];
+                snapshot.forEach((child) => {
+                    data.push({ id: child.key, ...child.val() });
+                });
+                data.sort((a, b) => (b.referralCount || 0) - (a.referralCount || 0));
+                renderLeaders(data);
+            });
+        }
+
+        function renderLeaders(leaders) {
+            // Pódio
+            if (leaders[0]) {
+                const name = leaders[0].fullname ? leaders[0].fullname.split(' ')[0] : "Usuário";
+                document.querySelector('#rank-1 .podium-name').innerText = name;
+                document.querySelector('#rank-1').style.opacity = '1';
+            }
+            if (leaders[1]) {
+                const name = leaders[1].fullname ? leaders[1].fullname.split(' ')[0] : "Usuário";
+                document.querySelector('#rank-2 .podium-name').innerText = name;
+                document.querySelector('#rank-2').style.opacity = '1';
+            }
+            if (leaders[2]) {
+                const name = leaders[2].fullname ? leaders[2].fullname.split(' ')[0] : "Usuário";
+                document.querySelector('#rank-3 .podium-name').innerText = name;
+                document.querySelector('#rank-3').style.opacity = '1';
+            }
+
+            // Lista
+            const list = document.getElementById('leaders-list');
+            list.innerHTML = '';
+            leaders.forEach((leader, index) => {
+                const row = document.createElement('div');
+                row.className = 'leader-row';
+                const displayName = leader.fullname || "Usuário Sem Nome";
+                row.innerHTML = `
+                    <div class="leader-info">
+                        <span class="leader-pos">${index + 1}</span>
+                        <span class="leader-name">${displayName}</span>
+                    </div>
+                    <span class="leader-count">${leader.referralCount || 0}</span>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        window.startProcess = () => { /* Simulação */ alert("Processando..."); };
+        window.requestSaque = () => { alert("Saque solicitado!"); };
+        window.copyLink = () => { alert("Link copiado!"); };
+    </script>
+</body>
+</html>

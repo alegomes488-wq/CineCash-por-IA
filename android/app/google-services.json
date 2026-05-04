@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "563829659490",
+    "firebase_url": "https://playearn-b001b-default-rtdb.firebaseio.com",
+    "project_id": "playearn-b001b",
+    "storage_bucket": "playearn-b001b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563829659490:android:a2f4a40d4a3d165541fe3b",
+        "android_client_info": {
+          "package_name": "br.com.cinecash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563829659490-6g91nshmb87b6qb9uriih20ott97nv91.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAodV-dw-p0UP7pqneDZaowOZLRmw6GVBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "563829659490-6g91nshmb87b6qb9uriih20ott97nv91.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
