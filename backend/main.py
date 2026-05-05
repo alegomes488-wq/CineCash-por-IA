@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+import sys
+sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
+sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf-8', buffering=1)
+
 import time
 import asyncio
 import requests
@@ -12,7 +19,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 from dotenv import load_dotenv
 
-# Carrega variáveis de ambiente (.env)
+# Carrega variaveis de ambiente (.env)
 load_dotenv()
 
 # --- CONFIGURAÇÃO FIREBASE ---
@@ -217,7 +224,18 @@ app = FastAPI(title="CineCash Core IA - Backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://cinecash.app", 
+        "https://www.cinecash.app", 
+        "https://api.cinecash.app",
+        "http://localhost",
+        "http://localhost:5500",
+        "http://localhost:5501",
+        "http://127.0.0.1",
+        "http://127.0.0.1:5500",
+        "http://127.0.0.1:5501",
+        "http://127.0.0.1:8000"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -247,19 +265,19 @@ async def ai_chat(data: dict = Body(...)):
 
 @app.post("/video/start/{uid}")
 async def start_video(uid: str, request: Request):
-    try:
-        user_ip = request.headers.get("X-Forwarded-For") or request.client.host
-        if is_ip_blocked(user_ip):
-            raise HTTPException(status_code=403, detail="Acesso bloqueado por protocolos de segurança (IP Sentinel).")
+    user_ip = request.headers.get("X-Forwarded-For")
+    if not user_ip:
+        user_ip = request.client.host if request.client else "127.0.0.1"
 
-        db.reference(f'active_sessions/{uid}').set({
-            "startTime": time.time(),
-            "status": "watching",
-            "ip": user_ip
-        })
-        return {"status": "success", "message": "Cronômetro iniciado."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if is_ip_blocked(user_ip):
+        raise HTTPException(status_code=403, detail="Acesso bloqueado por protocolos de segurança (IP Sentinel).")
+
+    db.reference(f'active_sessions/{uid}').set({
+        "startTime": time.time(),
+        "status": "watching",
+        "ip": user_ip
+    })
+    return {"status": "success", "message": "Cronômetro iniciado."}
 
 @app.get("/users/all")
 async def get_all_users_with_geo():
@@ -272,7 +290,9 @@ async def get_all_users_with_geo():
 
 @app.post("/video/complete/{uid}")
 async def complete_video(uid: str, request: Request):
-    user_ip = request.headers.get("X-Forwarded-For") or request.client.host
+    user_ip = request.headers.get("X-Forwarded-For")
+    if not user_ip:
+        user_ip = request.client.host if request.client else "127.0.0.1"
 
     if is_ip_blocked(user_ip):
         raise HTTPException(status_code=403, detail="Seu IP foi bloqueado por atividade suspeita.")
@@ -296,7 +316,6 @@ async def complete_video(uid: str, request: Request):
 
     # 2. Bloqueio por tempo mínimo (Sentinel 2.0)
     if elapsed < 28:
-        # Lógica de Hard-Block por IP (Sentinel)
         ip_key = user_ip.replace(".", "_").replace(":", "_")
         v_ref = db.reference(f'ip_violations/{ip_key}')
         v_count = (v_ref.get() or 0) + 1
@@ -311,13 +330,15 @@ async def complete_video(uid: str, request: Request):
             "timestamp": time.time(),
             "detail": f"Vídeo completado em apenas {round(elapsed, 2)} segundos"
         })
-        # Incrementa o risk_score em vez de apenas setar
         current_risk = db.reference(f'users/{uid}/risk_score').get() or 0
-        if isinstance(current_risk, str): current_risk = 50 # Fallback se for string antiga
+        if isinstance(current_risk, str): current_risk = 50
         db.reference(f'users/{uid}/risk_score').set(current_risk + 20)
 
         if current_risk >= 100:
              db.reference(f'users/{uid}/status').set('banido')
+
+        # Limpa a sessão mesmo em caso de erro
+        session_ref.delete()
 
         raise HTTPException(status_code=403, detail="Processamento recusado: tempo insuficiente para validação neural.")
 
@@ -520,10 +541,12 @@ async def request_payment(uid: str, data: dict = Body(...)):
 
         # Auditoria de Saldo Real
         vids = int(user.get('videosWatched', 0))
-        earnings = (vids / 150) * 0.50
         bonus = float(user.get('referralBonus', 0))
-        extra = float(user.get('balance', 0))
-        real_balance = earnings + bonus + extra
+        balance = float(user.get('balance', 0))
+
+        # O saldo do usuário JÁ inclui os earnings (balance é atualizado pelo backend)
+        # Portanto: saldo auditável = balance + bonus
+        real_balance = balance + bonus
 
         if amount > (real_balance + 0.01):
             # Log de tentativa de fraude
@@ -535,9 +558,8 @@ async def request_payment(uid: str, data: dict = Body(...)):
             })
             raise HTTPException(status_code=403, detail="Saldo insuficiente ou inconsistente.")
 
-        # Deduz do saldo "extra" (balance) ou cria um registro de débito
-        # Como o saldo é calculado dinamicamente, subtraímos do campo 'balance'
-        new_balance = extra - amount
+        # Deduz do saldo do usuário
+        new_balance = max(0, balance - amount)
         user_ref.update({"balance": new_balance})
 
         # Cria a solicitação no nó global e no histórico do usuário
