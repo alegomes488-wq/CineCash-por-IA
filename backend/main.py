@@ -201,6 +201,7 @@ def detect_pix_type(pix_key: str):
 # --- PROTOCOLOS SENTINEL (IP BLOCKING) ---
 def is_ip_blocked(ip: str):
     if not ip: return False
+    if ip in ["127.0.0.1", "localhost", "::1"]: return False
     ip_key = ip.replace(".", "_").replace(":", "_")
     return db.reference(f'blacklist_ips/{ip_key}').get() is not None
 
@@ -363,28 +364,41 @@ async def complete_video(uid: str, request: Request):
         "last_video_at": time.time()
     })
 
-    # --- LÓGICA DE INDICAÇÃO (SEGURA) ---
+    # --- LÓGICA DE INDICAÇÃO (MISSÕES) ---
     referred_by = user_data.get("referredBy")
-    if referred_by and new_count % 150 == 0:
+    if referred_by and new_count == 150:
+        # Bônus pro NOVO USUÁRIO (indicado)
+        new_balance += 0.50  # Bônus de conclusão da primeira missão
+        db.reference(f'users/{uid}/balance').set(new_balance)
+        
+        # Bônus pro PADRINHO (indicando)
         referrer_ref = db.reference(f'users/{referred_by}')
         referrer_data = referrer_ref.get()
         if referrer_data:
-            # Paga R$ 0,50 ao padrinho por ciclo de 150 vídeos
             current_bonus = float(referrer_data.get('referralBonus', 0))
             ref_balance = float(referrer_data.get('balance', 0))
+            valid_refs = int(referrer_data.get('validReferrals', 0)) + 1
+            
+            # Padrinho ganha 0.15 base
+            reward_ref = 0.15
+            
+            # Bônus de Missão: A cada 5 validados, ganha + 0.25 (Fechando 1.00)
+            if valid_refs % 5 == 0:
+                reward_ref += 0.25
+                
             referrer_ref.update({
-                "referralBonus": current_bonus + 0.50,
-                "balance": ref_balance + 0.50
+                "referralBonus": current_bonus + reward_ref,
+                "balance": ref_balance + reward_ref,
+                "validReferrals": valid_refs
             })
 
-            # Registra o evento de conclusão de ciclo no nó de indicações
+            # Registra o evento no nó de indicações
             db.reference(f'referrals/{referred_by}/{uid}').update({
                 "status": "completed",
                 "last_cycle_at": datetime.now().isoformat()
             })
 
-            send_telegram_msg(f"🎁 *NEXUS GROWTH*\nUsuário `{referred_by}` recebeu R$ 0,50 de bônus por indicação de `{uid}`.")
-            print(f"🎁 [REFERRAL] Bônus de R$ 0,50 creditado para {referred_by} (Indicação de {uid})")
+            send_telegram_msg(f"🎁 *NEXUS GROWTH*\nUsuário `{uid}` ativou conta! Padrinho `{referred_by}` recebeu R$ {reward_ref:.2f}.")
 
     session_ref.delete()
 

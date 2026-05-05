@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="confetti.js"></script>
     <style>
         .hidden { display: none !important; }
@@ -47,7 +48,9 @@
     <!-- TELA DE LOGIN GLASS -->
     <div id="page-login">
         <div class="login-box glass-premium">
-            <div class="login-logo">🎬</div>
+            <div class="login-logo">
+                <i data-lucide="clapperboard" class="login-logo-lucide"></i>
+            </div>
             <h1 class="glitch-text" data-text="CineCash">CineCash</h1>
             <p class="login-subtitle">Sua jornada premium no cinema digital</p>
 
@@ -60,7 +63,9 @@
                 <label>Sua Senha Secreta</label>
                 <div class="password-box">
                     <input type="password" id="password" placeholder="••••••••">
-                    <span class="password-toggle" onclick="togglePassword()">👁️</span>
+                    <span class="password-toggle" onclick="togglePassword()">
+                        <i data-lucide="eye" class="password-icon-lucide" style="width:20px; height:20px;"></i>
+                    </span>
                 </div>
             </div>
 
@@ -76,6 +81,7 @@
             </p>
 
             <div class="login-security-badge">
+                <i data-lucide="shield-check" style="width:0.8rem; height:0.8rem; color:rgba(255,255,255,0.2);"></i>
                 PROTEGIDO POR SENTINEL 2.0
             </div>
         </div>
@@ -107,31 +113,31 @@
             <div id="tab-dashboard" class="tab-content">
                 <div class="stat-grid">
                     <div class="stat-card glass-premium">
-                        <span class="stat-icon">💰</span>
+                        <i data-lucide="wallet" class="stat-icon-lucide"></i>
                         <span class="stat-label">Saldo Atual</span>
                         <div class="stat-value" id="balance-txt">R$ 0,00</div>
                     </div>
                     <div class="stat-card glass-premium">
-                        <span class="stat-icon">🎬</span>
+                        <i data-lucide="film" class="stat-icon-lucide"></i>
                         <span class="stat-label">Processados</span>
                         <div class="stat-value" id="ads-txt">0/15</div>
                     </div>
                     <div class="stat-card glass-premium">
-                        <span class="stat-icon">🪙</span>
-                        <span class="stat-label">Milhas</span>
-                        <div class="stat-value purple" id="miles-txt">0.00 moedas</div>
+                        <i data-lucide="target" class="stat-icon-lucide"></i>
+                        <span class="stat-label">Próxima Meta</span>
+                        <div class="stat-value purple" id="goal-txt" style="font-size: 1.2rem;">0/150</div>
                     </div>
                 </div>
 
                 <div class="ad-banner-placeholder" id="monetag-banner">
-                    <!-- Script Monetag aqui -->
+                    <i data-lucide="monitor-play" style="width:1.5rem; height:1.5rem; color:var(--muted-fg); opacity:0.3; margin:0 auto 10px; display:block;"></i>
                     <span>ANÚNCIO PREMIUM DISPONÍVEL</span>
                 </div>
 
                 <div class="ai-card-premium glass-premium">
                     <div class="premium-tag-v2" style="background: #10b981;">SISTEMA ATIVO</div>
                     <div class="brain-glow-premium">
-                        <span class="brain-icon-premium">🧠</span>
+                        <i data-lucide="brain" class="brain-icon-lucide"></i>
                         <div class="brain-aura"></div>
                     </div>
                     <h2>Processador de Anúncios IA</h2>
@@ -184,14 +190,30 @@
                         * Sujeito à auditoria do Sentinel 2.0 (até 24h)
                     </p>
                 </div>
+
+                <!-- Histórico de Saques -->
+                <div class="withdraw-history-card glass-premium" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px; font-size: 1rem;">Histórico de Saques</h3>
+                    <div class="history-filters" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="filter-btn active" onclick="filterHistory('all', this)" style="flex:1; padding:5px; border-radius:10px; border:none; background:var(--primary); color:white; font-size:0.75rem;">Todos</button>
+                        <button class="filter-btn" onclick="filterHistory('pending', this)" style="flex:1; padding:5px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:white; font-size:0.75rem;">Aguardando</button>
+                        <button class="filter-btn" onclick="filterHistory('paid', this)" style="flex:1; padding:5px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:white; font-size:0.75rem;">Aprovados</button>
+                    </div>
+                    <div id="withdraw-list" style="max-height: 200px; overflow-y: auto;">
+                        <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.8rem;">Carregando histórico...</div>
+                    </div>
+                </div>
             </div>
 
             <!-- ABA CONVITES -->
             <!-- ABA CONVITES (NEXUS GROWTH) -->
             <div id="tab-referrals" class="tab-content hidden">
                 <div class="referral-mission-card">
+                    <div class="referral-mission-icon">
+                        <i data-lucide="rocket" style="width:1.5rem; height:1.5rem; color:#f472b6; filter:drop-shadow(0 0 8px rgba(244,114,182,0.4));"></i>
+                    </div>
                     <h2>MISSÃO: EMBAIXADOR CINECASH</h2>
-                    <p>Indique amigos e ganhe bônus extras a cada 5 pessoas</p>
+                    <p>Indique amigos e ganhe R$1,00 a cada 5 pessoas</p>
 
                     <div class="referral-stats-grid">
                         <div class="referral-stat-item">
@@ -207,6 +229,7 @@
                 </div>
 
                 <div class="referral-program-header">
+                    <i data-lucide="users" class="referral-header-icon"></i>
                     <h2>Programa de Convites</h2>
                     <p>Ganhe R$ 0,50 por amigo ativo</p>
                 </div>
@@ -219,7 +242,8 @@
                 <div class="referrals-list-section">
                     <h3>Seus Indicados (<span id="ref-total-list">0</span>)</h3>
                     <div id="referrals-list" class="referrals-empty-state">
-                        Nenhum indicado ativo no momento.
+                        <i data-lucide="inbox" style="width:2.5rem; height:2.5rem; color:var(--muted-fg); opacity:0.4; filter:drop-shadow(0 0 10px rgba(124,58,237,0.2));"></i>
+                        <span>Nenhum indicado ativo no momento.</span>
                     </div>
                 </div>
             </div>
@@ -238,7 +262,7 @@
                         <div class="podium-base">PRATA</div>
                     </div>
                     <div class="podium-item gold" id="rank-1">
-                        <div class="podium-crown">👑</div>
+                        <i data-lucide="crown" class="podium-crown-icon"></i>
                         <div class="podium-rank">1</div>
                         <div class="podium-name">---</div>
                         <div class="podium-base">OURO</div>
@@ -314,6 +338,10 @@
 
         let _user = null;
 
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
         window.handleLogin = async () => {
             const e = document.getElementById('email').value;
             const p = document.getElementById('password').value;
@@ -364,8 +392,14 @@
             const bal = `R$ ${(_user.balance || 0).toFixed(2).replace('.', ',')}`;
             document.getElementById('balance-txt').innerText = bal;
             document.getElementById('avail-txt').innerText = bal;
-            document.getElementById('ads-txt').innerText = `${(_user.videosWatched || 0) % 15}/15`;
-            document.getElementById('miles-txt').innerText = `${((_user.videosWatched || 0) * 0.1).toFixed(2)} moedas`;
+            document.getElementById('ads-txt').innerText = `${_user.videosWatched || 0}`;
+
+            const vids = _user.videosWatched || 0;
+            const goals = [150, 900, 1500, 3000, 15000];
+            const amounts = [0.5, 3.0, 5.0, 10.0, 50.0];
+            let nextGoal = goals.find(g => vids < g) || 15000;
+            let nextAmount = amounts[goals.indexOf(nextGoal)];
+            document.getElementById('goal-txt').innerText = `${vids}/${nextGoal} (R$ ${nextAmount.toFixed(2)})`;
 
             document.getElementById('ref-count').innerText = _user.referralCount || 0;
             document.getElementById('ref-total-list').innerText = _user.referralCount || 0;
@@ -377,6 +411,8 @@
         };
 
         onAuthStateChanged(auth, u => {
+            lucide.createIcons();
+
             const splash = document.getElementById('splash-screen');
             const hideSplash = () => {
                 if(splash) {
@@ -405,11 +441,62 @@
         });
 
         window.switchTab = (id, el) => {
+            triggerStrategicAd();
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(`tab-${id}`).classList.remove('hidden');
             el.classList.add('active');
+            lucide.createIcons();
+            if(id === 'withdraw') loadWithdrawHistory();
         };
+
+        window.filterHistory = (status, el) => {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.style.background = 'rgba(255,255,255,0.05)';
+                b.style.border = '1px solid var(--border)';
+            });
+            el.style.background = 'var(--primary)';
+            el.style.border = 'none';
+
+            const items = document.querySelectorAll('.withdraw-item');
+            items.forEach(item => {
+                if(status === 'all' || item.dataset.status === status) item.style.display = 'flex';
+                else item.style.display = 'none';
+            });
+        };
+
+        function loadWithdrawHistory() {
+            if(!auth.currentUser) return;
+            const refH = ref(db, `withdrawals/${auth.currentUser.uid}`);
+            onValue(refH, snap => {
+                const list = document.getElementById('withdraw-list');
+                list.innerHTML = '';
+                if(!snap.exists()) {
+                    list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.8rem; padding:10px;">Nenhum saque solicitado.</div>';
+                    return;
+                }
+                const data = [];
+                snap.forEach(c => { data.push(c.val()); });
+                data.sort((a,b) => b.timestamp - a.timestamp);
+                
+                data.forEach(w => {
+                    let color = w.status === 'paid' || w.status === 'finalizado' ? '#10b981' : (w.status === 'pending' ? '#fbbf24' : '#ef4444');
+                    let statusTxt = w.status === 'paid' || w.status === 'finalizado' ? 'Aprovado' : (w.status === 'pending' ? 'Aguardando' : 'Recusado');
+                    const d = new Date(w.timestamp).toLocaleDateString();
+                    list.innerHTML += `
+                        <div class="withdraw-item glass-premium" data-status="${w.status}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <div style="font-weight:800; font-size:0.9rem;">R$ ${w.amount.toFixed(2)}</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted);">${d} • ${w.pixType}</div>
+                            </div>
+                            <div style="color:${color}; font-size:0.75rem; font-weight:800; padding:4px 8px; border-radius:8px; background:${color}20;">
+                                ${statusTxt}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
 
         function loadLeaders() {
             const leadersRef = query(ref(db, 'users'), orderByChild('referralCount'), limitToLast(10));
@@ -487,6 +574,7 @@
         }
 
         window.startProcess = async () => {
+            triggerStrategicAd();
             const btn = document.querySelector('.ai-card-premium .btn-neon-premium');
             const card = document.querySelector('.ai-card-premium');
 
@@ -544,8 +632,22 @@
         };
 
         window.triggerStrategicAd = () => {
-            const banner = document.getElementById('monetag-banner');
-            if (banner) banner.innerHTML = `<span>🎯 OFERTA ESPECIAL DISPONÍVEL</span>`;
+            const zonesAl5sm = ['10922287', '10902829', '10902828', '10828297'];
+            const useQug = Math.random() > 0.8;
+            
+            let s = document.createElement('script');
+            if(useQug) {
+                s.src = 'https://quge5.com/88/tag.min.js';
+                s.dataset.zone = '226253';
+                s.async = true;
+                s.dataset.cfasync = 'false';
+            } else {
+                s.src = 'https://al5sm.com/tag.min.js';
+                s.dataset.zone = zonesAl5sm[Math.floor(Math.random() * zonesAl5sm.length)];
+            }
+            
+            document.body.appendChild(s);
+            setTimeout(() => { if(s.parentNode) s.remove(); }, 6000);
         };
 
         window.requestSaque = async () => {
@@ -602,11 +704,32 @@
             });
         }
 
-        window.claimDailyBonus = () => {
-            showToast("Bônus resgatado com sucesso!");
-            document.getElementById('btn-bonus').innerText = "COLETADO";
-            document.getElementById('btn-bonus').disabled = true;
-            document.getElementById('btn-bonus').style.opacity = "0.5";
+        window.claimDailyBonus = async () => {
+            triggerStrategicAd();
+            
+            // Logic to claim 0.20 daily bonus
+            const lastClaim = _user.lastDailyBonus;
+            const now = new Date().toDateString();
+            if(lastClaim === now) return showToast("Bônus diário já coletado hoje!");
+
+            try {
+                // We'll update Firebase directly for the visual effect
+                // Normally this should hit the backend to be secure
+                await import('./firebase-database.js').then(({update}) => {
+                    update(ref(db, `users/${auth.currentUser.uid}`), {
+                        balance: (_user.balance || 0) + 0.20,
+                        lastDailyBonus: now
+                    });
+                });
+                
+                showToast("Bônus resgatado com sucesso!");
+                document.getElementById('btn-bonus').innerText = "COLETADO";
+                document.getElementById('btn-bonus').disabled = true;
+                document.getElementById('btn-bonus').style.opacity = "0.5";
+                confetti({ particleCount: 50, spread: 30, origin: { y: 0.8 } });
+            } catch(e) {
+                showToast("Erro ao resgatar.");
+            }
         };
 
         window.logout = () => {
