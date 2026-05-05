@@ -2013,12 +2013,17 @@ body.premium-theme {
     opacity: 0.6;
 }
 
+.login-logo-lucide {
+    width: 60px;
+    height: 60px;
+    color: white;
+    filter: drop-shadow(0 0 20px rgba(160, 68, 255, 0.4));
+}
+
 .login-logo {
     position: relative;
-    font-size: 3.5rem;
-    margin-bottom: 15px;
     display: inline-block;
-    filter: drop-shadow(0 0 20px rgba(160, 68, 255, 0.4));
+    margin-bottom: 15px;
     animation: logoFloat 3s ease-in-out infinite;
 }
 
@@ -2111,23 +2116,30 @@ body.premium-theme {
     padding-right: 50px !important;
 }
 
+.password-icon-lucide {
+    opacity: 0.5;
+    color: #aaa;
+    transition: all 0.3s;
+}
+
+.password-toggle:hover .password-icon-lucide {
+    opacity: 1;
+    color: #a044ff;
+    filter: drop-shadow(0 0 8px rgba(160, 68, 255, 0.4));
+}
+
 .password-toggle {
     position: absolute;
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    font-size: 1.1rem;
     user-select: none;
-    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
     transition: all 0.3s;
-    filter: grayscale(0.5);
-}
-
-.password-toggle:hover {
-    opacity: 1;
-    filter: grayscale(0) drop-shadow(0 0 8px rgba(160, 68, 255, 0.4));
-    transform: translateY(-50%) scale(1.1);
 }
 
 .terms-group {
@@ -2195,11 +2207,6 @@ body.premium-theme {
     align-items: center;
     justify-content: center;
     gap: 6px;
-}
-
-.login-security-badge::before {
-    content: "🛡️";
-    font-size: 0.8rem;
 }
 
 /* ─── Buttons Premium ─── */
@@ -2348,6 +2355,15 @@ body.premium-theme {
     border-color: rgba(160, 68, 255, 0.2);
 }
 
+.stat-icon-lucide {
+    width: 28px;
+    height: 28px;
+    color: #a044ff;
+    filter: drop-shadow(0 0 8px rgba(160, 68, 255, 0.5));
+    margin-bottom: 8px;
+    display: block;
+}
+
 .stat-icon {
     font-size: 1.5rem;
     display: block;
@@ -2401,16 +2417,6 @@ body.premium-theme {
     overflow: hidden;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.ad-banner-placeholder::before {
-    content: "📺";
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-    opacity: 0.3;
 }
 
 .ad-banner-placeholder span {
@@ -2476,6 +2482,14 @@ body.premium-theme {
         0 0 20px #ff6ec7,
         0 0 40px #7b2ff7;
     z-index: 2;
+}
+
+.brain-icon-lucide {
+    width: 32px;
+    height: 32px;
+    color: white;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    z-index: 3;
 }
 
 .brain-icon-premium {
@@ -2635,16 +2649,6 @@ body.premium-theme {
     overflow: hidden;
 }
 
-.bonus-bar::before {
-    content: "🎁";
-    position: absolute;
-    right: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.9rem;
-    opacity: 0.15;
-}
-
 .btn-claim-small {
     padding: 10px 20px;
     border: none;
@@ -2663,8 +2667,53 @@ body.premium-theme {
 
 /* ─── Withdraw Card ─── */
 .withdraw-card {
-    padding: 30px;
-    margin-top: 10px;
+    padding: 35px 30px;
+    margin: 25px auto 0;
+    max-width: 900px;
+    border-radius: 25px;
+}
+
+/* ─── Referral Styles ─── */
+.referral-mission-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.referral-header-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    color: #a044ff;
+    filter: drop-shadow(0 0 8px rgba(160, 68, 255, 0.3));
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+.referral-mission-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(124, 58, 247, 0.15), rgba(244, 114, 182, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    text-align: center;
+    padding: 30px 25px;
+    border-radius: 24px;
+    margin: 0 0 25px;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        inset 0 0 20px rgba(124, 58, 247, 0.03);
+}
+
+.referral-mission-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #f472b6, transparent);
+    opacity: 0.5;
 }
 
 /* ─── Referral Styles ─── */
@@ -2682,15 +2731,6 @@ body.premium-theme {
     box-shadow:
         0 20px 40px rgba(0, 0, 0, 0.3),
         inset 0 0 20px rgba(124, 58, 237, 0.03);
-}
-
-.referral-mission-card::before {
-    content: "🎯";
-    position: absolute;
-    top: 12px;
-    left: 18px;
-    font-size: 1.2rem;
-    filter: drop-shadow(0 0 8px rgba(244, 114, 182, 0.4));
 }
 
 .referral-mission-card::after {
@@ -2765,14 +2805,6 @@ body.premium-theme {
     position: relative;
 }
 
-.referral-program-header::before {
-    content: "👥";
-    display: block;
-    font-size: 1.5rem;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 0 8px rgba(160, 68, 255, 0.3));
-}
-
 .referral-program-header h2 {
     font-size: 1.1rem;
     font-weight: 800;
@@ -2787,9 +2819,10 @@ body.premium-theme {
 .referral-link-container {
     display: flex;
     gap: 10px;
-    padding: 12px;
-    margin-bottom: 25px;
+    padding: 14px;
+    margin: 25px 0;
     align-items: center;
+    border-radius: 20px;
 }
 
 .referral-link-container input {
@@ -2928,21 +2961,16 @@ body.premium-theme {
 }
 
 .referrals-empty-state {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
     padding: 40px;
     font-size: 0.8rem;
     color: var(--muted-fg);
     border: 1px dashed rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     background: rgba(0, 0, 0, 0.1);
-}
-
-.referrals-empty-state::before {
-    content: "📭";
-    display: block;
-    font-size: 2rem;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.2));
 }
 
 .referral-program-header h2 {
@@ -3060,7 +3088,7 @@ body.premium-theme {
 /* ─── Ranking Styles ─── */
 .ranking-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin: 30px 0;
 }
 
 .ranking-header h1 {
@@ -3083,9 +3111,10 @@ body.premium-theme {
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    gap: 15px;
-    margin-bottom: 30px;
+    gap: 20px;
+    margin: 30px auto;
     padding: 0 10px;
+    max-width: 600px;
 }
 
 .podium-item {
@@ -3123,10 +3152,10 @@ body.premium-theme {
     opacity: 0.5;
 }
 
-.podium-item.gold .podium-crown {
-    font-size: 1.8rem;
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
-    animation: crownFloat 2s ease-in-out infinite;
+.podium-item.gold .podium-crown-icon {
+    color: #ffd700;
+    width: 2rem;
+    height: 2rem;
 }
 
 @keyframes crownFloat {
@@ -3146,6 +3175,15 @@ body.premium-theme {
     background: linear-gradient(180deg, rgba(205, 127, 50, 0.1), rgba(184, 115, 51, 0.05));
     border-color: rgba(205, 127, 50, 0.2);
     padding: 18px 15px;
+}
+
+.podium-crown-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    color: #ffd700;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    margin-bottom: 5px;
+    animation: crownFloat 2s ease-in-out infinite;
 }
 
 .podium-crown {
@@ -3174,7 +3212,10 @@ body.premium-theme {
 }
 
 .ranking-table-container {
-    padding: 10px;
+    padding: 15px;
+    margin: 30px auto 0;
+    max-width: 900px;
+    border-radius: 25px;
 }
 
 .table-header {
