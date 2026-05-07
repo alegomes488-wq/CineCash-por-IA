@@ -16,6 +16,49 @@
     <style>
         .hidden { display: none !important; }
         #splash-screen.fade-out { opacity: 0; pointer-events: none; }
+        #maintenance-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 2, 5, 0.95);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        #maintenance-overlay h1 { color: var(--primary); margin-bottom: 10px; }
+        #maintenance-overlay p { color: white; max-width: 400px; }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 12px;
+            width: fit-content;
+            margin-bottom: 10px;
+        }
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite ease-in-out;
+            opacity: 0.3;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingPulse {
+            0%, 100% { transform: translateY(0); opacity: 0.3; }
+            50% { transform: translateY(-4px); opacity: 1; }
+        }
     </style>
 </head>
 <body class="premium-theme">
@@ -37,13 +80,30 @@
     <div class="cyber-grid"></div>
     <div class="cyber-scanlines"></div>
 
-    <!-- Barra de Status IA Superior -->
-    <div id="ai-status-indicator" class="glass-premium">
-        <div class="dot-green-v2"></div>
-        <span>NEXUS IA: ATIVA</span>
-    </div>
-
     <div id="toast">Operação realizada com sucesso!</div>
+
+    <!-- MODAL DE ACEITE OBRIGATÓRIO (PARA USUÁRIOS LOGADOS SEM ACEITE) -->
+    <div id="terms-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,2,5,0.98); z-index:200000; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(15px);">
+        <div class="login-box glass-premium" style="max-width:450px; border: 2px solid #7c3aed;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <i data-lucide="shield-check" style="width:50px; height:50px; color:#7c3aed;"></i>
+            </div>
+            <h2 style="color:#fff; text-align:center; margin-bottom:15px; font-size:1.4rem;">Atualização de Segurança Jurídica</h2>
+            <p style="color:rgba(255,255,255,0.7); font-size:0.85rem; text-align:center; margin-bottom:20px; line-height:1.4;">
+                Para continuar utilizando o CineCash e garantir a conformidade com as normas da <strong>Receita Federal</strong> e leis vigentes, você precisa confirmar a ciência dos novos termos.
+            </p>
+
+            <div class="terms-group" style="display:flex; align-items:center; gap:10px; margin: 20px 0; background: rgba(124,58,237,0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(124,58,237,0.3);">
+                <input type="checkbox" id="modal-terms-check" style="width:25px; height:25px; accent-color: #7c3aed; cursor:pointer;">
+                <label for="modal-terms-check" style="font-size: 0.75rem; color: #fff; cursor:pointer; line-height:1.2; font-weight:600;">
+                    Eu li e concordo com os <a href="termos.html" target="_blank" style="color: #7c3aed; text-decoration: underline;">termos de uso e obrigações fiscais</a> perante a Receita Federal e Justiça Brasileira.
+                </label>
+            </div>
+
+            <button class="btn-primary" onclick="confirmTermsInModal()" style="width:100%; margin-bottom:10px;">CONFIRMAR E ACESSAR PAINEL</button>
+            <button onclick="logout()" style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem;">Não concordo, desejo sair</button>
+        </div>
+    </div>
 
     <!-- TELA DE LOGIN GLASS -->
     <div id="page-login">
@@ -63,27 +123,86 @@
                 <label>Sua Senha Secreta</label>
                 <div class="password-box">
                     <input type="password" id="password" placeholder="••••••••">
-                    <span class="password-toggle" onclick="togglePassword()">
+                    <span class="password-toggle" onclick="togglePassword('password')">
                         <i data-lucide="eye" class="password-icon-lucide" style="width:20px; height:20px;"></i>
                     </span>
                 </div>
             </div>
 
-            <div class="terms-group">
-                <input type="checkbox" id="terms">
-                <label for="terms">Confirmo os termos de uso</label>
-            </div>
-
             <button class="btn-primary" onclick="handleLogin()">ENTRAR NA PLATAFORMA</button>
 
             <p class="register-text">
-                Novo por aqui? <a href="#">Criar conta VIP</a>
+                Novo por aqui? <a href="javascript:void(0)" onclick="switchAuthMode('register')">Criar conta VIP</a>
             </p>
+        </div>
+    </div>
 
-            <div class="login-security-badge">
-                <i data-lucide="shield-check" style="width:0.8rem; height:0.8rem; color:rgba(255,255,255,0.2);"></i>
-                PROTEGIDO POR SENTINEL 2.0
+    <!-- TELA DE CADASTRO VIP -->
+    <div id="page-register" class="hidden">
+        <div class="login-box glass-premium">
+            <div class="login-logo">
+                <i data-lucide="sparkles" class="login-logo-lucide" style="color: #fbbf24;"></i>
             </div>
+            <h1 class="glitch-text" data-text="Conta VIP">Conta VIP</h1>
+            <p class="login-subtitle">Comece sua jornada de ganhos agora</p>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group" style="flex: 1;">
+                    <label>Nome</label>
+                    <input type="text" id="reg-fname" placeholder="Ex: João">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Sobrenome</label>
+                    <input type="text" id="reg-lname" placeholder="Ex: Silva">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>E-mail para Acesso</label>
+                <input type="email" id="reg-email" placeholder="seu@email.com">
+            </div>
+
+            <div class="input-group">
+                <label>Defina sua Senha</label>
+                <div class="password-box">
+                    <input type="password" id="reg-password" placeholder="Ex: Cine2024" oninput="checkPasswordStrength(this.value)">
+                    <span class="password-toggle" onclick="togglePassword('reg-password')">
+                        <i data-lucide="eye" class="password-icon-lucide" style="width:20px; height:20px;"></i>
+                    </span>
+                </div>
+                <!-- Medidor de Força Inteligente -->
+                <div id="password-strength-meter" style="display: flex; gap: 4px; margin-top: 8px; height: 4px;">
+                    <div class="strength-bar" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 2px; transition: 0.3s;"></div>
+                    <div class="strength-bar" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 2px; transition: 0.3s;"></div>
+                    <div class="strength-bar" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 2px; transition: 0.3s;"></div>
+                </div>
+                <p id="password-hint" style="font-size: 0.6rem; color: #a78bfa; margin-top: 5px; font-weight: 600;">
+                    🛡️ Use 8 caracteres: [A-Z], [a-z] e [0-9].
+                </p>
+            </div>
+
+            <div class="input-group">
+                <label>Confirme sua Senha</label>
+                <div class="password-box">
+                    <input type="password" id="reg-confirm-password" placeholder="Repita a senha">
+                    <span class="password-toggle" onclick="togglePassword('reg-confirm-password')">
+                        <i data-lucide="eye" class="password-icon-lucide" style="width:20px; height:20px;"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="terms-group" style="display:flex; align-items:center; gap:10px; margin: 20px 0; background: rgba(124,58,237,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(124,58,237,0.1);">
+                <input type="checkbox" id="reg-terms" style="width:20px; height:20px; accent-color: #7c3aed; cursor:pointer;">
+                <label for="reg-terms" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); cursor:pointer; line-height:1.2;">
+                    Confirmo ciência dos <a href="termos.html" style="color: #7c3aed; text-decoration: underline; font-weight: 800;">termos legais e responsabilidades fiscais</a> perante a Receita Federal.
+                </label>
+            </div>
+
+            <button class="btn-primary" onclick="handleRegister()" style="background: linear-gradient(135deg, #7c3aed, #db2777);">CRIAR MINHA CONTA VIP</button>
+
+            <p class="register-text">
+                Já tem conta? <a href="javascript:void(0)" onclick="switchAuthMode('login')">Fazer Login</a>
+            </p>
         </div>
     </div>
 
@@ -98,7 +217,6 @@
                 <button class="nav-item active" onclick="switchTab('dashboard', this)">Início</button>
                 <button class="nav-item" onclick="switchTab('withdraw', this)">Intercâmbio</button>
                 <button class="nav-item" onclick="switchTab('referrals', this)">Convites</button>
-                <button class="nav-item" onclick="switchTab('leaders', this)">Líderes</button>
             </div>
             <div class="logout" onclick="logout()">⎋</div>
         </nav>
@@ -159,132 +277,178 @@
 
             <!-- ABA INTERCÂMBIO (SAQUE) -->
             <div id="tab-withdraw" class="tab-content hidden">
-                <div class="withdraw-card glass-premium">
-                    <span class="stat-label" style="text-align: center; display: block;">Disponível para Resgate</span>
-                    <div id="avail-txt" class="stat-value green">R$ 0,00</div>
+                <div class="withdraw-card glass-premium" style="position: relative; overflow: hidden;">
+                    <!-- Efeito de brilho de fundo -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent); filter: blur(40px); z-index: 0;"></div>
 
-                    <div class="input-group">
-                        <label>Valor do Saque (BRL)</label>
-                        <input type="number" id="w-amount" placeholder="Mínimo R$ 20,00" min="20" step="0.01">
+                    <div style="position: relative; z-index: 1;">
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <i data-lucide="arrow-up-right-from-circle" style="width: 40px; height: 40px; color: var(--primary); margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.4));"></i>
+                            <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 5px;">Solicitar Resgate</h2>
+                            <span class="stat-label" style="text-align: center; display: block; opacity: 0.6;">Disponível para Intercâmbio</span>
+                            <div id="avail-txt" class="stat-value green" style="font-size: 2.2rem; margin-top: 5px;">R$ 0,00</div>
+                        </div>
+
+                        <div class="input-group">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="banknote" style="width: 14px; height: 14px;"></i>
+                                Valor do Saque (BRL)
+                            </label>
+                            <div style="position: relative;">
+                                <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--primary);">R$</span>
+                                <input type="text" id="w-amount-display" readonly value="0,00" style="padding-left: 45px !important; font-size: 1.1rem; font-weight: 800; background: rgba(0,0,0,0.2) !important;">
+                                <input type="hidden" id="w-amount" value="0">
+                                <input type="hidden" id="w-type" value="CPF">
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
+                                <button onclick="setAmount(0.50)" class="amount-btn">R$ 0,50</button>
+                                <button onclick="setAmount(5.00)" class="amount-btn">R$ 5,00</button>
+                                <button onclick="setAmount(50.00)" class="amount-btn">R$ 50,00</button>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 25px;">
+                            <label style="margin-bottom: 12px; display: block;">Tipo de Chave PIX</label>
+                            <div class="pix-type-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="pix-type-btn active" onclick="selectPixType('CPF', this)">
+                                    <span>CPF</span>
+                                </button>
+                                <button class="pix-type-btn" onclick="selectPixType('EMAIL', this)">
+                                    <span>E-mail</span>
+                                </button>
+                                <button class="pix-type-btn" onclick="selectPixType('PHONE', this)">
+                                    <span>Telefone</span>
+                                </button>
+                                <button class="pix-type-btn" onclick="selectPixType('EVP', this)">
+                                    <span>Aleatória</span>
+                                </button>
+                            </div>
+                            <div class="input-group" style="margin-top: 25px;">
+                            <label style="display: flex; justify-content: space-between;">
+                                <span>Progresso para Próximo Resgate</span>
+                                <span id="progress-percent" style="color: var(--primary); font-weight: 800;">0%</span>
+                            </label>
+                            <div class="progress-container-saque" style="width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-top: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                <div id="progress-bar-saque" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), #10b981); box-shadow: 0 0 10px var(--primary); transition: width 0.5s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-weight: 800;">
+                                <span>R$ 0,00</span>
+                                <span>META: <span id="next-goal-txt">R$ 0,50</span></span>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 25px;">
+                        </div>
+
+                        <div class="input-group" style="margin-top: 20px;">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i>
+                                Chave PIX de Destino
+                            </label>
+                            <input type="text" id="w-key" placeholder="Digite sua chave aqui..." style="font-weight: 600;" oninput="applyMask(this)">
+                        </div>
+
+                        <button class="btn-primary" onclick="requestSaque()" style="margin-top: 15px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i data-lucide="zap" style="width: 20px; height: 20px;"></i>
+                            AUTORIZAR TRANSFERÊNCIA
+                        </button>
+
+                        <div style="background: rgba(16, 185, 129, 0.05); border-radius: 12px; padding: 12px; margin-top: 20px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; gap: 10px; align-items: flex-start;">
+                            <div class="dot-green-v2" id="auditor-status-dot" style="margin-top: 4px;"></div>
+                            <p style="font-size: 0.65rem; color: #10b981; line-height: 1.4; font-weight: 700;">
+                                <strong id="auditor-status-text">AGENTE AUDITOR ONLINE:</strong> Monitorando transações em tempo real. Sua solicitação será analisada instantaneamente pela Nexus IA.
+                            </p>
+                        </div>
+                        <div style="background: rgba(124, 58, 237, 0.05); border-radius: 12px; padding: 12px; margin-top: 10px; border: 1px solid rgba(124, 58, 237, 0.1); display: flex; gap: 10px; align-items: flex-start;">
+                            <i data-lucide="shield-check" style="width: 18px; height: 18px; color: var(--primary); flex-shrink: 0;"></i>
+                            <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; font-weight: 600;">
+                                <strong>PROTEÇÃO SENTINEL 2.0:</strong> Prazo de liquidação: imediato após auditoria (até 24h).
+                            </p>
+                        </div>
                     </div>
-
-                    <div class="input-group">
-                        <label>Destino (Tipo de Chave)</label>
-                        <select id="w-type">
-                            <option value="CPF">CPF do Titular</option>
-                            <option value="EMAIL">E-mail Cadastrado</option>
-                            <option value="PHONE">Telefone Celular</option>
-                            <option value="EVP">Chave Aleatória (EVP)</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Chave PIX de Destino</label>
-                        <input type="text" id="w-key" placeholder="Insira sua chave aqui">
-                    </div>
-
-                    <button class="btn-primary" onclick="requestSaque()" style="margin-top: 10px;">
-                        AUTORIZAR TRANSFERÊNCIA PIX
-                    </button>
-                    <p style="text-align: center; font-size: 0.65rem; color: var(--text-muted); margin-top: 15px; font-weight: 700;">
-                        * Sujeito à auditoria do Sentinel 2.0 (até 24h)
-                    </p>
                 </div>
 
                 <!-- Histórico de Saques -->
-                <div class="withdraw-history-card glass-premium" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px; font-size: 1rem;">Histórico de Saques</h3>
-                    <div class="history-filters" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button class="filter-btn active" onclick="filterHistory('all', this)" style="flex:1; padding:5px; border-radius:10px; border:none; background:var(--primary); color:white; font-size:0.75rem;">Todos</button>
-                        <button class="filter-btn" onclick="filterHistory('pending', this)" style="flex:1; padding:5px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:white; font-size:0.75rem;">Aguardando</button>
-                        <button class="filter-btn" onclick="filterHistory('paid', this)" style="flex:1; padding:5px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:white; font-size:0.75rem;">Aprovados</button>
+                <div class="withdraw-history-card glass-premium" style="margin-top: 25px; padding: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="history" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            Histórico
+                        </h3>
+                        <div id="history-count" style="font-size: 0.65rem; font-weight: 800; color: var(--muted-fg); background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px;">0 transações</div>
                     </div>
-                    <div id="withdraw-list" style="max-height: 200px; overflow-y: auto;">
-                        <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.8rem;">Carregando histórico...</div>
+
+                    <div class="history-filters" style="display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 14px;">
+                        <button class="filter-btn active" onclick="filterHistory('all', this)" style="flex:1; padding:8px; border-radius:10px; border:none; background:var(--primary); color:white; font-size:0.7rem; font-weight:800; cursor:pointer; transition: 0.3s;">Todos</button>
+                        <button class="filter-btn" onclick="filterHistory('pending', this)" style="flex:1; padding:8px; border-radius:10px; border:none; background:transparent; color:var(--muted-fg); font-size:0.7rem; font-weight:800; cursor:pointer; transition: 0.3s;">Pendentes</button>
+                        <button class="filter-btn" onclick="filterHistory('paid', this)" style="flex:1; padding:8px; border-radius:10px; border:none; background:transparent; color:var(--muted-fg); font-size:0.7rem; font-weight:800; cursor:pointer; transition: 0.3s;">Pagos</button>
+                    </div>
+
+                    <div id="withdraw-list" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.8rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                            <i data-lucide="inbox" style="width: 32px; height: 32px; opacity: 0.2;"></i>
+                            Carregando histórico neural...
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA CONVITES -->
             <!-- ABA CONVITES (NEXUS GROWTH) -->
             <div id="tab-referrals" class="tab-content hidden">
-                <div class="referral-mission-card">
+                <div class="referral-mission-card glass-premium">
                     <div class="referral-mission-icon">
-                        <i data-lucide="rocket" style="width:1.5rem; height:1.5rem; color:#f472b6; filter:drop-shadow(0 0 8px rgba(244,114,182,0.4));"></i>
-                    </div>
-                    <h2>MISSÃO: EMBAIXADOR CINECASH</h2>
-                    <p>Indique amigos e ganhe R$1,00 a cada 5 pessoas</p>
-
-                    <div class="referral-stats-grid">
-                        <div class="referral-stat-item">
-                            <span>Amigos Ativos</span>
-                            <h3 id="ref-count">0</h3>
-                        </div>
-
-                        <div class="referral-stat-item">
-                            <span>Bônus Acumulado</span>
-                            <h3 id="ref-bonus-txt">R$ 0,00</h3>
+                        <div class="brain-glow-premium" style="width: 50px; height: 50px; background: radial-gradient(circle, #f472b6, #db2777); box-shadow: 0 0 20px rgba(244, 114, 182, 0.4);">
+                             <i data-lucide="rocket" style="width:24px; height:24px; color:white;"></i>
                         </div>
                     </div>
+                    <h2 style="letter-spacing: 2px; color: #f472b6;">MISSÃO: EMBAIXADOR VIP</h2>
+                    <p style="font-weight: 600; opacity: 0.8;">Expanda a rede CineCash e seja recompensado pela Nexus IA.</p>
+
+                    <div class="referral-stats-grid" style="margin-top: 20px;">
+                        <div class="referral-stat-item glass-premium" style="background: rgba(0,0,0,0.3) !important;">
+                            <span>INDICADOS ATIVOS</span>
+                            <h3 id="ref-count" style="color: #f472b6;">0</h3>
+                        </div>
+
+                        <div class="referral-stat-item glass-premium" style="background: rgba(0,0,0,0.3) !important;">
+                            <span>BÔNUS TOTAL</span>
+                            <h3 id="ref-bonus-txt" style="color: #10b981;">R$ 0,00</h3>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="referral-program-header">
-                    <i data-lucide="users" class="referral-header-icon"></i>
-                    <h2>Programa de Convites</h2>
-                    <p>Ganhe R$ 0,50 por amigo ativo</p>
+                <div class="referral-link-container glass-premium" style="flex-direction: column; gap: 15px; padding: 25px;">
+                    <div style="width: 100%; text-align: left;">
+                        <label style="font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;">Seu Link de Convite Único</label>
+                        <input type="text" id="ref-link" readonly value="Carregando link..." style="width: 100%; background: rgba(0,0,0,0.4) !important; border: 1px solid rgba(124,58,237,0.3) !important; color: #fff !important; font-family: monospace;">
+                    </div>
+                    <button class="btn-primary" onclick="copyLink()" style="margin-top: 0; height: 55px; background: linear-gradient(90deg, #7c3aed, #db2777);">
+                        <i data-lucide="copy" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                        COPIAR E COMPARTILHAR
+                    </button>
                 </div>
 
-                <div class="referral-link-container glass-premium">
-                    <input type="text" id="ref-link" readonly value="Carregando link...">
-                    <button class="btn-share" onclick="copyLink()">Compartilhar</button>
-                </div>
-
-                <div class="referrals-list-section">
-                    <h3>Seus Indicados (<span id="ref-total-list">0</span>)</h3>
-                    <div id="referrals-list" class="referrals-empty-state">
-                        <i data-lucide="inbox" style="width:2.5rem; height:2.5rem; color:var(--muted-fg); opacity:0.4; filter:drop-shadow(0 0 10px rgba(124,58,237,0.2));"></i>
-                        <span>Nenhum indicado ativo no momento.</span>
+                <div class="referrals-list-section glass-premium" style="padding: 25px; margin-top: 20px;">
+                    <h3 style="font-size: 0.9rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="users-round" style="color: var(--primary);"></i>
+                        Sua Rede de Afiliados (<span id="ref-total-list">0</span>)
+                    </h3>
+                    <div id="referrals-list" class="referrals-empty-state" style="border: 1px dashed rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+                        <i data-lucide="inbox" style="width:32px; height:32px; opacity:0.3;"></i>
+                        <span>Nenhum operador recrutado ainda.</span>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA LÍDERES -->
-            <div id="tab-leaders" class="tab-content hidden">
-                <div class="ranking-header">
-                    <h1>Elite CineCash</h1>
-                    <p>Top Visionários da Nexus IA</p>
-                </div>
 
-                <div class="podium-container">
-                    <div class="podium-item silver" id="rank-2">
-                        <div class="podium-rank">2</div>
-                        <div class="podium-name">---</div>
-                        <div class="podium-base">PRATA</div>
-                    </div>
-                    <div class="podium-item gold" id="rank-1">
-                        <i data-lucide="crown" class="podium-crown-icon"></i>
-                        <div class="podium-rank">1</div>
-                        <div class="podium-name">---</div>
-                        <div class="podium-base">OURO</div>
-                    </div>
-                    <div class="podium-item bronze" id="rank-3">
-                        <div class="podium-rank">3</div>
-                        <div class="podium-name">---</div>
-                        <div class="podium-base">BRONZE</div>
-                    </div>
-                </div>
-
-                <div class="ranking-table-container glass-premium">
-                    <div class="table-header">
-                        <span>OPERADOR / POSIÇÃO</span>
-                        <span>INDICADOS</span>
-                    </div>
-                    <div id="leaders-list" class="table-body">
-                        <!-- Gerado via JS -->
-                    </div>
-                </div>
-            </div>
         </div>
+    </div>
+
+    <!-- OVERLAY DE MANUTENÇÃO -->
+    <div id="maintenance-overlay" class="hidden">
+        <i data-lucide="wrench" style="width: 64px; height: 64px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h1 class="glitch-text" data-text="MANUTENÇÃO">SISTEMA EM MANUTENÇÃO</h1>
+        <p>Estamos realizando atualizações neurais para melhorar sua experiência. Voltaremos em breve!</p>
     </div>
 
     <!-- OVERLAY DE VALIDAÇÃO NEURAL (OFFLINE-READY) -->
@@ -307,10 +471,34 @@
         </div>
     </div>
 
+    <!-- IA NEXUS (CHAT FLUTUANTE) -->
+    <button class="chat-trigger" onclick="toggleChat()" style="display: none;" id="chat-btn">
+        <i data-lucide="brain" style="width:24px; height:24px; color:white;"></i>
+        <div style="position:absolute; top:8px; right:8px; width:10px; height:10px; background:#10b981; border-radius:50%; border:2px solid var(--primary);"></div>
+    </button>
+
+    <div class="chat-window hidden" id="chat-window">
+        <div class="chat-header">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="brain" style="width:16px; height:16px;"></i>
+                Nexus IA
+            </span>
+            <button onclick="toggleChat()" style="background:transparent; border:none; color:white; cursor:pointer;"><i data-lucide="x" style="width:18px; height:18px;"></i></button>
+        </div>
+        <div class="chat-content" id="chat-content">
+            <div class="msg-ai">Olá! Sou a Nexus, a inteligência artificial do CineCash. Como posso ajudar você a otimizar seus ganhos hoje?</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()" style="background:var(--primary); border:none; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:white; cursor:pointer;"><i data-lucide="send" style="width:16px; height:16px;"></i></button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "./firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "./firebase-auth.js";
-        import { getDatabase, ref, onValue, query, orderByChild, limitToLast, equalTo } from "./firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "./firebase-auth.js";
+        import { getDatabase, ref, onValue, query, orderByChild, limitToLast, equalTo, set, update, serverTimestamp } from "./firebase-database.js";
+        import { getMessaging, getToken } from "./firebase-messaging.js";
 
         const CONFIG = {
             apiBase: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -332,9 +520,36 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
+        const messaging = getMessaging(app);
 
-        // URL do Backend: Altere para a URL correta caso mude o domínio
-        const API_BASE_URL = "https://api.cinecash.app";
+        async function saveFCMToken(uid) {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const token = await getToken(messaging, {
+                    vapidKey: "BDOU99-h67HcA6JeFXHbSNMu7e2yNNu3RzoMj8TM4W88jITfq7ZmPvIM1Iv-4_l2LxQcYwhqby2xGpWwzjfAnG4",
+                    serviceWorkerRegistration: registration
+                });
+                if (token) {
+                    await update(ref(db, `users/${uid}`), { fcm_token: token });
+                    console.log("Token FCM salvo:", token);
+                }
+            } catch (err) {
+                console.error("Erro ao obter token FCM:", err);
+            }
+        }
+
+        // Monitoramento de Modo Manutenção (Global)
+        onValue(ref(db, 'config/maintenance'), (snapshot) => {
+            const isMaintenance = snapshot.val();
+            const overlay = document.getElementById('maintenance-overlay');
+            if (isMaintenance) {
+                overlay.classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                overlay.classList.add('hidden');
+            }
+        });
+
 
         let _user = null;
 
@@ -342,21 +557,180 @@
             lucide.createIcons();
         });
 
+        window.confirmTermsInModal = async () => {
+            const checked = document.getElementById('modal-terms-check').checked;
+            if(!checked) return showToast("Você deve marcar o campo de aceite.");
+
+            const uid = auth.currentUser.uid;
+            try {
+                await update(ref(db, `users/${uid}`), {
+                    legal_acceptance: {
+                        accepted: true,
+                        timestamp: serverTimestamp(),
+                        version: "2.0.4",
+                        platform: "CineCash Force Modal",
+                        fiscal_declaration: "CIENTE_RECEITA_FEDERAL_E_JUSTICA"
+                    }
+                });
+                document.getElementById('terms-modal').classList.add('hidden');
+                showToast("Termos aceitos com sucesso!");
+                updateUI();
+            } catch(e) {
+                showToast("Erro ao processar aceite.");
+            }
+        };
+
+        window.switchAuthMode = (mode) => {
+            const loginPage = document.getElementById('page-login');
+            const registerPage = document.getElementById('page-register');
+
+            if(mode === 'register') {
+                loginPage.classList.add('hidden');
+                registerPage.classList.remove('hidden');
+            } else {
+                loginPage.classList.remove('hidden');
+                registerPage.classList.add('hidden');
+            }
+            lucide.createIcons();
+        };
+
+        window.checkPasswordStrength = (pass) => {
+            const bars = document.querySelectorAll('.strength-bar');
+            const hint = document.getElementById('password-hint');
+
+            let strength = 0;
+            if (/[A-Z]/.test(pass)) strength++;
+            if (/[a-z]/.test(pass)) strength++;
+            if (/[0-9]/.test(pass)) strength++;
+            if (pass.length !== 8) strength = Math.min(strength, 2); // Penaliza se não tiver 8 chars
+
+            bars.forEach((bar, i) => {
+                if (i < strength) {
+                    if (strength === 1) bar.style.background = '#ef4444';
+                    if (strength === 2) bar.style.background = '#fbbf24';
+                    if (strength === 3 && pass.length === 8) bar.style.background = '#10b981';
+                    else if (strength === 3) bar.style.background = '#fbbf24';
+                } else {
+                    bar.style.background = 'rgba(255,255,255,0.1)';
+                }
+            });
+
+            if (pass.length === 0) hint.innerText = "🛡️ Use 8 caracteres: [A-Z], [a-z] e [0-9].";
+            else if (pass.length !== 8) hint.innerText = "⚠️ A senha deve ter EXATAMENTE 8 caracteres.";
+            else if (strength < 3) hint.innerText = "❌ Falta misturar letras (A/a) e números.";
+            else hint.innerText = "✅ Senha Militar detectada. Proteção ativa.";
+        };
+
+        // Sistema de Fingerprint Digital (Identificação de Dispositivo)
+        async function getFingerprint() {
+            const data = {
+                ua: navigator.userAgent,
+                screen: `${window.screen.width}x${window.screen.height}`,
+                lang: navigator.language,
+                tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cores: navigator.hardwareConcurrency || 'unknown',
+                mem: navigator.deviceMemory || 'unknown'
+            };
+            const str = JSON.stringify(data);
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        window.handleRegister = async () => {
+            const fname = document.getElementById('reg-fname').value.trim();
+            const lname = document.getElementById('reg-lname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-password').value;
+            const confirmPass = document.getElementById('reg-confirm-password').value;
+            const terms = document.getElementById('reg-terms').checked;
+
+            if(!fname || !lname || !email || !pass) return showToast("Preencha todos os campos.");
+
+            // Validação de Senha Forte (Maiúscula, Minúscula, Número e Máx 8 caracteres)
+            const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8}$/;
+            if(!strongPassword.test(pass)) {
+                return showToast("Senha Inválida: Use 8 caracteres com letras (A e a) e números.");
+            }
+
+            if(pass !== confirmPass) return showToast("As senhas não coincidem.");
+            if(!terms) return showToast("Você deve aceitar os termos.");
+
+            const btn = document.querySelector('#page-register .btn-primary');
+            btn.innerText = "CRIANDO CONTA...";
+            btn.disabled = true;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const uid = userCredential.user.uid;
+
+                // Geração de Username Automático
+                const username = `@${fname.toLowerCase()}_${lname.toLowerCase()}${Math.floor(100 + Math.random() * 900)}`;
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const referredBy = urlParams.get('ref') || null;
+                const fingerprint = await getFingerprint();
+
+                await set(ref(db, `users/${uid}`), {
+                    fullname: `${fname} ${lname}`,
+                    firstname: fname,
+                    lastname: lname,
+                    username: username,
+                    email: email,
+                    balance: 0,
+                    videosWatched: 0,
+                    referralCount: 0,
+                    status: "ativo",
+                    createdAt: serverTimestamp(),
+                    referredBy: referredBy,
+                    security: {
+                        fingerprint: fingerprint,
+                        device_info: navigator.userAgent,
+                        ip_check_required: false
+                    },
+                    legal_acceptance: {
+                        accepted: true,
+                        timestamp: serverTimestamp(),
+                        version: "2.0.4",
+                        platform: "CineCash Web Hub Registration",
+                        fiscal_declaration: "CIENTE_RECEITA_FEDERAL_E_JUSTICA"
+                    }
+                });
+
+                showToast("Conta VIP criada com sucesso!");
+            } catch (err) {
+                console.error(err);
+                if(err.code === 'auth/email-already-in-use') showToast("E-mail já cadastrado.");
+                else showToast("Erro ao criar conta.");
+            } finally {
+                btn.innerText = "CRIAR MINHA CONTA VIP";
+                btn.disabled = false;
+            }
+        };
+
         window.handleLogin = async () => {
             const e = document.getElementById('email').value;
             const p = document.getElementById('password').value;
-            const t = document.getElementById('terms').checked;
 
             if(!e || !p) return showToast("Preencha e-mail e senha.");
-            if(!t) return showToast("Aceite os termos de uso.");
-            
+
             const btn = document.querySelector('#page-login .btn-primary');
             const originalText = btn.innerText;
             btn.innerText = "AUTENTICANDO...";
             btn.disabled = true;
 
             try { 
-                await signInWithEmailAndPassword(auth, e, p); 
+                const userCredential = await signInWithEmailAndPassword(auth, e, p);
+                const fingerprint = await getFingerprint();
+
+                // Atualiza o último dispositivo usado no login para auditoria
+                await import('./firebase-database.js').then(({update}) => {
+                    update(ref(db, `users/${userCredential.user.uid}/security`), {
+                        last_login_fingerprint: fingerprint,
+                        last_login_at: serverTimestamp()
+                    });
+                });
             } catch (err) { 
                 showToast("Erro no login: Credenciais inválidas."); 
                 console.error(err);
@@ -366,13 +740,17 @@
             }
         };
 
-        window.togglePassword = () => {
-            const pwd = document.getElementById('password');
-            if(pwd.type === 'password') {
-                pwd.type = 'text';
+        window.togglePassword = (id) => {
+            const input = document.getElementById(id);
+            const icon = input.parentElement.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
             } else {
-                pwd.type = 'password';
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
             }
+            lucide.createIcons();
         };
 
         function showToast(message) {
@@ -382,21 +760,62 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
+        const updateWithdrawProgress = (balance) => {
+            const bar = document.getElementById('progress-bar-saque');
+            const percentTxt = document.getElementById('progress-percent');
+            const nextGoalTxt = document.getElementById('next-goal-txt');
+            if (!bar || !percentTxt || !nextGoalTxt) return;
+
+            let goal = 0.50;
+            if (balance >= 0.50) goal = 5.00;
+            if (balance >= 5.00) goal = 50.00;
+            if (balance >= 50.00) goal = 100.00;
+
+            const percent = Math.min(100, (balance / goal) * 100);
+            bar.style.width = `${percent}%`;
+            percentTxt.innerText = `${Math.floor(percent)}%`;
+            nextGoalTxt.innerText = `R$ ${goal.toFixed(2).replace('.', ',')}`;
+        };
+
         const updateUI = () => {
             if (!_user) return;
-            const firstName = (_user.fullname || "Usuário").split(' ')[0];
-            document.getElementById('user-name-display').innerText = firstName;
-            document.getElementById('welcome-name').innerText = _user.fullname || "Operador";
+            const firstName = _user.firstname || _user.fullname.split(' ')[0];
+
+            // Exibe o @username no topo e o nome completo + e-mail no corpo
+            document.getElementById('user-name-display').innerText = _user.username || `@${firstName.toLowerCase()}`;
+            document.getElementById('welcome-name').innerHTML = `
+                ${_user.fullname}
+                <div style="font-size: 0.75rem; color: var(--primary); font-weight: 400; margin-top: 5px; opacity: 0.8;">
+                    <i data-lucide="mail" style="width:12px; height:12px; vertical-align: middle; margin-right: 4px;"></i>
+                    ${_user.email}
+                </div>
+            `;
             document.getElementById('user-avatar').innerText = firstName[0].toUpperCase();
 
             const bal = `R$ ${(_user.balance || 0).toFixed(2).replace('.', ',')}`;
             document.getElementById('balance-txt').innerText = bal;
             document.getElementById('avail-txt').innerText = bal;
+            updateWithdrawProgress(_user.balance || 0);
             document.getElementById('ads-txt').innerText = `${_user.videosWatched || 0}`;
 
+            // Atualiza estado do botão de bônus diário
+            const btnBonus = document.getElementById('btn-bonus');
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (_user.last_daily_bonus_date === todayStr) {
+                btnBonus.innerText = "COLETADO";
+                btnBonus.disabled = true;
+                btnBonus.style.opacity = "0.5";
+                btnBonus.style.cursor = "default";
+            } else {
+                btnBonus.innerText = "RESGATAR";
+                btnBonus.disabled = false;
+                btnBonus.style.opacity = "1";
+                btnBonus.style.cursor = "pointer";
+            }
+
             const vids = _user.videosWatched || 0;
-            const goals = [150, 900, 1500, 3000, 15000];
-            const amounts = [0.5, 3.0, 5.0, 10.0, 50.0];
+            const goals = [150, 1500, 15000];
+            const amounts = [0.5, 5.0, 50.0];
             let nextGoal = goals.find(g => vids < g) || 15000;
             let nextAmount = amounts[goals.indexOf(nextGoal)];
             document.getElementById('goal-txt').innerText = `${vids}/${nextGoal} (R$ ${nextAmount.toFixed(2)})`;
@@ -410,6 +829,29 @@
             document.getElementById('ref-link').value = `https://cinecash.app/?ref=${auth.currentUser?.uid || '...'}`;
         };
 
+        let heartbeatInterval = null;
+
+        // --- REGISTRO DE SERVICE WORKER PARA NOTIFICAÇÕES ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Removido { type: 'module' } e adicionado timestamp para forçar atualização
+                navigator.serviceWorker.register('./sw.js?v=' + Date.now()).then(reg => {
+                    console.log('SW registrado com sucesso:', reg.scope);
+                }).catch(err => {
+                    console.error('Falha ao registrar SW:', err);
+                });
+            });
+        }
+
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('Permissão para notificações concedida.');
+                }
+            }
+        }
+
         onAuthStateChanged(auth, u => {
             lucide.createIcons();
 
@@ -422,46 +864,183 @@
             };
 
             if (u) {
-                document.getElementById('page-login').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
                 onValue(ref(db, `users/${u.uid}`), s => {
                     _user = s.val();
                     if(_user) {
+                        // BLOQUEIO JURÍDICO ATIVO: Se não aceitou, mostra o modal e mantém dashboard oculto
+                        if(!_user.legal_acceptance || !_user.legal_acceptance.accepted) {
+                            document.getElementById('page-login').classList.add('hidden');
+                            document.getElementById('page-register').classList.add('hidden');
+                            document.getElementById('app-container').classList.add('hidden');
+                            document.getElementById('terms-modal').classList.remove('hidden');
+                            lucide.createIcons();
+                            hideSplash();
+                            return;
+                        }
+
+                        // SÓ MOSTRA O DASHBOARD SE TIVER ACEITO
+                        document.getElementById('terms-modal').classList.add('hidden');
+                        document.getElementById('page-login').classList.add('hidden');
+                        document.getElementById('page-register').classList.add('hidden');
+                        document.getElementById('app-container').classList.remove('hidden');
+                        document.getElementById('chat-btn').style.display = 'flex';
+
                         updateUI();
+                        saveFCMToken(u.uid);
+                        requestNotificationPermission();
+                        hideSplash();
+                    } else {
+                        signOut(auth);
                         hideSplash();
                     }
                 });
-                try { loadLeaders(); } catch(e) { console.warn('Falha ao carregar líderes'); }
+
+                // Heartbeat de Status (30s)
+                if (!heartbeatInterval) {
+                    heartbeatInterval = setInterval(() => {
+                        set(ref(db, 'status/site_last_pulse'), serverTimestamp());
+                    }, 30000);
+                    // Pulso inicial imediato
+                    set(ref(db, 'status/site_last_pulse'), serverTimestamp());
+                }
+
+                // Listener do Agente Auditor em Tempo Real
+                onValue(ref(db, 'status/auditor_last_pulse'), snap => {
+                    const lastPulse = snap.val();
+                    const statusText = document.getElementById('auditor-status-text');
+                    const statusDot = document.getElementById('auditor-status-dot');
+                    if (lastPulse && statusText && statusDot) {
+                        const now = Date.now();
+                        const diff = (now - lastPulse) / 1000;
+                        if (diff < 120) { // Considera online se pulsou nos últimos 2 minutos
+                            statusText.innerText = "AGENTE AUDITOR ONLINE:";
+                            statusText.style.color = "#10b981";
+                            statusDot.style.background = "#10b981";
+                            statusDot.style.boxShadow = "0 0 10px rgba(16, 185, 129, 0.6)";
+                        } else {
+                            statusText.innerText = "AGENTE AUDITOR OFFLINE:";
+                            statusText.style.color = "#ef4444";
+                            statusDot.style.background = "#ef4444";
+                            statusDot.style.boxShadow = "0 0 10px rgba(239, 68, 68, 0.6)";
+                        }
+                    }
+                });
+
+
                 try { loadReferrals(); } catch(e) { console.warn('Falha ao carregar indicações'); }
             } else {
                 document.getElementById('page-login').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
                 hideSplash();
+
+                if (heartbeatInterval) {
+                    clearInterval(heartbeatInterval);
+                    heartbeatInterval = null;
+                }
             }
         });
 
+        let menuClickCount = 0;
         window.switchTab = (id, el) => {
-            triggerStrategicAd();
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            triggerStrategicAd(true);
+            document.querySelectorAll('.tab-content').forEach(t => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(10px)';
+                setTimeout(() => t.classList.add('hidden'), 200);
+            });
+
+            setTimeout(() => {
+                const target = document.getElementById(`tab-${id}`);
+                target.classList.remove('hidden');
+                setTimeout(() => {
+                    target.style.opacity = '1';
+                    target.style.transform = 'translateY(0)';
+                }, 50);
+            }, 210);
+
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(`tab-${id}`).classList.remove('hidden');
             el.classList.add('active');
             lucide.createIcons();
             if(id === 'withdraw') loadWithdrawHistory();
         };
 
+        window.setAmount = (val) => {
+            const input = document.getElementById('w-amount');
+            input.value = parseFloat(val).toFixed(2);
+            input.focus();
+        };
+
+        window.selectPixType = (type, el) => {
+            document.getElementById('w-type').value = type;
+            document.querySelectorAll('.pix-type-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+
+            const keyInput = document.getElementById('w-key');
+            keyInput.value = ''; // Limpa ao trocar tipo
+            if (type === 'CPF') {
+                keyInput.placeholder = "000.000.000-00";
+                keyInput.type = "text";
+            }
+            else if (type === 'EMAIL') {
+                keyInput.placeholder = "exemplo@email.com";
+                keyInput.type = "email";
+            }
+            else if (type === 'PHONE') {
+                keyInput.placeholder = "(00) 00000-0000";
+                keyInput.type = "tel";
+            }
+            else if (type === 'EVP') {
+                keyInput.placeholder = "Chave Aleatória (UUID)";
+                keyInput.type = "text";
+            }
+
+            keyInput.focus();
+        };
+
+        window.applyMask = (el) => {
+            const type = document.getElementById('w-type').value;
+            if (type === 'CPF') {
+                let val = el.value.replace(/\D/g, '');
+                if (val.length > 11) val = val.slice(0, 11);
+                val = val.replace(/(\d{3})(\d)/, '$1.$2');
+                val = val.replace(/(\d{3})(\d)/, '$1.$2');
+                val = val.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                el.value = val;
+            } else if (type === 'PHONE') {
+                let val = el.value.replace(/\D/g, '');
+                if (val.length > 11) val = val.slice(0, 11);
+                if (val.length > 2) {
+                    val = `(${val.slice(0, 2)}) ${val.slice(2)}`;
+                }
+                if (val.length > 9) {
+                    val = `${val.slice(0, 10)}-${val.slice(10)}`;
+                }
+                el.value = val;
+            }
+        };
+
         window.filterHistory = (status, el) => {
             document.querySelectorAll('.filter-btn').forEach(b => {
-                b.style.background = 'rgba(255,255,255,0.05)';
-                b.style.border = '1px solid var(--border)';
+                b.style.background = 'transparent';
+                b.style.color = 'var(--muted-fg)';
             });
             el.style.background = 'var(--primary)';
-            el.style.border = 'none';
+            el.style.color = 'white';
 
             const items = document.querySelectorAll('.withdraw-item');
             items.forEach(item => {
-                if(status === 'all' || item.dataset.status === status) item.style.display = 'flex';
-                else item.style.display = 'none';
+                item.style.transition = '0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                if(status === 'all' || item.dataset.status === status || (status === 'paid' && item.dataset.status === 'finalizado')) {
+                    item.style.display = 'flex';
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'scale(1)';
+                    }, 10);
+                } else {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.95)';
+                    setTimeout(() => item.style.display = 'none', 300);
+                }
             });
         };
 
@@ -470,72 +1049,55 @@
             const refH = ref(db, `withdrawals/${auth.currentUser.uid}`);
             onValue(refH, snap => {
                 const list = document.getElementById('withdraw-list');
+                const counter = document.getElementById('history-count');
                 list.innerHTML = '';
                 if(!snap.exists()) {
-                    list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.8rem; padding:10px;">Nenhum saque solicitado.</div>';
+                    list.innerHTML = `
+                        <div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.8rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                            <i data-lucide="inbox" style="width: 32px; height: 32px; opacity: 0.2;"></i>
+                            Nenhuma transação encontrada.
+                        </div>`;
+                    counter.innerText = '0 transações';
+                    lucide.createIcons();
                     return;
                 }
                 const data = [];
                 snap.forEach(c => { data.push(c.val()); });
                 data.sort((a,b) => b.timestamp - a.timestamp);
-                
-                data.forEach(w => {
+                counter.innerText = `${data.length} transações`;
+
+                data.forEach((w, index) => {
                     let color = w.status === 'paid' || w.status === 'finalizado' ? '#10b981' : (w.status === 'pending' ? '#fbbf24' : '#ef4444');
-                    let statusTxt = w.status === 'paid' || w.status === 'finalizado' ? 'Aprovado' : (w.status === 'pending' ? 'Aguardando' : 'Recusado');
-                    const d = new Date(w.timestamp).toLocaleDateString();
+                    let statusTxt = w.status === 'paid' || w.status === 'finalizado' ? 'Pago' : (w.status === 'pending' ? 'Pendente' : 'Recusado');
+                    let icon = w.status === 'paid' || w.status === 'finalizado' ? 'check-circle' : (w.status === 'pending' ? 'clock' : 'x-circle');
+                    const d = new Date(w.timestamp).toLocaleDateString('pt-BR');
+                    const t = new Date(w.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
                     list.innerHTML += `
-                        <div class="withdraw-item glass-premium" data-status="${w.status}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);">
-                            <div>
-                                <div style="font-weight:800; font-size:0.9rem;">R$ ${w.amount.toFixed(2)}</div>
-                                <div style="font-size:0.7rem; color:var(--text-muted);">${d} • ${w.pixType}</div>
+                        <div class="withdraw-item glass-premium" data-status="${w.status}" style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-radius:16px; border:1px solid rgba(255,255,255,0.05); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity:0; transform: translateY(10px); animation: itemFadeIn 0.3s forwards ${index * 0.05}s;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 12px; background: ${color}15; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="${icon}" style="width: 20px; height: 20px; color: ${color};"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:800; font-size:0.95rem; color: #fff;">R$ ${w.amount.toFixed(2).replace('.', ',')}</div>
+                                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight: 600;">${d} às ${t} • ${w.pixType}</div>
+                                </div>
                             </div>
-                            <div style="color:${color}; font-size:0.75rem; font-weight:800; padding:4px 8px; border-radius:8px; background:${color}20;">
-                                ${statusTxt}
+                            <div style="text-align: right;">
+                                <div style="color:${color}; font-size:0.65rem; font-weight:900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    ${statusTxt}
+                                </div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); margin-top: 2px;">ID: ...${w.timestamp.toString().slice(-6)}</div>
                             </div>
                         </div>
                     `;
                 });
+                lucide.createIcons();
             });
         }
 
-        function loadLeaders() {
-            const leadersRef = query(ref(db, 'users'), orderByChild('referralCount'), limitToLast(10));
-            onValue(leadersRef, snapshot => {
-                const data = [];
-                snapshot.forEach(child => { data.push({ id: child.key, ...child.val() }); });
-                data.sort((a, b) => (b.referralCount || 0) - (a.referralCount || 0));
-                renderLeaders(data);
-            });
-        }
 
-        function renderLeaders(leaders) {
-            const podiumIds = ['rank-1', 'rank-2', 'rank-3'];
-            const podiumLabels = ['OURO', 'PRATA', 'BRONZE'];
-            podiumIds.forEach((id, i) => {
-                const el = document.getElementById(id);
-                if (leaders[i]) {
-                    el.querySelector('.podium-name').innerText = leaders[i].fullname.split(' ')[0];
-                    el.style.opacity = '1';
-                    const baseEl = el.querySelector('.podium-base');
-                    if (baseEl) baseEl.innerText = podiumLabels[i];
-                }
-            });
-
-            const list = document.getElementById('leaders-list');
-            list.innerHTML = '';
-            leaders.forEach((l, i) => {
-                const row = document.createElement('div');
-                row.className = 'leader-row';
-                row.innerHTML = `
-                    <div class="leader-info">
-                        <span class="leader-pos">${i + 1}</span>
-                        <span class="leader-name">${l.fullname || "Usuário"}</span>
-                    </div>
-                    <span class="leader-count">${l.referralCount || 0} Convites</span>
-                `;
-                list.appendChild(row);
-            });
-        }
 
         function loadReferrals() {
             const refQuery = query(ref(db, 'users'), orderByChild('referredBy'), equalTo(auth.currentUser.uid));
@@ -571,6 +1133,86 @@
                 `;
                 list.appendChild(item);
             });
+        }
+
+        window.setAmount = (val) => {
+            const display = document.getElementById('w-amount-display');
+            const hidden = document.getElementById('w-amount');
+            if (display) display.value = val.toFixed(2).replace('.', ',');
+            if (hidden) hidden.value = val;
+
+            // Estilizar botão selecionado
+            const buttons = document.querySelectorAll('.amount-btn');
+            buttons.forEach(btn => {
+                if (btn.innerText.includes(val.toFixed(2).replace('.', ','))) {
+                    btn.style.background = 'rgba(124,58,237,0.3)';
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.05)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    btn.style.color = 'var(--text-muted)';
+                }
+            });
+        };
+
+        // ============ SISTEMA DE TUTORIAL NEXUS IA ============
+        window.startNexusTutorial = async () => {
+            const steps = [
+                { 
+                    msg: "Olá! Eu sou a Nexus IA. Vou te mostrar como faturar aqui! 🚀", 
+                    action: () => switchTab('dashboard', document.querySelector('.nav-item')) 
+                },
+                { 
+                    msg: "Aqui no Início, você usa minha rede neural para validar anúncios e ganhar saldo. 🎬", 
+                    action: () => {
+                        const card = document.querySelector('.ai-card-premium');
+                        card.style.boxShadow = "0 0 40px var(--primary)";
+                        setTimeout(() => card.style.boxShadow = "none", 3000);
+                    } 
+                },
+                { 
+                    msg: "No menu Intercâmbio, você solicita o saque via PIX. Escolha valores de R$ 0,50, 5,00 ou 50,00. 💰", 
+                    action: () => switchTab('withdraw', document.querySelectorAll('.nav-item')[1]) 
+                },
+                { 
+                    msg: "Em Convites, você ganha R$ 0,50 por cada amigo que ativar a conta no CineCash! 🎁", 
+                    action: () => switchTab('referrals', document.querySelectorAll('.nav-item')[2]) 
+                },
+                { 
+                    msg: "Tutorial concluído! Agora você está pronto para lucrar. Alguma dúvida? 😊", 
+                    action: () => switchTab('dashboard', document.querySelector('.nav-item')) 
+                }
+            ];
+
+            const chatContent = document.getElementById('chat-content');
+            for (const step of steps) {
+                showTyping(true);
+                await new Promise(r => setTimeout(r, 2000));
+                showTyping(false);
+                step.action();
+                chatContent.innerHTML += `<div class="msg-ai">${step.msg}</div>`;
+                chatContent.scrollTop = chatContent.scrollHeight;
+                await new Promise(r => setTimeout(r, 3500));
+            }
+            lucide.createIcons();
+        };
+
+        function showTyping(show) {
+            const chatContent = document.getElementById('chat-content');
+            let indicator = document.getElementById('nexus-typing');
+            if (show) {
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.id = 'nexus-typing';
+                    indicator.className = 'typing-indicator';
+                    indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+                    chatContent.appendChild(indicator);
+                }
+                chatContent.scrollTop = chatContent.scrollHeight;
+            } else if (indicator) {
+                indicator.remove();
+            }
         }
 
         window.startProcess = async () => {
@@ -631,11 +1273,21 @@
             }
         };
 
-        window.triggerStrategicAd = () => {
+        window.triggerStrategicAd = (isMenu = false) => {
+            // Controle de frequência para o Menu (A cada 2 cliques)
+            if (isMenu) {
+                menuClickCount++;
+                if (menuClickCount % 2 !== 0) return; // Só dispara no 2º, 4º...
+            }
+
+            // Evita disparar múltiplos anúncios se um já estiver carregando (Anti-spam/Lag)
+            if (document.querySelector('script[data-ad-active="true"]')) return;
+
             const zonesAl5sm = ['10922287', '10902829', '10902828', '10828297'];
             const useQug = Math.random() > 0.8;
             
             let s = document.createElement('script');
+            s.setAttribute('data-ad-active', 'true');
             if(useQug) {
                 s.src = 'https://quge5.com/88/tag.min.js';
                 s.dataset.zone = '226253';
@@ -647,29 +1299,109 @@
             }
             
             document.body.appendChild(s);
-            setTimeout(() => { if(s.parentNode) s.remove(); }, 6000);
+            // Limpa o marcador após 10 segundos para permitir nova chamada controlada
+            setTimeout(() => {
+                if(s.parentNode) s.remove();
+            }, 10000);
         };
 
         window.requestSaque = async () => {
             triggerStrategicAd();
             const amountInput = document.getElementById('w-amount');
             const amount = parseFloat(amountInput?.value || '0');
-            const key = document.getElementById('w-key').value;
+            const key = document.getElementById('w-key').value.trim();
+            const type = document.getElementById('w-type').value;
 
-            if (amount < 20) return showToast("Valor mínimo para saque é R$ 20,00");
-            if (!key) return showToast("Preencha a chave PIX");
+            // Novos Limites Conforme Tabela (0.50, 5.00, 50.00)
+            const allowedAmounts = [0.5, 5.0, 50.0];
 
-            const res = await fetch(`${API_BASE_URL}/payments/request/${auth.currentUser.uid}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ amount, pixKey: key, pixType: document.getElementById('w-type').value })
-            });
-            if (res.ok) {
-                showToast("Saque solicitado! Na fila da IA.");
-                amountInput.value = '';
-                document.getElementById('w-key').value = '';
-            } else {
-                showToast("Erro no processamento do saque.");
+            if (!allowedAmounts.includes(amount)) {
+                return showToast("Selecione um dos valores da tabela.");
+            }
+
+            if (_user.balance < amount) {
+                return showToast("Saldo insuficiente.");
+            }
+
+            // Verifica se atingiu os limites mínimos para saque conforme solicitado
+            if (amount === 0.5 && _user.balance < 0.5) return showToast("Mínimo R$ 0,50 necessário.");
+            if (amount === 5.0 && _user.balance < 5.0) return showToast("Mínimo R$ 5,00 necessário para este saque.");
+            if (amount === 50.0 && _user.balance < 50.0) return showToast("Mínimo R$ 50,00 necessário para este saque.");
+
+            // Validação de Chave PIX Premium
+            const validatePix = (t, k) => {
+                if (t === 'CPF') {
+                    const cpf = k.replace(/\D/g, '');
+                    if (cpf.length !== 11) return false;
+                    if (/^(\d)\1+$/.test(cpf)) return false;
+                    // Validação de dígitos verificadores básica
+                    let sum = 0, rest;
+                    for (let i = 1; i <= 9; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (11 - i);
+                    rest = (sum * 10) % 11;
+                    if ((rest == 10) || (rest == 11)) rest = 0;
+                    if (rest != parseInt(cpf.substring(9, 10))) return false;
+                    sum = 0;
+                    for (let i = 1; i <= 10; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (12 - i);
+                    rest = (sum * 10) % 11;
+                    if ((rest == 10) || (rest == 11)) rest = 0;
+                    if (rest != parseInt(cpf.substring(10, 11))) return false;
+                    return true;
+                }
+                if (t === 'EMAIL') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k);
+                if (t === 'PHONE') {
+                    const phone = k.replace(/\D/g, '');
+                    return phone.length >= 10 && phone.length <= 13;
+                }
+                if (t === 'EVP') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k);
+                return true;
+            };
+
+            if (!validatePix(type, key)) {
+                let msg = "Formato de chave inválido.";
+                if (type === 'CPF') msg = "CPF inválido. Verifique os números.";
+                if (type === 'EMAIL') msg = "E-mail inválido. Verifique o formato.";
+                if (type === 'PHONE') msg = "Telefone inválido. Use DDD + Número.";
+                if (type === 'EVP') msg = "Chave Aleatória inválida. Verifique o código.";
+                return showToast(msg);
+            }
+
+            let finalKey = key;
+            if (type === 'CPF' || type === 'PHONE') finalKey = key.replace(/\D/g, '');
+
+            const btn = document.querySelector('#tab-withdraw .btn-primary');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="spinner" style="display:block;"></i> PROCESSANDO...';
+
+            try {
+                const fingerprint = await getFingerprint();
+
+                const res = await fetch(`${CONFIG.apiBase}/payments/request/${auth.currentUser.uid}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        amount,
+                        pixKey: finalKey,
+                        pixType: type,
+                        fingerprint: fingerprint
+                    })
+                });
+
+                if (res.ok) {
+                    showToast("SAQUE SOLICITADO COM SUCESSO!");
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } });
+                    amountInput.value = '';
+                    document.getElementById('w-key').value = '';
+                } else {
+                    const errorData = await res.json();
+                    showToast(errorData.detail || "Erro no processamento do saque.");
+                }
+            } catch (e) {
+                showToast("Erro de conexão com o servidor neural.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
             }
         };
 
@@ -705,35 +1437,84 @@
         }
 
         window.claimDailyBonus = async () => {
+            if (!_user) return;
             triggerStrategicAd();
             
-            // Logic to claim 0.20 daily bonus
-            const lastClaim = _user.lastDailyBonus;
-            const now = new Date().toDateString();
-            if(lastClaim === now) return showToast("Bônus diário já coletado hoje!");
+            const btn = document.getElementById('btn-bonus');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "VALIDANDO...";
 
             try {
-                // We'll update Firebase directly for the visual effect
-                // Normally this should hit the backend to be secure
-                await import('./firebase-database.js').then(({update}) => {
-                    update(ref(db, `users/${auth.currentUser.uid}`), {
-                        balance: (_user.balance || 0) + 0.20,
-                        lastDailyBonus: now
-                    });
+                const res = await fetch(`${CONFIG.apiBase}/user/claim-daily/${auth.currentUser.uid}`, {
+                    method: 'POST'
                 });
                 
-                showToast("Bônus resgatado com sucesso!");
-                document.getElementById('btn-bonus').innerText = "COLETADO";
-                document.getElementById('btn-bonus').disabled = true;
-                document.getElementById('btn-bonus').style.opacity = "0.5";
-                confetti({ particleCount: 50, spread: 30, origin: { y: 0.8 } });
-            } catch(e) {
-                showToast("Erro ao resgatar.");
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast("BÔNUS RESGATADO COM SUCESSO!");
+                    confetti({ particleCount: 50, spread: 30, origin: { y: 0.8 } });
+
+                    // O onValue do Firebase atualizará _user e a UI automaticamente
+                    btn.innerText = "COLETADO";
+                    btn.style.opacity = "0.5";
+                } else {
+                    const err = await res.json();
+                    showToast(err.detail || "Falha ao resgatar bônus.");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            } catch (e) {
+                showToast("Erro de conexão com CyberCore.");
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
         };
 
         window.logout = () => {
             signOut(auth).then(() => window.location.reload());
+        };
+
+        window.toggleChat = () => {
+            const w = document.getElementById('chat-window');
+            if (w.classList.contains('hidden')) {
+                w.classList.remove('hidden');
+            } else {
+                w.classList.add('hidden');
+            }
+        };
+
+        window.sendChatMessage = async () => {
+            const input = document.getElementById('chat-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+
+            const c = document.getElementById('chat-content');
+            c.innerHTML += `<div class="msg-user">${txt}</div>`;
+            input.value = '';
+            c.scrollTop = c.scrollHeight;
+
+            if (txt.toLowerCase().trim() === 'tutorial' || txt.toLowerCase().trim() === 'ajuda') {
+                window.startNexusTutorial();
+                return;
+            }
+
+            showTyping(true);
+            try {
+                const res = await fetch(`${CONFIG.apiBase}/ai/chat/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ prompt: txt })
+                });
+                const data = await res.json();
+                showTyping(false);
+                c.innerHTML += `<div class="msg-ai">${data.answer || "Processando a sua requisição neural..."}</div>`;
+            } catch(e) {
+                showTyping(false);
+                c.innerHTML += `<div class="msg-ai">Erro ao contactar a CyberCore IA. Tente novamente mais tarde.</div>`;
+            }
+            c.scrollTop = c.scrollHeight;
+            lucide.createIcons();
         };
     </script>
 </body>

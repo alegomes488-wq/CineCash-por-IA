@@ -16,7 +16,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, db, messaging
 from dotenv import load_dotenv
 
 # Carrega variaveis de ambiente (.env)
@@ -55,8 +55,7 @@ async def cybercore_audit_loop():
     while True:
         try:
             # --- PULSO VITAL (Sincronização com o HUB) ---
-            now_str = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-            db.reference('status/cinecash_last_pulse').set(now_str)
+            db.reference('status/auditor_last_pulse').set({".sv": "timestamp"})
 
             users_ref = db.reference('users').get()
             config = db.reference('config').get() or {}
@@ -128,7 +127,46 @@ async def cybercore_audit_loop():
 
         except Exception as e:
             print(f"⚠️ Erro Auditoria: {e}")
+        
+        # --- RASTREADOR DE LIQUIDAÇÃO ASAAS ---
+        try:
+            await track_asaas_transfers()
+        except: pass
+
         await asyncio.sleep(60)
+
+async def track_asaas_transfers():
+    """Consulta o status real das transferências no Asaas"""
+    config = db.reference('config').get() or {}
+    api_key = (config.get('asaasKey') or "").strip()
+    if not api_key: return
+
+    is_sandbox = "sandbox" in api_key.lower() or "test" in api_key.lower()
+    if "_prod_" in api_key.lower(): is_sandbox = False
+    
+    base_url = "https://sandbox.asaas.com/api/v3/transfers" if is_sandbox else "https://www.asaas.com/api/v3/transfers"
+    headers = {"access_token": api_key}
+
+    # Busca saques que foram 'enviados' mas ainda não 'finalizados'
+    withdrawals = db.reference('withdrawals').get() or {}
+    for uid, user_wds in withdrawals.items():
+        if not isinstance(user_wds, dict): continue
+        for wid, data in user_wds.items():
+            if data.get('status') == 'paid' and data.get('asaas_id'):
+                asaas_id = data.get('asaas_id')
+                try:
+                    resp = requests.get(f"{base_url}/{asaas_id}", headers=headers, timeout=10)
+                    if resp.status_code == 200:
+                        status_asaas = resp.json().get('status')
+                        # Se já foi concluído no banco
+                        if status_asaas in ['DONE', 'CONFIRMED']:
+                            db.reference(f'withdrawals/{uid}/{wid}/status').set('finalizado')
+                            db.reference(f'withdrawals/{uid}/{wid}/finalized_at').set(datetime.now().isoformat())
+                            print(f"💰 [RASTREADOR] Saque {wid} FINALIZADO com sucesso no banco.")
+                        elif status_asaas == 'FAILED':
+                            db.reference(f'withdrawals/{uid}/{wid}/status').set('falha_bancaria')
+                            print(f"❌ [RASTREADOR] Saque {wid} FALHOU no processamento bancário.")
+                except: pass
 
 # --- MODULO B: GEMINI CORE ---
 def ask_gemini(prompt: str):
@@ -166,6 +204,35 @@ def ask_gemini(prompt: str):
         return f"❌ Falha IA: {str(e)}"
 
 # --- TELEGRAM GATEWAY ---
+def send_push_notification(uid: str, title: str, body: str, url: str = "/"):
+    """
+    Envia uma notificação push via FCM para um usuário específico.
+    """
+    try:
+        user_ref = db.reference(f'users/{uid}').get()
+        if not user_ref: return
+
+        fcm_token = user_ref.get('fcm_token')
+        if not fcm_token:
+            print(f"⚠️ FCM: Usuário {uid} não possui token registrado.")
+            return
+
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            data={
+                "url": url
+            },
+            token=fcm_token,
+        )
+
+        response = messaging.send(message)
+        print(f"🚀 FCM: Notificação enviada para {uid}. Resposta: {response}")
+    except Exception as e:
+        print(f"❌ FCM: Erro ao enviar notificação: {e}")
+
 def send_telegram_msg(text: str):
     try:
         config = db.reference('config').get() or {}
@@ -178,25 +245,23 @@ def send_telegram_msg(text: str):
 
 # --- AUXILIARES ---
 def detect_pix_type(pix_key: str):
-    pix_key = str(pix_key).strip()
+    pix_key = str(pix_key).strip().replace(".", "").replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
+    
     if "@" in pix_key:
         return "EMAIL"
 
-    # Remove caracteres não numéricos
-    digits = "".join(filter(str.isdigit, pix_key))
-
-    if len(digits) == 11:
-        return "CPF"
-    if len(digits) == 14:
-        return "CNPJ"
-    if len(digits) >= 10 and (pix_key.startswith("+") or digits.startswith("55")):
+    # Se começar com + ou tiver formato de celular brasileiro (11 dígitos começando com DDD válido)
+    if pix_key.startswith("+") or (len(pix_key) == 11 and pix_key[2] == '9'):
         return "PHONE"
+    
+    if len(pix_key) == 11:
+        # Se não for telefone (9º dígito), assumimos CPF
+        return "CPF"
+        
+    if len(pix_key) == 14:
+        return "CNPJ"
 
-    # Se tiver hífens e for longo, provavelmente é EVP (Chave Aleatória)
-    if "-" in pix_key and len(pix_key) > 30:
-        return "EVP"
-
-    return "EVP" # Fallback para chave aleatória
+    return "EVP" 
 
 # --- PROTOCOLOS SENTINEL (IP BLOCKING) ---
 def is_ip_blocked(ip: str):
@@ -251,10 +316,8 @@ def home():
 @app.api_route("/heartbeat/site/", methods=["GET", "POST", "OPTIONS"])
 async def site_pulse():
     try:
-        now = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        db.reference('status/cinecash_last_pulse').set(now)
-        print(f"💓 [PULSO VITAL] CineCash Site ativo as {now}")
-        return {"status": "pulsing", "time": now}
+        db.reference('status/site_last_pulse').set({".sv": "timestamp"})
+        return {"status": "pulsing", "timestamp": "firebase_server_sync"}
     except Exception as e:
         print(f"❌ [ERRO] Falha no pulso CineCash: {e}")
         return {"status": "error", "message": str(e)}
@@ -272,6 +335,11 @@ async def start_video(uid: str, request: Request):
 
     if is_ip_blocked(user_ip):
         raise HTTPException(status_code=403, detail="Acesso bloqueado por protocolos de segurança (IP Sentinel).")
+
+    # NOVA TRAVA JURÍDICA: Verifica se aceitou os termos antes de começar a ganhar
+    user_data = db.reference(f'users/{uid}').get()
+    if not user_data or not user_data.get('legal_acceptance', {}).get('accepted'):
+        raise HTTPException(status_code=403, detail="Aceite os termos de uso para iniciar o processamento.")
 
     db.reference(f'active_sessions/{uid}').set({
         "startTime": time.time(),
@@ -350,6 +418,10 @@ async def complete_video(uid: str, request: Request):
     if not user_data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
+    # TRAVA DE SEGURANÇA EXTRA: Verifica aceite jurídico no momento do crédito
+    if not user_data.get('legal_acceptance', {}).get('accepted'):
+        raise HTTPException(status_code=403, detail="Processamento negado: Termos não aceitos.")
+
     old_count = user_data.get("videosWatched", 0)
     new_count = old_count + 1
 
@@ -405,6 +477,46 @@ async def complete_video(uid: str, request: Request):
     print(f"💰 [RECOMPENSA] Usuário {uid} completou vídeo. Total: {new_count} - Saldo: R$ {new_balance:.4f}")
     return {"status": "success", "new_count": new_count, "reward": reward, "balance": new_balance}
 
+@app.post("/user/claim-daily/{uid}")
+async def claim_daily_bonus(uid: str):
+    """
+    Processa o resgate do bônus diário de R$ 0,20 validando a data no servidor.
+    """
+    user_ref = db.reference(f'users/{uid}')
+    user = user_ref.get()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    # TRAVA JURÍDICA: Impede bônus sem aceite
+    if not user.get('legal_acceptance', {}).get('accepted'):
+        raise HTTPException(status_code=403, detail="Aceite os termos para resgatar bônus.")
+
+    now = datetime.now()
+    today_str = now.strftime("%Y-%m-%d")
+
+    last_claim = user.get('last_daily_bonus_date')
+
+    if last_claim == today_str:
+        raise HTTPException(status_code=400, detail="Bônus diário já resgatado hoje.")
+
+    current_balance = float(user.get('balance', 0))
+    bonus_amount = 0.20
+    new_balance = current_balance + bonus_amount
+
+    user_ref.update({
+        "balance": new_balance,
+        "last_daily_bonus_date": today_str,
+        "last_daily_bonus_at": time.time() * 1000
+    })
+
+    return {
+        "status": "success",
+        "message": "Bônus diário creditado!",
+        "new_balance": new_balance,
+        "bonus": bonus_amount
+    }
+
 @app.post("/payments/approve/{withdrawal_id}")
 async def approve_payment(withdrawal_id: str):
     # Tenta pegar a chave do Firebase primeiro (mais atualizada), se não, usa a do .env
@@ -432,6 +544,11 @@ async def approve_payment(withdrawal_id: str):
     if not user:
          raise HTTPException(status_code=404, detail="Usuário do saque não localizado.")
 
+    # TRAVA MESTRA: Verifica se o usuário aceitou os termos antes de o Admin aprovar o PIX
+    if not user.get('legal_acceptance', {}).get('accepted'):
+        send_telegram_msg(f"🚨 *AUDITORIA: BLOQUEIO CRÍTICO*\nTentativa de aprovação de saque para `{uid}` sem aceite dos termos jurídicos/fiscais.")
+        raise HTTPException(status_code=403, detail="Usuário não possui aceite jurídico registrado. Pagamento bloqueado.")
+
     vids = int(float(user.get('videosWatched', 0)))
     bonus = float(user.get('referralBonus', 0))
     user_balance = float(user.get('balance', 0))
@@ -446,8 +563,8 @@ async def approve_payment(withdrawal_id: str):
         send_telegram_msg(f"🚨 *AUDITORIA: BLOQUEIO DE SAQUE*\nUsuário: `{uid}` tentou sacar R$ {amount} mas o saldo real auditado ({user_balance:.2f}) excede o limite teórico ({theoretical_max:.2f}).")
         raise HTTPException(status_code=403, detail="Inconsistência de saldo detectada pela Auditoria CyberCore.")
 
-    if amount > user_balance:
-        raise HTTPException(status_code=400, detail="Saldo insuficiente.")
+    # A verificação de saldo insuficiente foi removida aqui pois o débito ocorre no momento do pedido (request_payment).
+    # O Auditor CyberCore continua validando a integridade do saldo total acima.
 
     # --- INTEGRAÇÃO REAL ASAAS ---
     headers = {
@@ -457,9 +574,21 @@ async def approve_payment(withdrawal_id: str):
 
     pix_type = detect_pix_type(pix_key)
 
-    # URL Dinâmica (Sandbox vs Produção)
-    is_sandbox = api_key.startswith("$") or "sandbox" in api_key.lower()
-    asaas_url = "https://sandbox.asaas.com/api/v3/transfers" if is_sandbox else "https://www.asaas.com/api/v3/transfers"
+    # Limpeza profunda da chave
+    api_key = api_key.strip()
+
+    # URL Dinâmica (Sandbox vs Produção) - LOGICA À PROVA DE FALHAS
+    # Se a chave contém '_prod_', ela é obrigatoriamente PRODUÇÃO.
+    if "_prod_" in api_key.lower():
+        is_sandbox = False
+        asaas_url = "https://www.asaas.com/api/v3/transfers"
+    else:
+        is_sandbox = True
+        asaas_url = "https://sandbox.asaas.com/api/v3/transfers"
+    
+    print(f"📡 [ASAAS DIAGNÓSTICO] Ambiente Detectado: {'SANDBOX' if is_sandbox else 'PRODUÇÃO'}")
+    print(f"🔑 [ASAAS DIAGNÓSTICO] Prefixo Final: {api_key[:10]}...")
+    print(f"🌐 [ASAAS DIAGNÓSTICO] URL Alvo: {asaas_url}")
 
     payload = {
         "value": amount,
@@ -469,48 +598,45 @@ async def approve_payment(withdrawal_id: str):
     }
 
     try:
-        print(f"🚀 [ASAAS] Processando transferência de R$ {amount} para {pix_key} ({pix_type})")
-        # Em ambiente de teste/desenvolvimento, você pode querer logar o payload (sem a key completa)
-
+        print(f"🚀 [ASAAS] Enviando transferência: R$ {amount} -> {pix_key} ({pix_type})")
+        
         response = requests.post(asaas_url, json=payload, headers=headers, timeout=25)
         res_json = response.json()
+        
+        # LOG DE AUDITORIA CRÍTICA
+        print(f"📦 [ASAAS RESPOSTA COMPLETA]: {res_json}")
 
         if response.status_code == 200:
-            # Sucesso no Asaas
             asaas_id = res_json.get('id')
-
-            # Atualiza histórico do usuário
+            asaas_status = res_json.get('status')
+            
             db.reference(f'withdrawals/{uid}/{withdrawal_id}').update({
                 "status": "paid",
+                "asaas_status": asaas_status,
                 "paid_at": datetime.now().isoformat(),
                 "asaas_id": asaas_id
             })
-
-            # Registra mapeamento para Webhook
-            db.reference(f'asaas_transfers/{asaas_id}').set({
-                "uid": uid,
-                "withdrawal_id": withdrawal_id
-            })
-
-            # Remove da fila de pendentes
             withdraw_ref.delete()
+            print(f"✅ [ASAAS] Ordem aceita! ID: {asaas_id} | Status Atual: {asaas_status}")
 
-            print(f"✅ [ASAAS] Pagamento {asaas_id} concluído com sucesso.")
-            return {"status": "success", "msg": "Pagamento processado e enviado via Asaas!", "asaas_id": asaas_id}
+            # Notifica o usuário via Push
+            send_push_notification(
+                uid,
+                "💰 Pagamento Enviado!",
+                f"Seu resgate de R$ {amount:.2f} foi enviado para sua conta PIX.",
+                "/#withdraw"
+            )
+
+            return {"status": "success", "msg": f"Pagamento enviado! Status: {asaas_status}", "asaas_id": asaas_id}
         else:
-            # Erro retornado pelo Asaas
             errors = res_json.get('errors', [])
-            error_msg = errors[0].get('description') if errors else "Erro desconhecido na API Asaas"
-
-            # Registra o erro no log do saque para o admin ver no painel
-            db.reference(f'withdrawals/{uid}/{withdrawal_id}/last_error').set(f"Asaas: {error_msg}")
-
-            print(f"❌ [ASAAS] Erro: {error_msg}")
-            return {"status": "error", "msg": f"Asaas: {error_msg}"}
+            error_desc = errors[0].get('description') if errors else "Erro desconhecido"
+            print(f"❌ [ASAAS] Erro da API: {res_json}")
+            return {"status": "error", "msg": f"Asaas: {error_desc}"}
 
     except Exception as e:
-        print(f"💥 [CRITICAL] Falha na conexão com Asaas: {str(e)}")
-        return {"status": "error", "msg": "Falha de comunicação com o gateway de pagamentos."}
+        print(f"💥 [ASAAS] Falha Crítica: {str(e)}")
+        return {"status": "error", "msg": "Falha na conexão com o gateway."}
 
 @app.post("/webhook/asaas")
 async def asaas_webhook(payload: dict = Body(...)):
@@ -533,17 +659,27 @@ async def asaas_webhook(payload: dict = Body(...)):
                 })
                 print(f"✅ [WEBHOOK ASAAS] Saque {wid} do usuário {uid} FINALIZADO.")
 
+                # Notifica o usuário que o dinheiro caiu
+                send_push_notification(
+                    uid,
+                    "💸 Dinheiro na Conta!",
+                    "Sua transferência PIX foi concluída com sucesso. Aproveite!",
+                    "/#withdraw"
+                )
+
     return {"status": "received"}
 
 @app.post("/payments/request/{uid}")
 async def request_payment(uid: str, data: dict = Body(...)):
     """
     Registra uma solicitação de saque validando o saldo real via Auditoria.
+    Inclui bloqueio por duplicidade de Fingerprint (Multi-contas).
     """
     try:
         amount = float(data.get("amount", 0))
         pix_key = str(data.get("pixKey", "")).strip()
         pix_type = str(data.get("pixType", "EVP"))
+        fingerprint = data.get("fingerprint")
 
         if amount < 0.50:
             raise HTTPException(status_code=400, detail="Valor mínimo de saque é R$ 0,50.")
@@ -552,6 +688,43 @@ async def request_payment(uid: str, data: dict = Body(...)):
         user = user_ref.get()
         if not user:
             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+        # TRAVA JURÍDICA DE SAQUE: Impede solicitação sem aceite
+        if not user.get('legal_acceptance', {}).get('accepted'):
+            raise HTTPException(status_code=403, detail="Você deve aceitar os termos e obrigações fiscais antes de solicitar saques.")
+
+        # --- SENTINEL 2.0: BLOQUEIO DE FINGERPRINT DUPLICADO ---
+        if fingerprint:
+            # Salva o fingerprint atual no perfil se não existir
+            if not user.get('security', {}).get('fingerprint'):
+                db.reference(f'users/{uid}/security/fingerprint').set(fingerprint)
+
+            # Busca todos os usuários para encontrar duplicatas
+            all_users = db.reference('users').get()
+            if isinstance(all_users, dict):
+                duplicates = []
+                for other_uid, other_user in all_users.items():
+                    if other_uid == uid: continue
+                    other_fp = other_user.get('security', {}).get('fingerprint')
+                    if other_fp == fingerprint:
+                        duplicates.append(other_uid)
+
+                if duplicates:
+                    # Registra tentativa de fraude multi-conta
+                    db.reference(f'logs/frauds/{uid}').push({
+                        "type": "multi_account_fingerprint",
+                        "fingerprint": fingerprint,
+                        "duplicates": duplicates,
+                        "timestamp": time.time()
+                    })
+
+                    # Alerta Sentinel
+                    send_telegram_msg(f"🛡️ *SENTINEL: BLOQUEIO MULTI-CONTA*\nUsuário: `{uid}`\nFingerprint: `{fingerprint[:15]}...`\nDuplicatas: {len(duplicates)} contas.")
+
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Fraude detectada: Este dispositivo já está vinculado a outra conta CineCash. Saques bloqueados pela Auditoria Sentinel."
+                    )
 
         # Auditoria de Saldo Real
         vids = int(user.get('videosWatched', 0))
@@ -593,7 +766,7 @@ async def request_payment(uid: str, data: dict = Body(...)):
         db.reference(f'admin/pending_withdrawals/{wid}').set(withdrawal_data)
 
         # Pulso sonoro para o Hub Sentinel
-        db.reference('status/last_withdrawal_alert').set(time.time())
+        db.reference('status/last_withdrawal_alert').set({".sv": "timestamp"})
 
         return {"status": "success", "msg": "Saque solicitado com sucesso!", "wid": wid}
 

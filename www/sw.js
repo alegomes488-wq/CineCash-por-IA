@@ -1,71 +1,35 @@
-const CACHE_NAME = 'cinecash-v2';
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './style.css',
-  './bg.png',
-  './confetti.js',
-  './firebase-app.js',
-  './firebase-auth.js',
-  './firebase-database.js'
-];
+// Service Worker CineCash IA (Versão Compat)
+importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js');
 
-// Instalação: Cacheia todos os recursos estáticos
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('CineCash Cache: Offline assets pre-cached');
-        return cache.addAll(urlsToCache);
-      })
-  );
+const firebaseConfig = {
+    apiKey: "AIzaSyAodV-dw-p0UP7pqneDZaowOZLRmw6GVBA",
+    authDomain: "playearn-b001b.firebaseapp.com",
+    databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
+    projectId: "playearn-b001b",
+    messagingSenderId: "563829659490"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+    console.log('[sw.js] Mensagem em background:', payload);
+    const title = payload.notification?.title || "CineCash IA";
+    const options = {
+        body: payload.notification?.body || "Você tem uma nova atualização.",
+        icon: '/bg.png',
+        data: payload.data
+    };
+    self.registration.showNotification(title, options);
 });
 
-// Ativação: Limpa caches antigos
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('CineCash SW: Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+// Cache básico para funcionamento offline
+const CACHE_NAME = 'cinecash-v4';
+self.addEventListener('install', e => {
+    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', './index.html', './style.css'])));
 });
 
-// Estratégia de Fetch: Cache-First para assets locais, Network-Only para APIs
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Ignorar requisições de API e Firebase (deixar o navegador/SDK lidar com a rede)
-  if (url.origin.includes('firebaseio.com') || url.pathname.includes('/api/')) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Se estiver no cache, retorna. Caso contrário, busca na rede.
-        return response || fetch(event.request).then(fetchRes => {
-          // Opcional: Cachear dinamicamente novos assets locais encontrados
-          if (url.origin === self.location.origin) {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, fetchRes.clone());
-              return fetchRes;
-            });
-          }
-          return fetchRes;
-        });
-      }).catch(() => {
-        // Fallback básico para quando estiver totalmente offline e o recurso não estiver no cache
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      })
-  );
+self.addEventListener('fetch', e => {
+    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
