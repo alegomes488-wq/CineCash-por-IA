@@ -820,11 +820,11 @@
             let nextAmount = amounts[goals.indexOf(nextGoal)];
             document.getElementById('goal-txt').innerText = `${vids}/${nextGoal} (R$ ${nextAmount.toFixed(2)})`;
 
-            document.getElementById('ref-count').innerText = _user.referralCount || 0;
+            document.getElementById('ref-count').innerText = _user.validReferrals || 0;
             document.getElementById('ref-total-list').innerText = _user.referralCount || 0;
-            const referralBonus = (_user.referralCount || 0) * 0.5;
-            const missionBonus = Math.floor((_user.referralCount || 0) / 5) * 1.0;
-            const totalBonus = referralBonus + missionBonus;
+
+            // Exibe o bônus real creditado pelo Sentinel no backend
+            const totalBonus = _user.referralBonus || 0;
             document.getElementById('ref-bonus-txt').innerText = `R$ ${totalBonus.toFixed(2).replace('.', ',')}`;
             document.getElementById('ref-link').value = `https://cinecash.app/?ref=${auth.currentUser?.uid || '...'}`;
         };
