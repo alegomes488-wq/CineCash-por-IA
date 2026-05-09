@@ -82,6 +82,27 @@
 
     <div id="toast">Operação realizada com sucesso!</div>
 
+    <!-- MODAL DE BANIMENTO (SENTINEL 2.0) -->
+    <div id="ban-overlay" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,2,5,0.98); z-index:300000; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(20px);">
+        <div class="login-box glass-premium" style="max-width:400px; border: 2px solid #ef4444; text-align: center;">
+            <div style="margin-bottom:20px;">
+                <i data-lucide="shield-alert" style="width:60px; height:60px; color:#ef4444; filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.4));"></i>
+            </div>
+            <h2 style="color:#fff; margin-bottom:15px; font-size:1.5rem; letter-spacing: 1px;">ACESSO BLOQUEADO</h2>
+            <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin-bottom:25px; line-height:1.5;">
+                O sistema <strong>Sentinel 2.0</strong> detectou uma violação dos termos de uso ou atividade inconsistente vinculada a esta conta.
+            </p>
+
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2); margin-bottom: 25px; text-align: left;">
+                <span style="font-size: 0.65rem; color: #ef4444; font-weight: 800; text-transform: uppercase;">Motivo da Restrição:</span>
+                <p id="ban-reason-text" style="font-size: 0.8rem; color: #fff; margin-top: 5px; font-weight: 600;">Violação de Protocolo de Segurança Neural.</p>
+            </div>
+
+            <button onclick="window.location.href='https://t.me/cinecash_suporte'" style="width:100%; background:#ef4444; color:white; border:none; padding:15px; border-radius:12px; font-weight:800; cursor:pointer; margin-bottom:10px;">CONTESTAR VIA TELEGRAM</button>
+            <button onclick="logout()" style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem;">Sair da Conta</button>
+        </div>
+    </div>
+
     <!-- MODAL DE ACEITE OBRIGATÓRIO (PARA USUÁRIOS LOGADOS SEM ACEITE) -->
     <div id="terms-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,2,5,0.98); z-index:200000; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(15px);">
         <div class="login-box glass-premium" style="max-width:450px; border: 2px solid #7c3aed;">
@@ -218,17 +239,18 @@
                 <button class="nav-item" onclick="switchTab('withdraw', this)">Intercâmbio</button>
                 <button class="nav-item" onclick="switchTab('referrals', this)">Convites</button>
             </div>
-            <div class="logout" onclick="logout()">⎋</div>
+            <div class="logout" onclick="logout()">
+                <i data-lucide="log-out" style="width:18px; height:18px;"></i>
+            </div>
         </nav>
 
         <div class="container">
-            <div class="welcome-text">
-                <p>Status: Operador de Rede</p>
-                <h1 id="welcome-name">---</h1>
-            </div>
-
             <!-- ABA INÍCIO -->
             <div id="tab-dashboard" class="tab-content">
+                <div class="welcome-text">
+                    <p>Status: Operador de Rede</p>
+                    <h1 id="welcome-name">---</h1>
+                </div>
                 <div class="stat-grid">
                     <div class="stat-card glass-premium">
                         <i data-lucide="wallet" class="stat-icon-lucide"></i>
@@ -356,7 +378,7 @@
                         <div style="background: rgba(16, 185, 129, 0.05); border-radius: 12px; padding: 12px; margin-top: 20px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; gap: 10px; align-items: flex-start;">
                             <div class="dot-green-v2" id="auditor-status-dot" style="margin-top: 4px;"></div>
                             <p style="font-size: 0.65rem; color: #10b981; line-height: 1.4; font-weight: 700;">
-                                <strong id="auditor-status-text">AGENTE AUDITOR ONLINE:</strong> Monitorando transações em tempo real. Sua solicitação será analisada instantaneamente pela Nexus IA.
+                                <strong id="auditor-status-text">AGENTE AUDITOR ONLINE:</strong> Monitorando transações em tempo real. Sua solicitação será analisada instantaneamente pela CyberCore IA.
                             </p>
                         </div>
                         <div style="background: rgba(124, 58, 237, 0.05); border-radius: 12px; padding: 12px; margin-top: 10px; border: 1px solid rgba(124, 58, 237, 0.1); display: flex; gap: 10px; align-items: flex-start;">
@@ -367,6 +389,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
                 <!-- Histórico de Saques -->
                 <div class="withdraw-history-card glass-premium" style="margin-top: 25px; padding: 25px;">
@@ -393,7 +416,7 @@
                 </div>
             </div>
 
-            <!-- ABA CONVITES (NEXUS GROWTH) -->
+            <!-- ABA CONVITES (CYBERCORE GROWTH) -->
             <div id="tab-referrals" class="tab-content hidden">
                 <div class="referral-mission-card glass-premium">
                     <div class="referral-mission-icon">
@@ -402,7 +425,7 @@
                         </div>
                     </div>
                     <h2 style="letter-spacing: 2px; color: #f472b6;">MISSÃO: EMBAIXADOR VIP</h2>
-                    <p style="font-weight: 600; opacity: 0.8;">Expanda a rede CineCash e seja recompensado pela Nexus IA.</p>
+                    <p style="font-weight: 600; opacity: 0.8;">Expanda a rede CineCash e seja recompensado pela Agente Nexus.</p>
 
                     <div class="referral-stats-grid" style="margin-top: 20px;">
                         <div class="referral-stat-item glass-premium" style="background: rgba(0,0,0,0.3) !important;">
@@ -440,7 +463,6 @@
                 </div>
             </div>
 
-
         </div>
     </div>
 
@@ -471,27 +493,44 @@
         </div>
     </div>
 
-    <!-- IA NEXUS (CHAT FLUTUANTE) -->
-    <button class="chat-trigger" onclick="toggleChat()" style="display: none;" id="chat-btn">
-        <i data-lucide="brain" style="width:24px; height:24px; color:white;"></i>
-        <div style="position:absolute; top:8px; right:8px; width:10px; height:10px; background:#10b981; border-radius:50%; border:2px solid var(--primary);"></div>
-    </button>
+    <!-- IA CYBERCORE (CHAT FLUTUANTE PREMIUM - AGENTE NEXUS) -->
+    <div id="cybercore-floating-chat" class="cybercore-chat-container">
+        <div class="cybercore-chat-header">
+            <div class="cybercore-chat-brand">
+                <div class="cybercore-chat-orb"></div>
+                <span class="cybercore-chat-icon">🤖</span>
+                <span class="cybercore-chat-title">Agente Nexus</span>
+            </div>
+            <button class="cybercore-chat-close" onclick="toggleFloatingChat()">×</button>
+        </div>
+        <div id="cybercore-chat-messages" class="cybercore-chat-body">
+            <div class="cybercore-msg cybercore-msg-ai">
+                Olá! Sou o <strong>Agente Nexus</strong>, seu tutor oficial CineCash. 
+                <br><br>
+                Estou aqui para guiar você pela plataforma e garantir que sua experiência com a IA <strong>CyberCore</strong> seja lucrativa. 
+                <br><br>
+                Deseja que eu te mostre como o sistema funciona?
+            </div>
+        </div>
 
-    <div class="chat-window hidden" id="chat-window">
-        <div class="chat-header">
-            <span style="display:flex; align-items:center; gap:8px;">
-                <i data-lucide="brain" style="width:16px; height:16px;"></i>
-                Nexus IA
-            </span>
-            <button onclick="toggleChat()" style="background:transparent; border:none; color:white; cursor:pointer;"><i data-lucide="x" style="width:18px; height:18px;"></i></button>
+        <div class="cybercore-chat-suggestions">
+            <button onclick="sendQuickCommand('Sim, me mostre o site')">🚀 Iniciar Tour</button>
+            <button onclick="sendQuickCommand('Dúvidas Frequentes')">❓ Dúvidas</button>
+            <button onclick="sendQuickCommand('Como sacar?')">💰 Como Sacar</button>
         </div>
-        <div class="chat-content" id="chat-content">
-            <div class="msg-ai">Olá! Sou a Nexus, a inteligência artificial do CineCash. Como posso ajudar você a otimizar seus ganhos hoje?</div>
+
+        <div class="cybercore-chat-footer">
+            <input type="text" id="cybercore-chat-input" placeholder="Comando Master..." autocomplete="off">
+            <button id="cybercore-chat-send" onclick="sendFloatingChatMessage()">
+                <i data-lucide="send" style="width:18px; height:18px;"></i>
+            </button>
         </div>
-        <div class="chat-footer">
-            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
-            <button onclick="sendChatMessage()" style="background:var(--primary); border:none; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:white; cursor:pointer;"><i data-lucide="send" style="width:16px; height:16px;"></i></button>
-        </div>
+    </div>
+
+    <div id="cybercore-chat-trigger" class="cybercore-chat-trigger" onclick="toggleFloatingChat()" style="display: none;">
+        <div class="cybercore-chat-pulse"></div>
+        <div class="cybercore-chat-trigger-icon">🧠</div>
+        <div class="cybercore-online-dot"></div>
     </div>
 
     <script type="module">
@@ -501,10 +540,8 @@
         import { getMessaging, getToken } from "./firebase-messaging.js";
 
         const CONFIG = {
-            apiBase: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://127.0.0.1:8000'
-                : 'https://api.cinecash.app', // Altere para seu domínio real de produção
-            monetagId: '7654321' // Exemplo de ID da Monetag
+            apiBase: 'https://desenvovimento-cybercore-ia.hf.space',
+            monetagId: '7654321'
         };
 
         const firebaseConfig = {
@@ -826,17 +863,23 @@
             // Exibe o bônus real creditado pelo Sentinel no backend
             const totalBonus = _user.referralBonus || 0;
             document.getElementById('ref-bonus-txt').innerText = `R$ ${totalBonus.toFixed(2).replace('.', ',')}`;
-            document.getElementById('ref-link').value = `https://cinecash.app/?ref=${auth.currentUser?.uid || '...'}`;
-        };
+
+            // Link de convite único por UID
+            const uid = auth.currentUser?.uid;
+            if (uid) {
+                document.getElementById('ref-link').value = `https://cinecash.app/?ref=${uid}`;
+            }
+        }; // fim updateUI
 
         let heartbeatInterval = null;
 
         // --- REGISTRO DE SERVICE WORKER PARA NOTIFICAÇÕES ---
+        let swRegistration = null;
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Removido { type: 'module' } e adicionado timestamp para forçar atualização
                 navigator.serviceWorker.register('./sw.js?v=' + Date.now()).then(reg => {
                     console.log('SW registrado com sucesso:', reg.scope);
+                    swRegistration = reg;
                 }).catch(err => {
                     console.error('Falha ao registrar SW:', err);
                 });
@@ -844,11 +887,15 @@
         }
 
         async function requestNotificationPermission() {
-            if ('Notification' in window) {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    console.log('Permissão para notificações concedida.');
-                }
+            if (!('Notification' in window)) return;
+            if (!('PushManager' in window)) return;
+            // Aguarda SW ativo antes de pedir permissão push
+            if (!swRegistration) {
+                try { await navigator.serviceWorker.ready; } catch(e) { return; }
+            }
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('Permissão para notificações concedida.');
             }
         }
 
@@ -867,7 +914,22 @@
                 onValue(ref(db, `users/${u.uid}`), s => {
                     _user = s.val();
                     if(_user) {
-                        // BLOQUEIO JURÍDICO ATIVO: Se não aceitou, mostra o modal e mantém dashboard oculto
+                        // 1. VERIFICAÇÃO DE BANIMENTO (SENTINEL 2.0)
+                        if(_user.status === 'banido' || _user.status === 'banned') {
+                            document.getElementById('app-container').classList.add('hidden');
+                            document.getElementById('page-login').classList.add('hidden');
+                            document.getElementById('page-register').classList.add('hidden');
+                            document.getElementById('terms-modal').classList.add('hidden');
+                            document.getElementById('ban-overlay').classList.remove('hidden');
+                            document.getElementById('ban-reason-text').innerText = _user.ban_reason || "Atividade suspeita detectada pelo Sentinel 2.0.";
+                            lucide.createIcons();
+                            hideSplash();
+                            return;
+                        } else {
+                            document.getElementById('ban-overlay').classList.add('hidden');
+                        }
+
+                        // 2. BLOQUEIO JURÍDICO ATIVO: Se não aceitou, mostra o modal e mantém dashboard oculto
                         if(!_user.legal_acceptance || !_user.legal_acceptance.accepted) {
                             document.getElementById('page-login').classList.add('hidden');
                             document.getElementById('page-register').classList.add('hidden');
@@ -883,7 +945,14 @@
                         document.getElementById('page-login').classList.add('hidden');
                         document.getElementById('page-register').classList.add('hidden');
                         document.getElementById('app-container').classList.remove('hidden');
-                        document.getElementById('chat-btn').style.display = 'flex';
+
+                        // Mostra o agente Nexus flutuante
+                        const nexusTrigger = document.getElementById('cybercore-chat-trigger');
+                        if (nexusTrigger) nexusTrigger.style.display = 'flex';
+
+                        // Garante que o link de convite seja preenchido com o UID do usuário
+                        const refLinkEl = document.getElementById('ref-link');
+                        if (refLinkEl) refLinkEl.value = `https://cinecash.app/?ref=${u.uid}`;
 
                         updateUI();
                         saveFCMToken(u.uid);
@@ -942,26 +1011,41 @@
 
         let menuClickCount = 0;
         window.switchTab = (id, el) => {
-            triggerStrategicAd(true);
+            if (typeof triggerStrategicAd === 'function') triggerStrategicAd(true);
+            
             document.querySelectorAll('.tab-content').forEach(t => {
+                t.classList.add('hidden');
                 t.style.opacity = '0';
                 t.style.transform = 'translateY(10px)';
-                setTimeout(() => t.classList.add('hidden'), 200);
             });
 
-            setTimeout(() => {
-                const target = document.getElementById(`tab-${id}`);
+            const target = document.getElementById(`tab-${id}`);
+            console.log(`[CineCash] Trocando para aba: ${id}`, target);
+            if (target) {
                 target.classList.remove('hidden');
                 setTimeout(() => {
                     target.style.opacity = '1';
                     target.style.transform = 'translateY(0)';
                 }, 50);
-            }, 210);
+            }
 
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-            lucide.createIcons();
-            if(id === 'withdraw') loadWithdrawHistory();
+            if (el) el.classList.add('active');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (id === 'withdraw' && typeof loadWithdrawHistory === 'function') loadWithdrawHistory();
+            if (id === 'referrals') {
+                console.log("[CineCash] Chamando loadReferrals()...");
+                if (typeof loadReferrals === 'function') loadReferrals();
+                else console.error("[CineCash] Erro: loadReferrals não está definida!");
+            }
+        };
+
+        window.copyLink = () => {
+            const input = document.getElementById('ref-link');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            showToast("LINK COPIADO!");
         };
 
         window.setAmount = (val) => {
@@ -1100,39 +1184,73 @@
 
 
         function loadReferrals() {
+            if (!auth.currentUser) {
+                console.warn("[CineCash] loadReferrals abortado: Usuário não logado.");
+                return;
+            }
+            console.log("[CineCash] Buscando convites para UID:", auth.currentUser.uid);
             const refQuery = query(ref(db, 'users'), orderByChild('referredBy'), equalTo(auth.currentUser.uid));
             onValue(refQuery, snapshot => {
                 const data = [];
                 snapshot.forEach(child => { data.push({ id: child.key, ...child.val() }); });
+                console.log(`[CineCash] ${data.length} convites encontrados.`);
                 renderReferrals(data);
+            }, (error) => {
+                console.error("[CineCash] Erro ao buscar convites:", error);
             });
         }
 
         function renderReferrals(referrals) {
             const list = document.getElementById('referrals-list');
+            const totalSpan = document.getElementById('ref-total-list');
+
+            if (totalSpan) totalSpan.innerText = referrals.length;
+
             if (referrals.length === 0) {
-                list.innerHTML = 'Nenhum indicado ativo no momento.';
-                list.className = 'referrals-empty-state';
+                list.innerHTML = `
+                    <div class="referrals-empty-state" style="padding: 20px; text-align: center; color: var(--text-muted);">
+                        <i data-lucide="inbox" style="width:32px; height:32px; opacity:0.3; margin-bottom: 10px;"></i>
+                        <br><span>Nenhum operador recrutado ainda.</span>
+                    </div>`;
+                lucide.createIcons();
                 return;
             }
 
             list.innerHTML = '';
-            list.className = ''; // Remove empty state class
+            list.className = 'referrals-list-container'; // Estilo de container
             referrals.forEach(r => {
                 const item = document.createElement('div');
-                item.className = 'referral-item';
-                const status = (r.videosWatched || 0) >= 15 ? 'Ativo' : 'Pendente';
-                const statusClass = status === 'Ativo' ? 'status-active' : 'status-pending';
+                item.className = 'referral-item glass-premium';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.padding = '12px';
+                item.style.marginBottom = '10px';
+                item.style.borderRadius = '12px';
+                item.style.border = '1px solid rgba(255,255,255,0.05)';
+
+                const vids = r.videosWatched || 0;
+                const status = vids >= 15 ? 'Ativo' : `${vids}/15`;
+                const statusClass = vids >= 15 ? 'status-active' : 'status-pending';
+                const statusColor = vids >= 15 ? '#10b981' : '#fbbf24';
 
                 item.innerHTML = `
-                    <div class="referral-user-info">
-                        <div class="referral-avatar">${(r.fullname || "U")[0].toUpperCase()}</div>
-                        <div class="referral-name">${r.fullname || "Usuário"}</div>
+                    <div class="referral-user-info" style="display: flex; align-items: center; gap: 10px;">
+                        <div class="referral-avatar" style="width: 35px; height: 35px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">
+                            ${(r.firstname || r.fullname || "U")[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="referral-name" style="font-size: 0.85rem; font-weight: 700;">${r.fullname || "Usuário"}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">${r.username || ''}</div>
+                        </div>
                     </div>
-                    <div class="referral-status ${statusClass}">${status}</div>
+                    <div class="referral-status ${statusClass}" style="font-size: 0.7rem; font-weight: 800; color: ${statusColor}; background: ${statusColor}15; padding: 4px 10px; border-radius: 20px;">
+                        ${status}
+                    </div>
                 `;
                 list.appendChild(item);
             });
+            lucide.createIcons();
         }
 
         window.setAmount = (val) => {
@@ -1156,11 +1274,11 @@
             });
         };
 
-        // ============ SISTEMA DE TUTORIAL NEXUS IA ============
-        window.startNexusTutorial = async () => {
+        // ============ SISTEMA DE TUTORIAL CYBERCORE IA ============
+        window.startCyberCoreTutorial = async () => {
             const steps = [
                 { 
-                    msg: "Olá! Eu sou a Nexus IA. Vou te mostrar como faturar aqui! 🚀", 
+                    msg: "Olá! Eu sou a CyberCore IA. Vou te mostrar como faturar aqui! 🚀", 
                     action: () => switchTab('dashboard', document.querySelector('.nav-item')) 
                 },
                 { 
@@ -1200,13 +1318,13 @@
 
         function showTyping(show) {
             const chatContent = document.getElementById('chat-content');
-            let indicator = document.getElementById('nexus-typing');
+            let indicator = document.getElementById('cybercore-typing');
             if (show) {
                 if (!indicator) {
                     indicator = document.createElement('div');
-                    indicator.id = 'nexus-typing';
+                    indicator.id = 'cybercore-typing';
                     indicator.className = 'typing-indicator';
-                    indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+                    indicator.innerHTML = '<div class="typing-dot" style="background:var(--primary)"></div><div class="typing-dot" style="background:var(--primary)"></div><div class="typing-dot" style="background:var(--primary)"></div>';
                     chatContent.appendChild(indicator);
                 }
                 chatContent.scrollTop = chatContent.scrollHeight;
@@ -1475,47 +1593,160 @@
             signOut(auth).then(() => window.location.reload());
         };
 
-        window.toggleChat = () => {
-            const w = document.getElementById('chat-window');
-            if (w.classList.contains('hidden')) {
-                w.classList.remove('hidden');
-            } else {
-                w.classList.add('hidden');
+        // ============ AGENTE NEXUS (TUTOR & FILTRO IA) ============
+        window.toggleFloatingChat = () => {
+            const chat = document.getElementById('cybercore-floating-chat');
+            const isVisible = chat.style.display === 'flex';
+            chat.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) document.getElementById('cybercore-chat-input').focus();
+        };
+
+        window.sendQuickCommand = (cmd) => {
+            const input = document.getElementById('cybercore-chat-input');
+            if (input) {
+                input.value = cmd;
+                window.sendFloatingChatMessage();
             }
         };
 
-        window.sendChatMessage = async () => {
-            const input = document.getElementById('chat-input');
-            const txt = input.value.trim();
-            if(!txt) return;
+        const NEXUS_KNOWLEDGE = {
+            "o que é": "O CineCash é uma plataforma premium onde você converte processamento de anúncios em saldo real através da nossa rede neural.",
+            "como ganhar": "Para ganhar, basta ir na aba 'Início' e clicar em 'INICIAR PROCESSAMENTO'. Nossa IA validará as sessões de mídia para você.",
+            "saque": "Você pode realizar o 'Intercâmbio' (saque) na aba de mesmo nome assim que atingir os limites mínimos de R$ 0,50, R$ 5,00 ou R$ 50,00.",
+            "convite": "Ao convidar amigos na aba 'Convites', você expande a rede e recebe bônus por cada novo operador ativo recrutado.",
+            "limite": "Os limites de saque são baseados no seu volume de processamento. Quanto mais anúncios você processa, maiores os saques permitidos."
+        };
 
-            const c = document.getElementById('chat-content');
-            c.innerHTML += `<div class="msg-user">${txt}</div>`;
+        window.startNexusTour = async () => {
+            const container = document.getElementById('cybercore-chat-messages');
+            const appendNexus = (msg) => {
+                const div = document.createElement('div');
+                div.className = 'cybercore-msg cybercore-msg-ai';
+                div.innerHTML = `<strong>Nexus:</strong> ${msg}`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            };
+
+            appendNexus("Excelente! Vamos começar. Primeiramente, estamos na aba <strong>Início</strong>.");
+            window.switchTab('dashboard');
+            await new Promise(r => setTimeout(r, 2000));
+            
+            appendNexus("Aqui você encontra o <strong>Processador IA</strong>. É o coração dos seus ganhos.");
+            await new Promise(r => setTimeout(r, 2500));
+
+            appendNexus("Agora, veja a aba <strong>Intercâmbio</strong>. É onde você solicita seus resgates via PIX.");
+            window.switchTab('withdraw');
+            await new Promise(r => setTimeout(r, 2500));
+
+            appendNexus("E por fim, a aba <strong>Convites</strong>. Recrute novos membros para ganhar bônus extras!");
+            window.switchTab('referrals');
+            await new Promise(r => setTimeout(r, 2500));
+
+            appendNexus("Tour concluído! Ficou alguma dúvida? Se eu não souber, consultarei o núcleo <strong>CyberCore IA</strong> para você.");
+            window.switchTab('dashboard');
+        };
+
+        window.sendFloatingChatMessage = async () => {
+            const input = document.getElementById('cybercore-chat-input');
+            const container = document.getElementById('cybercore-chat-messages');
+            const chatContainer = document.getElementById('cybercore-floating-chat');
+            const text = input.value.trim();
+            const lowText = text.toLowerCase();
+
+            if (!text) return;
+
+            // Mensagem do Usuário
+            const userMsg = document.createElement('div');
+            userMsg.className = 'cybercore-msg cybercore-msg-user';
+            userMsg.innerText = text;
+            container.appendChild(userMsg);
             input.value = '';
-            c.scrollTop = c.scrollHeight;
+            container.scrollTop = container.scrollHeight;
 
-            if (txt.toLowerCase().trim() === 'tutorial' || txt.toLowerCase().trim() === 'ajuda') {
-                window.startNexusTutorial();
+            if (chatContainer) chatContainer.classList.add('cybercore-responding');
+
+            // Thinking...
+            const typingId = 'typing-' + Date.now();
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'cybercore-msg cybercore-msg-ai';
+            typingMsg.id = typingId;
+            typingMsg.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+            container.appendChild(typingMsg);
+            container.scrollTop = container.scrollHeight;
+
+            // 1. Lógica de Tutorial/Tour
+            if (lowText.includes('tour') || lowText.includes('me mostre') || lowText.includes('apresentar')) {
+                document.getElementById(typingId).remove();
+                window.startNexusTour();
+                if (chatContainer) chatContainer.classList.remove('cybercore-responding');
                 return;
             }
 
-            showTyping(true);
-            try {
-                const res = await fetch(`${CONFIG.apiBase}/ai/chat/`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ prompt: txt })
-                });
-                const data = await res.json();
-                showTyping(false);
-                c.innerHTML += `<div class="msg-ai">${data.answer || "Processando a sua requisição neural..."}</div>`;
-            } catch(e) {
-                showTyping(false);
-                c.innerHTML += `<div class="msg-ai">Erro ao contactar a CyberCore IA. Tente novamente mais tarde.</div>`;
+            // 2. Filtro Nexus (Dúvidas Rápidas)
+            let quickAnswer = null;
+            for (let key in NEXUS_KNOWLEDGE) {
+                if (lowText.includes(key)) {
+                    quickAnswer = NEXUS_KNOWLEDGE[key];
+                    break;
+                }
             }
-            c.scrollTop = c.scrollHeight;
-            lucide.createIcons();
+
+            if (quickAnswer) {
+                setTimeout(() => {
+                    document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> ${quickAnswer}`;
+                    if (chatContainer) chatContainer.classList.remove('cybercore-responding');
+                    container.scrollTop = container.scrollHeight;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }, 800);
+                return;
+            }
+
+            // 3. Delegação para CyberCore IA (Complexo)
+            try {
+                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> <i>Consultando núcleo CyberCore IA para resposta técnica...</i>`;
+                
+                const response = await fetch(`${CONFIG.apiBase}/ai/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text, uid: auth.currentUser?.uid || "guest" })
+                });
+                const data = await response.json();
+                let responseText = data.answer || "O núcleo CyberCore não retornou dados.";
+                
+                // --- INTERPRETADOR DE COMANDOS NEXUS ---
+                if (responseText.includes('[COMMAND:')) {
+                    if (responseText.includes('NAVIGATE:intercambio')) window.switchTab('withdraw');
+                    if (responseText.includes('NAVIGATE:convites')) window.switchTab('referrals');
+                    if (responseText.includes('NAVIGATE:inicio')) window.switchTab('dashboard');
+                    if (responseText.includes('START_TOUR')) window.startNexusTour();
+
+                    // Remove os comandos do texto para não poluir a conversa
+                    responseText = responseText.replace(/\[COMMAND:.*?\]/g, '').trim();
+                }
+
+                const el = document.getElementById(typingId);
+                el.innerHTML = `<strong>Nexus:</strong> ${responseText}`;
+                if (chatContainer) chatContainer.classList.remove('cybercore-responding');
+                container.scrollTop = container.scrollHeight;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            } catch (e) {
+                document.getElementById(typingId).innerText = "⚠️ Nexus: Falha na conexão neural com CyberCore.";
+                if (chatContainer) chatContainer.classList.remove('cybercore-responding');
+            }
         };
+
+        // Suporte ao Enter
+        setTimeout(() => {
+            document.getElementById('cybercore-chat-input')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') window.sendFloatingChatMessage();
+            });
+        }, 1000);
+
+        onAuthStateChanged(auth, u => {
+            const trigger = document.getElementById('cybercore-chat-trigger');
+            if(trigger) trigger.style.display = u ? 'flex' : 'none';
+        });
     </script>
 </body>
 </html>

@@ -49,9 +49,9 @@ except Exception as e:
 # Cache para monitorar comportamento (Anti-Bot)
 user_behavior_cache = {}
 
-# --- MODULO A & C: SENTINEL 2.0 & NEXUS GROWTH ---
+# --- MODULO A & C: SENTINEL 2.0 & CYBERCORE GROWTH ---
 async def cybercore_audit_loop():
-    print("🤖 CYBERCORE: Sentinel 2.0 e Nexus Growth em operação...")
+    print("🤖 CYBERCORE: Sentinel 2.0 e CyberCore Growth em operação...")
     while True:
         try:
             # --- PULSO VITAL (Sincronização com o HUB) ---
@@ -99,7 +99,7 @@ async def cybercore_audit_loop():
                          db.reference(f'users/{uid}/risk_score').set(100)
                          db.reference(f'users/{uid}/status').set('suspeito')
 
-                    # --- NEXUS GROWTH: MONITOR DE RETENÇÃO (OTIMIZADO) ---
+                    # --- CYBERCORE GROWTH: MONITOR DE RETENÇÃO (OTIMIZADO) ---
                     last_login_str = user.get('lastLogin')
                     if last_login_str:
                         try:
@@ -107,8 +107,8 @@ async def cybercore_audit_loop():
                             days_inactive = (now - last_login_dt).days
 
                             if days_inactive >= 3:
-                                if user.get('nexus_status') != 'pendente_recuperacao':
-                                    db.reference(f'users/{uid}/nexus_status').set('pendente_recuperacao')
+                                if user.get('cybercore_status') != 'pendente_recuperacao':
+                                    db.reference(f'users/{uid}/cybercore_status').set('pendente_recuperacao')
                                     inactive_count += 1
 
                                     # Gera mensagem de retenção personalizada via Gemini (Máx 1 por loop para salvar quota)
@@ -117,13 +117,13 @@ async def cybercore_audit_loop():
                                         prompt = f"Crie uma mensagem curta e persuasiva para o usuário {user.get('fullname', 'visionário')} que não entra há {days_inactive} dias e tem R$ {balance:.2f} parados na conta CineCash. Use emojis e tom motivador."
                                         msg = ask_gemini(prompt)
                                         if "❌" not in msg:
-                                            db.reference(f'users/{uid}/nexus_message').set(msg)
+                                            db.reference(f'users/{uid}/cybercore_message').set(msg)
                                             ai_calls_this_loop += 1
 
                         except: pass
 
                 if inactive_count > 0:
-                    send_telegram_msg(f"📈 *NEXUS GROWTH*\nIdentificados `{inactive_count}` usuários inativos.")
+                    send_telegram_msg(f"📈 *CYBERCORE GROWTH*\nIdentificados `{inactive_count}` usuários inativos.")
 
         except Exception as e:
             print(f"⚠️ Erro Auditoria: {e}")
@@ -192,13 +192,15 @@ def ask_gemini(prompt: str):
         - Saldo Total: R$ {total_saldo:.2f}
         """
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-        full_prompt = f"{contexto_sistema}\n\nPergunta: {prompt}"
-        payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-        resp = requests.post(url, json=payload, timeout=10)
-
-        if resp.status_code == 200:
-            return resp.json()['candidates'][0]['content']['parts'][0]['text']
+        # Tenta gemini-2.0-flash (v1beta), fallback para gemini-1.5-flash (v1)
+        for model in ("gemini-2.0-flash", "gemini-1.5-flash"):
+            api_ver = "v1beta" if model == "gemini-2.0-flash" else "v1"
+            url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={api_key}"
+            full_prompt = f"{contexto_sistema}\n\nPergunta: {prompt}"
+            payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
+            resp = requests.post(url, json=payload, timeout=10)
+            if resp.status_code == 200:
+                return resp.json()['candidates'][0]['content']['parts'][0]['text']
         return f"❌ Erro IA ({resp.status_code})"
     except Exception as e:
         return f"❌ Falha IA: {str(e)}"
@@ -324,8 +326,31 @@ async def site_pulse():
 
 @app.post("/ai/chat")
 async def ai_chat(data: dict = Body(...)):
-    prompt = data.get("prompt", "")
-    return {"answer": str(ask_gemini(prompt))}
+    prompt = data.get("prompt", "").lower()
+
+    # --- FALLBACK DE SEGURANÇA NEXUS (Local) ---
+    fallback_responses = {
+        "ajuda": "Comandos Nexus: /status, /saque, /suporte. Como posso ajudar?",
+        "status": "Sistema CineCash operando em 98.4% de eficiência neural.",
+        "erro": "Detectei uma instabilidade na rede neural. Tentando reconectar...",
+        "oi": "Nexus IA ativa. Pronto para otimizar seus ganhos.",
+        "ola": "Nexus IA ativa. Pronto para otimizar seus ganhos."
+    }
+
+    # Verifica se há uma resposta local simples antes de chamar a rede neural
+    for key in fallback_responses:
+        if key in prompt:
+            return {"answer": f"[NEXUS LOCAL]: {fallback_responses[key]}"}
+
+    # Força um comportamento de terminal técnico
+    technical_prompt = f"Responda como um terminal de sistema (curto, técnico, sem 'Olá'): {prompt}"
+    answer = ask_gemini(technical_prompt)
+
+    if "❌" in answer or "⚠️" in answer:
+        # Fallback inteligente para falha de API
+        return {"answer": "NEXUS: Conexão neural instável. Comando processado via núcleo local. Tente novamente em 60s."}
+
+    return {"answer": str(answer).strip()}
 
 @app.post("/video/start/{uid}")
 async def start_video(uid: str, request: Request):
@@ -336,9 +361,15 @@ async def start_video(uid: str, request: Request):
     if is_ip_blocked(user_ip):
         raise HTTPException(status_code=403, detail="Acesso bloqueado por protocolos de segurança (IP Sentinel).")
 
-    # NOVA TRAVA JURÍDICA: Verifica se aceitou os termos antes de começar a ganhar
+    # NOVA TRAVA JURÍDICA E DE SEGURANÇA: Verifica se aceitou os termos e se não está banido
     user_data = db.reference(f'users/{uid}').get()
-    if not user_data or not user_data.get('legal_acceptance', {}).get('accepted'):
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    if user_data.get('status') == 'banido':
+        raise HTTPException(status_code=403, detail="Acesso negado: Conta suspensa por violação de termos.")
+
+    if not user_data.get('legal_acceptance', {}).get('accepted'):
         raise HTTPException(status_code=403, detail="Aceite os termos de uso para iniciar o processamento.")
 
     db.reference(f'active_sessions/{uid}').set({
@@ -418,7 +449,11 @@ async def complete_video(uid: str, request: Request):
     if not user_data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
-    # TRAVA DE SEGURANÇA EXTRA: Verifica aceite jurídico no momento do crédito
+    # TRAVA DE SEGURANÇA EXTRA: Verifica status e aceite jurídico no momento do crédito
+    if user_data.get('status') == 'banido':
+        session_ref.delete()
+        raise HTTPException(status_code=403, detail="Conta suspensa. Crédito negado.")
+
     if not user_data.get('legal_acceptance', {}).get('accepted'):
         raise HTTPException(status_code=403, detail="Processamento negado: Termos não aceitos.")
 
@@ -438,25 +473,20 @@ async def complete_video(uid: str, request: Request):
 
     # --- LÓGICA DE INDICAÇÃO (MISSÕES) ---
     referred_by = user_data.get("referredBy")
-    if referred_by and new_count == 150:
+    if referred_by and new_count == 15: # Ativação com 15 vídeos conforme regra Embaixador VIP
         # Bônus pro NOVO USUÁRIO (indicado)
-        new_balance += 0.50  # Bônus de conclusão da primeira missão
+        new_balance += 0.50  # Bônus de boas-vindas/ativação
         db.reference(f'users/{uid}/balance').set(new_balance)
         
-        # Bônus pro PADRINHO (indicando)
+        # Bônus pro PADRINHO (indicando): R$ 0,50 por amigo ativo
         referrer_ref = db.reference(f'users/{referred_by}')
         referrer_data = referrer_ref.get()
         if referrer_data:
             current_bonus = float(referrer_data.get('referralBonus', 0))
             ref_balance = float(referrer_data.get('balance', 0))
             valid_refs = int(referrer_data.get('validReferrals', 0)) + 1
-            
-            # Padrinho ganha 0.15 base
-            reward_ref = 0.15
-            
-            # Bônus de Missão: A cada 5 validados, ganha + 0.25 (Fechando 1.00)
-            if valid_refs % 5 == 0:
-                reward_ref += 0.25
+
+            reward_ref = 0.50 # R$ 0,50 fixo por indicação ativa
                 
             referrer_ref.update({
                 "referralBonus": current_bonus + reward_ref,
@@ -467,10 +497,10 @@ async def complete_video(uid: str, request: Request):
             # Registra o evento no nó de indicações
             db.reference(f'referrals/{referred_by}/{uid}').update({
                 "status": "completed",
-                "last_cycle_at": datetime.now().isoformat()
+                "activated_at": datetime.now().isoformat()
             })
 
-            send_telegram_msg(f"🎁 *NEXUS GROWTH*\nUsuário `{uid}` ativou conta! Padrinho `{referred_by}` recebeu R$ {reward_ref:.2f}.")
+            send_telegram_msg(f"🎁 *CYBERCORE GROWTH*\nUsuário `{uid}` atingiu 15 vídeos! Padrinho `{referred_by}` recebeu R$ {reward_ref:.2f} de bônus VIP.")
 
     session_ref.delete()
 
@@ -816,4 +846,5 @@ async def get_financial_audit():
 
 if __name__ == "__main__":
     import uvicorn
+    # CineCash App Backend na porta 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)
