@@ -7,7 +7,9 @@ const firebaseConfig = {
     authDomain: "playearn-b001b.firebaseapp.com",
     databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
     projectId: "playearn-b001b",
-    messagingSenderId: "563829659490"
+    storageBucket: "playearn-b001b.appspot.com",
+    messagingSenderId: "563829659490",
+    appId: "1:563829659490:web:a2f4a40d4a3d165541fe3b"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -24,12 +26,50 @@ messaging.onBackgroundMessage((payload) => {
     self.registration.showNotification(title, options);
 });
 
-// Cache básico para funcionamento offline
-const CACHE_NAME = 'cinecash-v4';
+// ── Cache com estratégia NETWORK-FIRST ──────────────────────────────────────
+// Sempre busca a versão mais recente na rede.
+// Só usa cache se estiver offline.
+const CACHE_NAME = 'cinecash-v9'; // ← versão bumped para limpar cache antigo
+
 self.addEventListener('install', e => {
-    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', './index.html', './style.css'])));
+    // Força o novo SW a assumir imediatamente, sem esperar fechar todas as abas
+    self.skipWaiting();
+    e.waitUntil(
+        caches.open(CACHE_NAME).then(cache =>
+            cache.addAll(['./', './index.html', './style.css'])
+        )
+    );
+});
+
+self.addEventListener('activate', e => {
+    // Remove todos os caches antigos ao ativar
+    e.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(
+                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+            )
+        ).then(() => self.clients.claim())
+    );
 });
 
 self.addEventListener('fetch', e => {
-    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+    // IGNORA requisições que não sejam GET (como POST de bônus ou saques)
+    // IGNORA requisições para a API da IA (Hugging Face)
+    if (e.request.method !== 'GET' || e.request.url.includes('hf.space')) {
+        return;
+    }
+
+    e.respondWith(
+        fetch(e.request)
+            .then(response => {
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
+                }
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(e.request))
+    );
 });
+
