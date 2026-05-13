@@ -13,6 +13,7 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from collections import deque
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ADMIN_DIR = os.path.join(PROJECT_ROOT, "admin")
@@ -55,6 +56,44 @@ MEMORY_BASE = "cybercore/memory"
 COMMAND_BUS = "cybercore/commands"
 AGENT_STATUS = "cybercore/agents"
 ALERT_LEVEL = "cybercore/alert_level"
+
+# --- MEMÓRIA INTELIGENTE (FIREBASE) ---
+MEMORY_CONTEXT = "cybercore_memory"
+CONTEXT_MAX = 50
+
+def memory_load(uid: str):
+    try:
+        data = db.reference(f'{MEMORY_CONTEXT}/{uid}/context').get() or []
+        return deque(data, maxlen=CONTEXT_MAX)
+    except:
+        return deque(maxlen=CONTEXT_MAX)
+
+def memory_save(uid: str, context: deque):
+    try:
+        db.reference(f'{MEMORY_CONTEXT}/{uid}/context').set(list(context))
+        db.reference(f'{MEMORY_CONTEXT}/{uid}/last_updated').set(datetime.now().isoformat())
+    except Exception as e:
+        print(f"[MEMORIA] Erro ao salvar: {e}")
+
+def memory_summarize(uid: str, full_context: deque):
+    try:
+        texto = "\n".join([f"{m['role']}: {m['content']}" for m in full_context])
+        summary_ref = db.reference(f'{MEMORY_CONTEXT}/{uid}/summary')
+        existing = summary_ref.get() or []
+        session = {"timestamp": datetime.now().isoformat(), "messages": len(full_context), "preview": texto[:200]}
+        existing.append(session)
+        if len(existing) > 20: existing = existing[-20:]
+        summary_ref.set(existing)
+    except Exception as e:
+        print(f"[MEMORIA] Erro ao sumarizar: {e}")
+
+def memory_recall(uid: str, query: str = ""):
+    try:
+        summaries = db.reference(f'{MEMORY_CONTEXT}/{uid}/summary').get() or []
+        if not query: return summaries[-5:] if summaries else []
+        return [s for s in summaries if query.lower() in s.get("preview", "").lower()][-5:]
+    except:
+        return []
 
 # --- UTILITÁRIOS ---
 
@@ -422,10 +461,18 @@ async def test_push(data: dict = Body(...)):
 
 @app.post("/api/nexus/report")
 async def nexus_report(data: dict = Body(...)):
-    """Recebe dados do Agente Nexus para auditoria."""
+    """Recebe dados do Agente Nexus e encaminha ao Painel via Firebase."""
     try:
         uid = data.get("uid")
         if not uid: return {"status": "ignored"}
+
+        # Escreve no mesmo path que o Painel Gerenciamento lê
+        db.reference(f'logs/nexus/{uid}').push({"report": data, "received_at": datetime.now().isoformat()})
+
+        # Também escreve em agent_data para o dashboard neural do Painel
+        db.reference('agent_data/incoming').push({"agent_id": "nexus_cinecash", "type": "telemetry", "payload": data, "received_at": datetime.now().isoformat()})
+
+        # Fraude (mesma lógica anterior, mas agora loga no path do Painel)
         user_ref = db.reference(f'users/{uid}')
         user_data = user_ref.get()
         if user_data:
@@ -442,6 +489,13 @@ async def nexus_report(data: dict = Body(...)):
         return {"status": "processed", "nexus_action": "monitoring"}
     except Exception as e:
         return {"status": "error", "msg": str(e)}
+
+@app.post("/ai/recall")
+async def ai_recall(data: dict = Body(...)):
+    uid = data.get("uid", "admin_master")
+    query = data.get("query", "")
+    results = memory_recall(uid, query)
+    return {"results": results, "count": len(results)}
 
 @app.post("/ai/chat")
 async def ai_chat(data: dict = Body(...)):
@@ -610,6 +664,13 @@ async def heartbeat(data: dict = Body(default={"source": "direct_access"})):
         return {"ok": True, "status": "pulsing"}
     except:
         return {"ok": False, "error": "Firebase logic failed"}
+
+# --- PAINEL GERENCIAMENTO INTEGRATION ---
+@app.post("/api/painel/heartbeat")
+async def painel_heartbeat():
+    """Endpoint chamado pelo Painel Gerenciamento para verificar se CineCash está online."""
+    db.reference('status/cinecash_last_pulse').set({".sv": "timestamp"})
+    return {"status": "cinecash_online", "service": "CineCash-por-IA"}
 
 @app.post("/payments/approve/{wid}")
 async def approve_payment(wid: str):
