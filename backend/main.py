@@ -1,850 +1,715 @@
-# -*- coding: utf-8 -*-
 import os
-os.environ['PYTHONIOENCODING'] = 'utf-8'
-
 import sys
-sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
-sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf-8', buffering=1)
-
-import time
+import json
 import asyncio
 import requests
-import json
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Header, Depends, Body, Request
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 from contextlib import asynccontextmanager
+import time
+
 import firebase_admin
 from firebase_admin import credentials, db, messaging
-from dotenv import load_dotenv
+from fastapi import FastAPI, Body, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-# Carrega variaveis de ambiente (.env)
-load_dotenv()
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ADMIN_DIR = os.path.join(PROJECT_ROOT, "admin")
+WWW_DIR = os.path.join(PROJECT_ROOT, "www")
 
-# --- CONFIGURAÇÃO FIREBASE ---
+# --- CONFIGURAÇÃO DE AMBIENTE ---
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+if sys.stdout:
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr:
+    sys.stderr.reconfigure(encoding='utf-8')
+
+# --- CONFIGURA O FIREBASE ---
 backend_dir = os.path.dirname(__file__)
-# Tenta encontrar o arquivo de credenciais (pode ser firebase-adminsdk.json ou serviceAccountKey.json)
-cred_filename = "firebase-adminsdk.json"
-cred_path = os.path.join(backend_dir, cred_filename)
+cred_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
 
-if not os.path.exists(cred_path):
-    # Tenta o nome alternativo se o primeiro não existir
+if cred_json:
+    cred_dict = json.loads(cred_json)
+    cred = credentials.Certificate(cred_dict)
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred, {'databaseURL': 'https://playearn-b001b-default-rtdb.firebaseio.com'})
+    print("Firebase iniciado via Variável de Ambiente")
+else:
     cred_filename = "serviceAccountKey.json"
     cred_path = os.path.join(backend_dir, cred_filename)
+    if not os.path.exists(cred_path):
+        cred_filename = "firebase-adminsdk.json"
+        cred_path = os.path.join(backend_dir, cred_filename)
 
-try:
     if os.path.exists(cred_path):
         cred = credentials.Certificate(cred_path)
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': 'https://playearn-b001b-default-rtdb.firebaseio.com'
-            })
-        print(f"✅ Firebase Admin iniciado com sucesso usando {cred_filename}")
+            firebase_admin.initialize_app(cred, {'databaseURL': 'https://playearn-b001b-default-rtdb.firebaseio.com'})
+        print(f"Firebase iniciado com {cred_filename}")
     else:
-        print(f"❌ Erro: Arquivo de credenciais não encontrado em {backend_dir}")
-except Exception as e:
-    print(f"⚠️ Erro ao iniciar Firebase Admin: {e}")
+        print("ERRO: Credenciais Firebase não encontradas!")
 
-# Cache para monitorar comportamento (Anti-Bot)
-user_behavior_cache = {}
+# --- CONSTANTES CYBERCORE ---
+MEMORY_BASE = "cybercore/memory"
+COMMAND_BUS = "cybercore/commands"
+AGENT_STATUS = "cybercore/agents"
+ALERT_LEVEL = "cybercore/alert_level"
 
-# --- MODULO A & C: SENTINEL 2.0 & CYBERCORE GROWTH ---
-async def cybercore_audit_loop():
-    print("🤖 CYBERCORE: Sentinel 2.0 e CyberCore Growth em operação...")
-    while True:
-        try:
-            # --- PULSO VITAL (Sincronização com o HUB) ---
-            db.reference('status/auditor_last_pulse').set({".sv": "timestamp"})
+# --- UTILITÁRIOS ---
 
-            users_ref = db.reference('users').get()
-            config = db.reference('config').get() or {}
+def get_dollar_rate():
+    try:
+        resp = requests.get("https://economia.awesomeapi.com.br/last/USD-BRL", timeout=5)
+        return float(resp.json()['USDBRL']['bid'])
+    except: return 5.25
 
-            # --- PROTOCOLOS SENTINEL 2.0 (MODO HARD-BLOCK) ---
-            if isinstance(users_ref, dict):
-                now = datetime.now()
-                inactive_count = 0
-                ai_calls_this_loop = 0 # Limitador para não estourar quota
+def tool_analyze_health():
+    try:
+        users = db.reference('users').get() or {}
+        config = db.reference('config').get() or {}
+        total_debt = sum([float(u.get('balance', 0)) for u in users.values() if isinstance(u, dict)])
+        hits = config.get('stats', {}).get('hits', 0)
+        cpm = config.get('cpm', 0.18)
+        dollar = get_dollar_rate()
+        revenue_brl = (hits / 1000) * cpm * dollar
+        status = "SAUDÁVEL" if revenue_brl > (total_debt * 1.5) else "CRÍTICO"
+        return {
+            "revenue_brl": round(revenue_brl, 2),
+            "total_debt": round(total_debt, 2),
+            "net_profit_brl": round(revenue_brl - total_debt, 2),
+            "roi_status": status,
+            "health_status": status,
+            "dollar_rate": dollar
+        }
+    except: return {"revenue_brl": 0, "total_debt": 0, "health_status": "ERRO"}
 
-                for uid, user in users_ref.items():
-                    if not isinstance(user, dict): continue
+def tool_sync_monetag():
+    health = tool_analyze_health()
+    data = {
+        "usd": health['revenue_brl'] / (health.get('dollar_rate') or 5.25),
+        "brl": health['revenue_brl'],
+        "rate": health.get('dollar_rate') or 5.25,
+        "last_update": datetime.now().strftime('%H:%M:%S')
+    }
+    db.reference('stats/financial_realtime').set(data)
+    return f"Sincronizado: R$ {health['revenue_brl']}"
 
-                    # 1. Auditoria de Tempo (Sentinel Video Security)
-                    last_video_at = user.get('last_video_at')
-                    if last_video_at:
-                        # Se o usuário assistiu muitos vídeos em tempo impossível
-                        vids = user.get('videosWatched', 0)
-                        account_age_seconds = (now - datetime.fromtimestamp(user.get('createdAt', time.time()) / 1000 if isinstance(user.get('createdAt'), int) else time.time())).total_seconds()
+def tool_send_push(target, message):
+    try:
+        if target == 'global':
+            msg = messaging.Message(notification=messaging.Notification(title='CyberCore IA', body=message), topic='all_users')
+        else:
+            user = db.reference(f'users/{target}').get()
+            if not user or 'fcmToken' not in user: return "Sem token"
+            msg = messaging.Message(notification=messaging.Notification(title='CyberCore IA', body=message), token=user['fcmToken'])
+        messaging.send(msg)
+        return "Push enviado"
+    except Exception as e: return str(e)
 
-                        # Média de tempo por vídeo (mínimo real 30s)
-                        if vids > 10 and account_age_seconds > 0:
-                            avg_time = account_age_seconds / vids
-                            if avg_time < 25: # Humanamente impossível manter média de 25s por vídeo
-                                if user.get('status') != 'banido':
-                                    db.reference(f'users/{uid}/status').set('banido')
-                                    db.reference(f'users/{uid}/ban_reason').set(f"Sentinel: Média de tempo suspeita ({avg_time:.1f}s/vid)")
-                                    send_telegram_msg(f"🛡️ *SENTINEL: BANIMENTO AUTOMÁTICO*\nUsuário: `{uid}`\nMotivo: Média de tempo impossível ({avg_time:.1f}s)")
+def tool_execute_ban(uid, reason):
+    db.reference(f'users/{uid}').update({"status": "banido", "risk_score": 100, "ban_reason": reason})
+    tool_send_push(uid, "Sua conta foi suspensa por violação de segurança.")
+    return f"Usuário {uid} banido."
 
-                    # 2. Auditoria de Saldo (Integridade SEFAZ)
-                    # Verifica se o saldo foi manipulado diretamente no Firebase
-                    vids = int(user.get('videosWatched', 0))
-                    bonus = float(user.get('referralBonus', 0))
-                    balance = float(user.get('balance', 0))
+def tool_execute_unban(uid, reason):
+    db.reference(f'users/{uid}').update({"status": "ativo", "risk_score": 0, "unban_reason": reason})
+    tool_send_push(uid, "Sua conta foi reabilitada após análise.")
+    return f"Usuário {uid} desbanido."
 
-                    # Saldo máximo permitido baseado em vídeos (R$ 0.50 a cada 150)
-                    theoretical_max = (vids / 150) * 0.50 + bonus + balance + 5.0 # Margem de R$ 5
+async def auto_approve_withdrawals(force=False):
+    try:
+        config = db.reference('config').get() or {}
+        api_key = config.get('asaasKey') or os.environ.get('ASAAS_API_KEY', '')
+        if not api_key: return "ASAAS_API_KEY não configurada"
 
-                    # Se houver outro campo de saldo que não bate
-                    if user.get('total_claimed', 0) > theoretical_max:
-                         db.reference(f'users/{uid}/risk_score').set(100)
-                         db.reference(f'users/{uid}/status').set('suspeito')
+        users = db.reference('users').get() or {}
+        total_debt = sum([float(u.get('balance', 0)) for u in users.values() if isinstance(u, dict)])
+        hits = config.get('stats', {}).get('hits', 0)
+        cpm = config.get('cpm', 0.18)
+        dollar = get_dollar_rate()
+        revenue = (hits / 1000) * cpm * dollar
+        roi = ((revenue - total_debt) / revenue * 100) if revenue > 0 else 0
 
-                    # --- CYBERCORE GROWTH: MONITOR DE RETENÇÃO (OTIMIZADO) ---
-                    last_login_str = user.get('lastLogin')
-                    if last_login_str:
-                        try:
-                            last_login_dt = datetime.strptime(last_login_str, "%d/%m/%Y %H:%M:%S")
-                            days_inactive = (now - last_login_dt).days
+        # No modo force (via terminal), ignoramos o ROI mínimo
+        if not force and roi < 30: return f"ROI {roi:.1f}% baixo do limiar (30%)"
 
-                            if days_inactive >= 3:
-                                if user.get('cybercore_status') != 'pendente_recuperacao':
-                                    db.reference(f'users/{uid}/cybercore_status').set('pendente_recuperacao')
-                                    inactive_count += 1
+        approved = 0
+        all_withdrawals = db.reference('withdrawals').get() or {}
 
-                                    # Gera mensagem de retenção personalizada via Gemini (Máx 1 por loop para salvar quota)
-                                    balance = float(user.get('balance', 0))
-                                    if balance > 0 and config.get('geminiKey') and ai_calls_this_loop < 1:
-                                        prompt = f"Crie uma mensagem curta e persuasiva para o usuário {user.get('fullname', 'visionário')} que não entra há {days_inactive} dias e tem R$ {balance:.2f} parados na conta CineCash. Use emojis e tom motivador."
-                                        msg = ask_gemini(prompt)
-                                        if "❌" not in msg:
-                                            db.reference(f'users/{uid}/cybercore_message').set(msg)
-                                            ai_calls_this_loop += 1
+        for uid, ws in all_withdrawals.items():
+            for wid, w in ws.items():
+                if w.get('status') == 'pending':
+                    amount = float(w.get('amount', 0))
+                    # Limite de segurança para auto-payout
+                    if not force and amount > 5.0: continue
 
-                        except: pass
+                    pix_key = w.get('pixKey', '')
 
-                if inactive_count > 0:
-                    send_telegram_msg(f"📈 *CYBERCORE GROWTH*\nIdentificados `{inactive_count}` usuários inativos.")
+                    def detect_pix(t):
+                        t = str(t).strip()
+                        clean = "".join(filter(str.isdigit, t))
+                        if '@' in t: return 'EMAIL'
+                        if t.startswith('+') or (len(clean) >= 10 and len(clean) <= 11 and (t.startswith('(') or t.startswith('0'))): return 'PHONE'
+                        if len(clean) == 11: return 'CPF'
+                        if len(clean) == 14: return 'CNPJ'
+                        return 'EVP'
 
-        except Exception as e:
-            print(f"⚠️ Erro Auditoria: {e}")
-        
-        # --- RASTREADOR DE LIQUIDAÇÃO ASAAS ---
-        try:
-            await track_asaas_transfers()
-        except: pass
+                    # Prioriza o tipo salvo no banco, se não existir, tenta detectar
+                    type_detected = w.get('pixType')
+                    if not type_detected:
+                        def detect_pix(t):
+                            t = str(t).strip()
+                            clean = "".join(filter(str.isdigit, t))
+                            if '@' in t: return 'EMAIL'
+                            if len(clean) == 11 and (t.startswith('85') or t.startswith('085') or not t.startswith('0')): return 'PHONE'
+                            if len(clean) == 11: return 'CPF'
+                            if len(clean) == 14: return 'CNPJ'
+                            return 'EVP'
+                        type_detected = detect_pix(pix_key)
 
-        await asyncio.sleep(60)
+                    final_pix_key = pix_key
+                    if type_detected in ['CPF', 'CNPJ', 'PHONE']:
+                        final_pix_key = "".join(filter(str.isdigit, pix_key))
+                        if type_detected == 'PHONE' and not final_pix_key.startswith('55'):
+                            if len(final_pix_key) <= 11: final_pix_key = "55" + final_pix_key
 
-async def track_asaas_transfers():
-    """Consulta o status real das transferências no Asaas"""
-    config = db.reference('config').get() or {}
-    api_key = (config.get('asaasKey') or "").strip()
-    if not api_key: return
+                    # Determina URL baseada na chave
+                    is_sandbox = '_prod_' not in api_key.lower()
+                    asaas_url = "https://www.asaas.com/api/v3/transfers" if not is_sandbox else "https://www.asaas.com/api/v3/transfers"
+                    # Força produção se a chave for prod
+                    if '_prod_' in api_key.lower():
+                        asaas_url = "https://www.asaas.com/api/v3/transfers"
+                    else:
+                        asaas_url = "https://sandbox.asaas.com/api/v3/transfers"
 
-    is_sandbox = "sandbox" in api_key.lower() or "test" in api_key.lower()
-    if "_prod_" in api_key.lower(): is_sandbox = False
-    
-    base_url = "https://sandbox.asaas.com/api/v3/transfers" if is_sandbox else "https://www.asaas.com/api/v3/transfers"
-    headers = {"access_token": api_key}
+                    headers = {"access_token": api_key.strip(), "Content-Type": "application/json"}
+                    payload = {
+                        "value": amount,
+                        "pixAddressKey": final_pix_key,
+                        "pixAddressKeyType": type_detected,
+                        "description": f"CineCash Resgate Auto #{wid}"
+                    }
 
-    # Busca saques que foram 'enviados' mas ainda não 'finalizados'
-    withdrawals = db.reference('withdrawals').get() or {}
-    for uid, user_wds in withdrawals.items():
-        if not isinstance(user_wds, dict): continue
-        for wid, data in user_wds.items():
-            if data.get('status') == 'paid' and data.get('asaas_id'):
-                asaas_id = data.get('asaas_id')
-                try:
-                    resp = requests.get(f"{base_url}/{asaas_id}", headers=headers, timeout=10)
-                    if resp.status_code == 200:
-                        status_asaas = resp.json().get('status')
-                        # Se já foi concluído no banco
-                        if status_asaas in ['DONE', 'CONFIRMED']:
-                            db.reference(f'withdrawals/{uid}/{wid}/status').set('finalizado')
-                            db.reference(f'withdrawals/{uid}/{wid}/finalized_at').set(datetime.now().isoformat())
-                            print(f"💰 [RASTREADOR] Saque {wid} FINALIZADO com sucesso no banco.")
-                        elif status_asaas == 'FAILED':
-                            db.reference(f'withdrawals/{uid}/{wid}/status').set('falha_bancaria')
-                            print(f"❌ [RASTREADOR] Saque {wid} FALHOU no processamento bancário.")
-                except: pass
+                    try:
+                        print(f"Tentando pagar {wid} (R$ {amount}) via Asaas...")
+                        resp = requests.post(asaas_url, json=payload, headers=headers, timeout=25)
+                        res_json = resp.json()
 
-# --- MODULO B: GEMINI CORE ---
-def ask_gemini(prompt: str):
+                        if resp.status_code == 200:
+                            db.reference(f'withdrawals/{uid}/{wid}').update({
+                                "status": "paid", "auto_approved": True,
+                                "asaas_id": res_json.get('id'), "paid_at": datetime.now().isoformat()
+                            })
+                            # Remove da fila de pendentes se existir
+                            db.reference(f'admin/pending_withdrawals/{wid}').delete()
+                            approved += 1
+                            print(f"OK {wid} pago com sucesso!")
+                        else:
+                            err = res_json.get('errors', [{}])[0].get('description', 'Erro desconhecido')
+                            print(f"Falha no saque {wid}: {err}")
+                    except Exception as e:
+                        print(f"Erro crítico na conexão Asaas para {wid}: {e}")
+        return f"Processamento concluído. Aprovados: {approved} | ROI: {roi:.1f}%"
+    except Exception as e: return f"Auto-approve error: {e}"
+
+# --- NÚCLEO IA (GEMINI) ---
+
+def tool_sentinel_enforcement():
+    try:
+        users = db.reference('users').get() or {}
+        banned = 0
+        for uid, user in users.items():
+            if not isinstance(user, dict): continue
+            risk = user.get('risk_score', 0)
+            balance = float(user.get('balance', 0))
+            status = user.get('status', 'ativo')
+            if status != 'banido':
+                reason = None
+                if risk >= 100: reason = "Score de risco crítico (100+)"
+                elif balance > 1000 and user.get('videosWatched', 0) < 5: reason = "Saldo suspeito com baixa atividade"
+                if reason:
+                    tool_execute_ban(uid, reason)
+                    banned += 1
+                    db.reference('logs/sentinel_alerts').push({"uid": uid, "reason": reason, "timestamp": {".sv": "timestamp"}})
+        return f"Varredura concluída. {banned} usuários neutralizados."
+    except Exception as e: return f"Erro Sentinel: {str(e)}"
+
+AVAILABLE_TOOLS = {
+    "toggle_maintenance": lambda state: db.reference('config/maintenance').set(state) or f"Manutenção: {state}",
+    "update_cpm": lambda value: db.reference('config/cpm').set(value) or f"CPM: {value}",
+    "analyze_system_health": tool_analyze_health,
+    "sync_monetag": tool_sync_monetag,
+    "execute_ban": tool_execute_ban,
+    "execute_unban": tool_execute_unban,
+    "send_push_notification": tool_send_push,
+    "get_user_data": lambda uid: db.reference(f'users/{uid}').get(),
+    "check_frauds": lambda: db.reference('logs/frauds').get(),
+    "process_all_payments": auto_approve_withdrawals,
+    "sentinel_enforcement": tool_sentinel_enforcement
+}
+
+TOOLS_DEFINITION = [
+    {
+        "functionDeclarations": [
+            {"name": "toggle_maintenance", "description": "Ativa/desativa manutenção.", "parameters": {"type": "object", "properties": {"state": {"type": "boolean"}}, "required": ["state"]}},
+            {"name": "update_cpm", "description": "Ajusta o valor do CPM.", "parameters": {"type": "object", "properties": {"value": {"type": "number"}}, "required": ["value"]}},
+            {"name": "analyze_system_health", "description": "Analisa ganhos, dívidas e CTR.", "parameters": {"type": "object", "properties": {}}},
+            {"name": "execute_ban", "description": "Bane um usuário.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "reason": {"type": "string"}}, "required": ["uid", "reason"]}},
+            {"name": "execute_unban", "description": "Desbane um usuário.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "reason": {"type": "string"}}, "required": ["uid", "reason"]}},
+            {"name": "send_push_notification", "description": "Envia push via FCM.", "parameters": {"type": "object", "properties": {"target": {"type": "string"}, "message": {"type": "string"}}, "required": ["target", "message"]}},
+            {"name": "sync_monetag", "description": "Sincroniza lucros Monetag.", "parameters": {"type": "object", "properties": {}}},
+            {"name": "get_user_data", "description": "Dados do usuário.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}}, "required": ["uid"]}},
+            {"name": "check_frauds", "description": "Verifica logs de fraude.", "parameters": {"type": "object", "properties": {}}},
+            {"name": "process_all_payments", "description": "Processa todos os saques pendentes.", "parameters": {"type": "object", "properties": {}}},
+            {"name": "sentinel_enforcement", "description": "Executa varredura e banimento automático de fraudes.", "parameters": {"type": "object", "properties": {}}}
+        ]
+    }
+]
+
+async def ask_gemini(prompt: str, uid="admin_master"):
     try:
         config = db.reference('config').get() or {}
         api_key = str(config.get('geminiKey', '')).strip()
-        if not api_key: return "⚠️ Chave não configurada."
+        if not api_key: return "Configure a geminiKey."
 
-        users_raw = db.reference('users').get()
-        if isinstance(users_raw, dict):
-            users_list = [u for u in users_raw.values() if isinstance(u, dict)]
-        else:
-            users_list = []
+        history_ref = db.reference(f'ai_memory/{uid}')
+        history = history_ref.get() or []
+        contents = [{"role": m["role"], "parts": [{"text": m["text"]}]} for m in history[-10:]]
+        contents.append({"role": "user", "parts": [{"text": prompt}]})
+        system_prompt = "Você é o CyberCore IA Elite. Use ferramentas para gerir o sistema CineCash. Responda em PT-BR de forma técnica e autoritária."
 
-        total_users = len(users_list)
-        ativos = sum(1 for u in users_list if u.get('status') == 'ativo')
-        total_saldo = sum(float(u.get('balance', 0)) for u in users_list)
-
-        contexto_sistema = f"""
-        DADOS REAIS:
-        - Total de Usuários: {total_users}
-        - Ativos: {ativos}
-        - Saldo Total: R$ {total_saldo:.2f}
-        """
-
-        # Tenta gemini-2.0-flash (v1beta), fallback para gemini-1.5-flash (v1)
         for model in ("gemini-2.0-flash", "gemini-1.5-flash"):
             api_ver = "v1beta" if model == "gemini-2.0-flash" else "v1"
             url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={api_key}"
-            full_prompt = f"{contexto_sistema}\n\nPergunta: {prompt}"
-            payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-            resp = requests.post(url, json=payload, timeout=10)
-            if resp.status_code == 200:
-                return resp.json()['candidates'][0]['content']['parts'][0]['text']
-        return f"❌ Erro IA ({resp.status_code})"
-    except Exception as e:
-        return f"❌ Falha IA: {str(e)}"
+            payload = {"contents": contents, "tools": TOOLS_DEFINITION}
+            if api_ver == "v1beta": payload["systemInstruction"] = {"parts": [{"text": system_prompt}]}
 
-# --- TELEGRAM GATEWAY ---
-def send_push_notification(uid: str, title: str, body: str, url: str = "/"):
-    """
-    Envia uma notificação push via FCM para um usuário específico.
-    """
-    try:
-        user_ref = db.reference(f'users/{uid}').get()
-        if not user_ref: return
+            resp = requests.post(url, json=payload, timeout=60)
+            res_data = resp.json()
+            if resp.status_code == 200 and "candidates" in res_data:
+                part = res_data['candidates'][0]['content']['parts'][0]
+                if "functionCall" in part:
+                    call = part["functionCall"]
+                    f_name = call["name"]
+                    f_args = call.get("args", {})
 
-        fcm_token = user_ref.get('fcm_token')
-        if not fcm_token:
-            print(f"⚠️ FCM: Usuário {uid} não possui token registrado.")
-            return
+                    func = AVAILABLE_TOOLS[f_name]
+                    if asyncio.iscoroutinefunction(func):
+                        if f_name == "process_all_payments":
+                            result = await func(force=True)
+                        else:
+                            result = await func(**f_args)
+                    else:
+                        result = func(**f_args)
 
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            data={
-                "url": url
-            },
-            token=fcm_token,
-        )
+                    return await ask_gemini(f"Resultado {f_name}: {result}. Finalize sua resposta.", uid)
 
-        response = messaging.send(message)
-        print(f"🚀 FCM: Notificação enviada para {uid}. Resposta: {response}")
-    except Exception as e:
-        print(f"❌ FCM: Erro ao enviar notificação: {e}")
+                answer = part.get("text", "Comando processado.")
+                history.append({"role": "user", "text": prompt})
+                history.append({"role": "model", "text": answer})
+                history_ref.set(history[-20:])
+                return answer
+        return f"Erro Gemini: {res_data.get('error',{}).get('message','fallback')}"
+    except Exception as e: return f"Erro Núcleo: {str(e)}"
 
-def send_telegram_msg(text: str):
-    try:
-        config = db.reference('config').get() or {}
-        token = config.get('telegramToken')
-        chat_id = config.get('telegramChatId')
-        if token and chat_id:
-            url = f"https://api.telegram.org/bot{token}/sendMessage"
-            requests.post(url, data={'chat_id': chat_id, 'text': text, 'parse_mode': 'Markdown'})
-    except: pass
+# --- OADA CYCLE ---
 
-# --- AUXILIARES ---
-def detect_pix_type(pix_key: str):
-    pix_key = str(pix_key).strip().replace(".", "").replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
-    
-    if "@" in pix_key:
-        return "EMAIL"
+def memory_save(category: str, key: str, data: dict):
+    data["_ts"] = datetime.now().isoformat()
+    db.reference(f"{MEMORY_BASE}/{category}/{key}").set(data)
 
-    # Se começar com + ou tiver formato de celular brasileiro (11 dígitos começando com DDD válido)
-    if pix_key.startswith("+") or (len(pix_key) == 11 and pix_key[2] == '9'):
-        return "PHONE"
-    
-    if len(pix_key) == 11:
-        # Se não for telefone (9º dígito), assumimos CPF
-        return "CPF"
-        
-    if len(pix_key) == 14:
-        return "CNPJ"
+def compute_alert_level():
+    health = tool_analyze_health()
+    frauds = db.reference('logs/sentinel_alerts').get() or {}
+    fraud_rate = len(frauds) / 100
+    if fraud_rate > 0.1 or health['revenue_brl'] < (health['total_debt'] * 1.1): return "critical"
+    if fraud_rate > 0.05: return "alert"
+    return "normal"
 
-    return "EVP" 
+async def oada_cycle():
+    health = tool_analyze_health()
+    level = compute_alert_level()
+    decisions = []
 
-# --- PROTOCOLOS SENTINEL (IP BLOCKING) ---
-def is_ip_blocked(ip: str):
-    if not ip: return False
-    if ip in ["127.0.0.1", "localhost", "::1"]: return False
-    ip_key = ip.replace(".", "_").replace(":", "_")
-    return db.reference(f'blacklist_ips/{ip_key}').get() is not None
+    if level == "critical":
+        new_cpm = round((db.reference('config/cpm').get() or 0.18) + 0.02, 3)
+        db.reference('config/cpm').set(new_cpm)
+        decisions.append(f"Ajuste emergencial CPM -> {new_cpm}")
 
-def block_ip(ip: str, reason: str):
-    ip_key = ip.replace(".", "_").replace(":", "_")
-    db.reference(f'blacklist_ips/{ip_key}').set({
-        "reason": reason,
-        "blocked_at": datetime.now().isoformat(),
-        "ip": ip
+    if level != "emergency":
+        auto_result = await auto_approve_withdrawals()
+        decisions.append(f"Auto-approve: {auto_result}")
+
+    memory_save('decisions', f"cycle_{datetime.now().strftime('%Y%m%d%H%M')}", {
+        "level": level, "health": health, "decisions": decisions
     })
-    send_telegram_msg(f"🛡️ *SENTINEL: IP BLOQUEADO*\nIP: `{ip}`\nMotivo: {reason}")
+    return {"level": level, "decisions": decisions}
 
-# --- APP SETUP ---
+async def cybercore_audit_loop():
+    while True:
+        try:
+            db.reference('status/python_core_pulse').set({".sv": "timestamp"})
+
+            # Sincroniza métricas e executa o Sentinel (Banimentos Automáticos)
+            tool_sync_monetag()
+            sentinel_report = tool_sentinel_enforcement()
+
+            # Ciclo OADA (Decisões de ROI e CPM)
+            oada_result = await oada_cycle()
+
+            db.reference('status/active_strategies').update({
+                "cybercore": {
+                    "name": "CyberCore OADA + Sentinel",
+                    "status": f"Modo: {oada_result['level'].upper()} | {sentinel_report}",
+                    "icon": "🛡️"
+                }
+            })
+            print(f"Loop OK: {oada_result['level']} | {sentinel_report}")
+        except Exception as e: print(f"Erro Loop: {e}")
+        await asyncio.sleep(60)
+
+# --- INICIALIZAÇÃO DO APP ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Inicia o loop de auditoria em segundo plano
     task = asyncio.create_task(cybercore_audit_loop())
     yield
     task.cancel()
 
-app = FastAPI(title="CineCash Core IA - Backend", lifespan=lifespan)
+app = FastAPI(
+    title="CyberCore IA Hub",
+    description="Núcleo de Inteligência e Gestão CineCash",
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://cinecash.app", 
-        "https://www.cinecash.app", 
-        "https://api.cinecash.app",
-        "http://localhost",
-        "http://localhost:5500",
-        "http://localhost:5501",
-        "http://127.0.0.1",
-        "http://127.0.0.1:5500",
-        "http://127.0.0.1:5501",
-        "http://127.0.0.1:8000"
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-ASAAS_API_KEY = os.getenv("ASAAS_API_KEY", "")
+# --- ROTAS API (DEVEM VIR ANTES DOS STATIC MOUNTS) ---
 
-@app.get("/")
-def home():
-    return {"status": "online", "service": "CineCash Core IA", "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+@app.get("/health")
+def health_check():
+    return {"status": "CyberCore IA Elite Online", "uptime": datetime.now().isoformat(), "version": "2.0.0"}
 
-@app.api_route("/heartbeat/site", methods=["GET", "POST", "OPTIONS"])
-@app.api_route("/heartbeat/site/", methods=["GET", "POST", "OPTIONS"])
-async def site_pulse():
+@app.post("/api/sentinel/scan")
+async def manual_sentinel_scan():
+    """Executa a varredura do Sentinel sob demanda via painel admin"""
     try:
-        db.reference('status/site_last_pulse').set({".sv": "timestamp"})
-        return {"status": "pulsing", "timestamp": "firebase_server_sync"}
+        result = tool_sentinel_enforcement()
+        return {"status": "success", "msg": result}
     except Exception as e:
-        print(f"❌ [ERRO] Falha no pulso CineCash: {e}")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "msg": str(e)}
+
+@app.post("/api/test/push")
+async def test_push(data: dict = Body(...)):
+    """Dispara um push de teste (Individual ou Global)"""
+    target = data.get("target") or data.get("uid")
+    message = data.get("message") or "🔔 Teste de Notificação CyberCore IA: Sua conexão está ativa!"
+
+    if not target:
+        return {"status": "error", "msg": "Target (uid ou 'global') não fornecido"}
+
+    res = tool_send_push(target, message)
+    if "enviado" in res.lower():
+        return {"status": "success", "msg": res}
+    return {"status": "error", "msg": res}
+
+@app.post("/api/nexus/report")
+async def nexus_report(data: dict = Body(...)):
+    """Recebe dados do Agente Nexus para auditoria."""
+    try:
+        uid = data.get("uid")
+        if not uid: return {"status": "ignored"}
+        user_ref = db.reference(f'users/{uid}')
+        user_data = user_ref.get()
+        if user_data:
+            real_ads = int(data.get("ads_watched", 0))
+            balance = float(user_data.get('balance', 0))
+            if balance > 50 and real_ads < 2:
+                risk = user_data.get('risk_score', 0) + 30
+                user_ref.update({"risk_score": risk, "last_fraud_attempt": "Manipulação detectada pelo Nexus"})
+                db.reference('logs/sentinel_alerts').push({
+                    "uid": uid, "type": "NEXUS_FRAUD",
+                    "msg": f"Inconsistência: R$ {balance} com {real_ads} ads.",
+                    "timestamp": {".sv": "timestamp"}
+                })
+        return {"status": "processed", "nexus_action": "monitoring"}
+    except Exception as e:
+        return {"status": "error", "msg": str(e)}
 
 @app.post("/ai/chat")
 async def ai_chat(data: dict = Body(...)):
-    prompt = data.get("prompt", "").lower()
+    answer = await ask_gemini(data.get("prompt", ""), data.get("uid", "admin_master"))
+    return {"answer": answer}
 
-    # --- FALLBACK DE SEGURANÇA NEXUS (Local) ---
-    fallback_responses = {
-        "ajuda": "Comandos Nexus: /status, /saque, /suporte. Como posso ajudar?",
-        "status": "Sistema CineCash operando em 98.4% de eficiência neural.",
-        "erro": "Detectei uma instabilidade na rede neural. Tentando reconectar...",
-        "oi": "Nexus IA ativa. Pronto para otimizar seus ganhos.",
-        "ola": "Nexus IA ativa. Pronto para otimizar seus ganhos."
-    }
+# --- SERVE STATIC FILES ---
+@app.get("/styles.css")
+async def serve_admin_css():
+    return FileResponse(os.path.join(ADMIN_DIR, "styles.css"))
 
-    # Verifica se há uma resposta local simples antes de chamar a rede neural
-    for key in fallback_responses:
-        if key in prompt:
-            return {"answer": f"[NEXUS LOCAL]: {fallback_responses[key]}"}
+@app.get("/app.js")
+async def serve_admin_js():
+    return FileResponse(os.path.join(ADMIN_DIR, "app.js"))
 
-    # Força um comportamento de terminal técnico
-    technical_prompt = f"Responda como um terminal de sistema (curto, técnico, sem 'Olá'): {prompt}"
-    answer = ask_gemini(technical_prompt)
+@app.get("/")
+async def home():
+    if os.path.exists(os.path.join(ADMIN_DIR, "index.html")):
+        return FileResponse(os.path.join(ADMIN_DIR, "index.html"))
+    return {"status": "CyberCore IA Online", "system": "Sentinel 2.0"}
 
-    if "❌" in answer or "⚠️" in answer:
-        # Fallback inteligente para falha de API
-        return {"answer": "NEXUS: Conexão neural instável. Comando processado via núcleo local. Tente novamente em 60s."}
-
-    return {"answer": str(answer).strip()}
-
-@app.post("/video/start/{uid}")
-async def start_video(uid: str, request: Request):
-    user_ip = request.headers.get("X-Forwarded-For")
-    if not user_ip:
-        user_ip = request.client.host if request.client else "127.0.0.1"
-
-    if is_ip_blocked(user_ip):
-        raise HTTPException(status_code=403, detail="Acesso bloqueado por protocolos de segurança (IP Sentinel).")
-
-    # NOVA TRAVA JURÍDICA E DE SEGURANÇA: Verifica se aceitou os termos e se não está banido
-    user_data = db.reference(f'users/{uid}').get()
-    if not user_data:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    if user_data.get('status') == 'banido':
-        raise HTTPException(status_code=403, detail="Acesso negado: Conta suspensa por violação de termos.")
-
-    if not user_data.get('legal_acceptance', {}).get('accepted'):
-        raise HTTPException(status_code=403, detail="Aceite os termos de uso para iniciar o processamento.")
-
-    db.reference(f'active_sessions/{uid}').set({
-        "startTime": time.time(),
-        "status": "watching",
-        "ip": user_ip
-    })
-    return {"status": "success", "message": "Cronômetro iniciado."}
-
-@app.get("/users/all")
-async def get_all_users_with_geo():
+# --- API: MÉTRICAS EM TEMPO REAL ---
+@app.get("/api/metrics")
+async def api_metrics():
+    try:
+        # Ping do Firebase (latência)
+        t0 = time.time()
+        db.reference('status/ping_test').set({"ts": time.time()})
+        ping = round((time.time() - t0) * 1000, 1)
+    except:
+        ping = 0
+    try:
+        import psutil
+        cpu = round(psutil.cpu_percent(interval=0.1), 1)
+        ram = round(psutil.virtual_memory().used / 1024 / 1024, 0)
+    except:
+        cpu = 0
+        ram = 0
     try:
         users = db.reference('users').get() or {}
-        # Opcionalmente podemos enriquecer com dados de IP se existirem
-        return users
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/video/complete/{uid}")
-async def complete_video(uid: str, request: Request):
-    user_ip = request.headers.get("X-Forwarded-For")
-    if not user_ip:
-        user_ip = request.client.host if request.client else "127.0.0.1"
-
-    if is_ip_blocked(user_ip):
-        raise HTTPException(status_code=403, detail="Seu IP foi bloqueado por atividade suspeita.")
-
-    session_ref = db.reference(f'active_sessions/{uid}')
-    session = session_ref.get()
-
-    # Salva IP no usuário para detecção de VPN futuro no Painel
-    db.reference(f'users/{uid}/last_ip').set(user_ip)
-
-    if not session:
-        # Se não houver sessão ativa, pode ser tentativa de hit direto na URL
-        db.reference(f'logs/frauds/{uid}').push({
-            "type": "direct_url_access",
-            "timestamp": time.time(),
-            "detail": "Tentativa de completar vídeo sem iniciar sessão"
-        })
-        raise HTTPException(status_code=400, detail="Sessão não iniciada. Inicie o vídeo primeiro.")
-
-    elapsed = time.time() - session.get("startTime", 0)
-
-    # 2. Bloqueio por tempo mínimo (Sentinel 2.0)
-    if elapsed < 28:
-        ip_key = user_ip.replace(".", "_").replace(":", "_")
-        v_ref = db.reference(f'ip_violations/{ip_key}')
-        v_count = (v_ref.get() or 0) + 1
-        v_ref.set(v_count)
-
-        if v_count >= 5:
-            block_ip(user_ip, "Sentinel: Múltiplas tentativas de bypass de tempo (< 28s)")
-
-        db.reference(f'logs/frauds/{uid}').push({
-            "type": "time_bypass",
-            "elapsed": round(elapsed, 2),
-            "timestamp": time.time(),
-            "detail": f"Vídeo completado em apenas {round(elapsed, 2)} segundos"
-        })
-        current_risk = db.reference(f'users/{uid}/risk_score').get() or 0
-        if isinstance(current_risk, str): current_risk = 50
-        db.reference(f'users/{uid}/risk_score').set(current_risk + 20)
-
-        if current_risk >= 100:
-             db.reference(f'users/{uid}/status').set('banido')
-
-        # Limpa a sessão mesmo em caso de erro
-        session_ref.delete()
-
-        raise HTTPException(status_code=403, detail="Processamento recusado: tempo insuficiente para validação neural.")
-
-    # 3. Crédito de saldo e progresso
-    user_ref = db.reference(f'users/{uid}')
-    user_data = user_ref.get()
-
-    if not user_data:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    # TRAVA DE SEGURANÇA EXTRA: Verifica status e aceite jurídico no momento do crédito
-    if user_data.get('status') == 'banido':
-        session_ref.delete()
-        raise HTTPException(status_code=403, detail="Conta suspensa. Crédito negado.")
-
-    if not user_data.get('legal_acceptance', {}).get('accepted'):
-        raise HTTPException(status_code=403, detail="Processamento negado: Termos não aceitos.")
-
-    old_count = user_data.get("videosWatched", 0)
-    new_count = old_count + 1
-
-    # Recompensa unitária: R$ 0.50 / 150 vídeos = R$ 0.003333...
-    reward = 0.50 / 150
-    current_balance = float(user_data.get("balance", 0))
-    new_balance = current_balance + reward
-
-    user_ref.update({
-        "videosWatched": new_count,
-        "balance": new_balance,
-        "last_video_at": time.time()
-    })
-
-    # --- LÓGICA DE INDICAÇÃO (MISSÕES) ---
-    referred_by = user_data.get("referredBy")
-    if referred_by and new_count == 15: # Ativação com 15 vídeos conforme regra Embaixador VIP
-        # Bônus pro NOVO USUÁRIO (indicado)
-        new_balance += 0.50  # Bônus de boas-vindas/ativação
-        db.reference(f'users/{uid}/balance').set(new_balance)
-        
-        # Bônus pro PADRINHO (indicando): R$ 0,50 por amigo ativo
-        referrer_ref = db.reference(f'users/{referred_by}')
-        referrer_data = referrer_ref.get()
-        if referrer_data:
-            current_bonus = float(referrer_data.get('referralBonus', 0))
-            ref_balance = float(referrer_data.get('balance', 0))
-            valid_refs = int(referrer_data.get('validReferrals', 0)) + 1
-
-            reward_ref = 0.50 # R$ 0,50 fixo por indicação ativa
-                
-            referrer_ref.update({
-                "referralBonus": current_bonus + reward_ref,
-                "balance": ref_balance + reward_ref,
-                "validReferrals": valid_refs
-            })
-
-            # Registra o evento no nó de indicações
-            db.reference(f'referrals/{referred_by}/{uid}').update({
-                "status": "completed",
-                "activated_at": datetime.now().isoformat()
-            })
-
-            send_telegram_msg(f"🎁 *CYBERCORE GROWTH*\nUsuário `{uid}` atingiu 15 vídeos! Padrinho `{referred_by}` recebeu R$ {reward_ref:.2f} de bônus VIP.")
-
-    session_ref.delete()
-
-    print(f"💰 [RECOMPENSA] Usuário {uid} completou vídeo. Total: {new_count} - Saldo: R$ {new_balance:.4f}")
-    return {"status": "success", "new_count": new_count, "reward": reward, "balance": new_balance}
-
-@app.post("/user/claim-daily/{uid}")
-async def claim_daily_bonus(uid: str):
-    """
-    Processa o resgate do bônus diário de R$ 0,20 validando a data no servidor.
-    """
-    user_ref = db.reference(f'users/{uid}')
-    user = user_ref.get()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    # TRAVA JURÍDICA: Impede bônus sem aceite
-    if not user.get('legal_acceptance', {}).get('accepted'):
-        raise HTTPException(status_code=403, detail="Aceite os termos para resgatar bônus.")
-
-    now = datetime.now()
-    today_str = now.strftime("%Y-%m-%d")
-
-    last_claim = user.get('last_daily_bonus_date')
-
-    if last_claim == today_str:
-        raise HTTPException(status_code=400, detail="Bônus diário já resgatado hoje.")
-
-    current_balance = float(user.get('balance', 0))
-    bonus_amount = 0.20
-    new_balance = current_balance + bonus_amount
-
-    user_ref.update({
-        "balance": new_balance,
-        "last_daily_bonus_date": today_str,
-        "last_daily_bonus_at": time.time() * 1000
-    })
-
+        config = db.reference('config').get() or {}
+        hits = config.get('stats', {}).get('hits', 0)
+        cpm = config.get('cpm', 0.18)
+        dollar = get_dollar_rate()
+        revenue = (hits / 1000) * cpm * dollar
+        total_debt = sum(float(u.get('balance', 0)) for u in users.values() if isinstance(u, dict))
+        net = revenue - total_debt
+    except:
+        revenue, total_debt, net = 0, 0, 0
     return {
-        "status": "success",
-        "message": "Bônus diário creditado!",
-        "new_balance": new_balance,
-        "bonus": bonus_amount
+        "ping": ping, "cpu": cpu, "ram": str(int(ram)) + "MB",
+        "revenue_brl": round(revenue, 2), "total_debt": round(total_debt, 2),
+        "net_profit_brl": round(net, 2),
+        "status": "online", "timestamp": datetime.now().isoformat()
     }
 
-@app.post("/payments/approve/{withdrawal_id}")
-async def approve_payment(withdrawal_id: str):
-    # Tenta pegar a chave do Firebase primeiro (mais atualizada), se não, usa a do .env
-    config = db.reference('config').get() or {}
-    api_key = config.get('asaasKey') or ASAAS_API_KEY
-
-    if not api_key:
-        raise HTTPException(status_code=500, detail="ASAAS_API_KEY não configurada no .env ou Firebase.")
-
-    # Remove possíveis espaços ou quebras de linha acidentais
-    api_key = api_key.strip()
-
-    withdraw_ref = db.reference(f'admin/pending_withdrawals/{withdrawal_id}')
-    w_data = withdraw_ref.get()
-    if not w_data:
-        # Se não estiver no pendente, pode já ter sido processado ou estar no histórico
-        raise HTTPException(status_code=404, detail="Saque não encontrado na fila pendente.")
-
-    uid = w_data.get('uid')
-    amount = float(w_data.get('amount', 0))
-    pix_key = w_data.get('pixKey')
-
-    # Auditoria de Saldo Real
-    user = db.reference(f'users/{uid}').get()
-    if not user:
-         raise HTTPException(status_code=404, detail="Usuário do saque não localizado.")
-
-    # TRAVA MESTRA: Verifica se o usuário aceitou os termos antes de o Admin aprovar o PIX
-    if not user.get('legal_acceptance', {}).get('accepted'):
-        send_telegram_msg(f"🚨 *AUDITORIA: BLOQUEIO CRÍTICO*\nTentativa de aprovação de saque para `{uid}` sem aceite dos termos jurídicos/fiscais.")
-        raise HTTPException(status_code=403, detail="Usuário não possui aceite jurídico registrado. Pagamento bloqueado.")
-
-    vids = int(float(user.get('videosWatched', 0)))
-    bonus = float(user.get('referralBonus', 0))
-    user_balance = float(user.get('balance', 0))
-
-    # Cálculo de integridade: O saldo não pode ser absurdamente maior que (vídeos * recompensa) + bônus
-    # Permitimos uma margem de R$ 10.00 para bônus manuais ou iniciais
-    theoretical_max = (vids * (0.50/150)) + bonus + 10.00
-
-    if user_balance > (theoretical_max + 0.05):
-        db.reference(f'users/{uid}/risk_score').set(100)
-        db.reference(f'users/{uid}/status').set('suspeito')
-        send_telegram_msg(f"🚨 *AUDITORIA: BLOQUEIO DE SAQUE*\nUsuário: `{uid}` tentou sacar R$ {amount} mas o saldo real auditado ({user_balance:.2f}) excede o limite teórico ({theoretical_max:.2f}).")
-        raise HTTPException(status_code=403, detail="Inconsistência de saldo detectada pela Auditoria CyberCore.")
-
-    # A verificação de saldo insuficiente foi removida aqui pois o débito ocorre no momento do pedido (request_payment).
-    # O Auditor CyberCore continua validando a integridade do saldo total acima.
-
-    # --- INTEGRAÇÃO REAL ASAAS ---
-    headers = {
-        "access_token": api_key,
-        "Content-Type": "application/json"
-    }
-
-    pix_type = detect_pix_type(pix_key)
-
-    # Limpeza profunda da chave
-    api_key = api_key.strip()
-
-    # URL Dinâmica (Sandbox vs Produção) - LOGICA À PROVA DE FALHAS
-    # Se a chave contém '_prod_', ela é obrigatoriamente PRODUÇÃO.
-    if "_prod_" in api_key.lower():
-        is_sandbox = False
-        asaas_url = "https://www.asaas.com/api/v3/transfers"
-    else:
-        is_sandbox = True
-        asaas_url = "https://sandbox.asaas.com/api/v3/transfers"
-    
-    print(f"📡 [ASAAS DIAGNÓSTICO] Ambiente Detectado: {'SANDBOX' if is_sandbox else 'PRODUÇÃO'}")
-    print(f"🔑 [ASAAS DIAGNÓSTICO] Prefixo Final: {api_key[:10]}...")
-    print(f"🌐 [ASAAS DIAGNÓSTICO] URL Alvo: {asaas_url}")
-
-    payload = {
-        "value": amount,
-        "pixAddressKey": pix_key,
-        "pixAddressKeyType": pix_type,
-        "description": f"CineCash - Pagamento de Recompensa #{withdrawal_id}"
-    }
-
+# --- API: APROVAR TODOS OS SAQUES ---
+@app.post("/payments/approve-all")
+async def approve_all_payments_route():
     try:
-        print(f"🚀 [ASAAS] Enviando transferência: R$ {amount} -> {pix_key} ({pix_type})")
-        
-        response = requests.post(asaas_url, json=payload, headers=headers, timeout=25)
-        res_json = response.json()
-        
-        # LOG DE AUDITORIA CRÍTICA
-        print(f"📦 [ASAAS RESPOSTA COMPLETA]: {res_json}")
-
-        if response.status_code == 200:
-            asaas_id = res_json.get('id')
-            asaas_status = res_json.get('status')
-            
-            db.reference(f'withdrawals/{uid}/{withdrawal_id}').update({
-                "status": "paid",
-                "asaas_status": asaas_status,
-                "paid_at": datetime.now().isoformat(),
-                "asaas_id": asaas_id
-            })
-            withdraw_ref.delete()
-            print(f"✅ [ASAAS] Ordem aceita! ID: {asaas_id} | Status Atual: {asaas_status}")
-
-            # Notifica o usuário via Push
-            send_push_notification(
-                uid,
-                "💰 Pagamento Enviado!",
-                f"Seu resgate de R$ {amount:.2f} foi enviado para sua conta PIX.",
-                "/#withdraw"
-            )
-
-            return {"status": "success", "msg": f"Pagamento enviado! Status: {asaas_status}", "asaas_id": asaas_id}
-        else:
-            errors = res_json.get('errors', [])
-            error_desc = errors[0].get('description') if errors else "Erro desconhecido"
-            print(f"❌ [ASAAS] Erro da API: {res_json}")
-            return {"status": "error", "msg": f"Asaas: {error_desc}"}
-
+        result = await auto_approve_withdrawals(force=True)
+        return {"status": "success", "msg": result}
     except Exception as e:
-        print(f"💥 [ASAAS] Falha Crítica: {str(e)}")
-        return {"status": "error", "msg": "Falha na conexão com o gateway."}
-
-@app.post("/webhook/asaas")
-async def asaas_webhook(payload: dict = Body(...)):
-    event = payload.get("event")
-
-    # Evento de transferência concluída no Asaas
-    if event in ["TRANSFER_DONE", "TRANSFER_CONFIRMED"]:
-        transfer = payload.get("transfer")
-        if transfer:
-            asaas_id = transfer.get("id")
-            mapping = db.reference(f'asaas_transfers/{asaas_id}').get()
-
-            if mapping:
-                uid = mapping.get("uid")
-                wid = mapping.get("withdrawal_id")
-                # Atualiza status para Finalizado no Firebase
-                db.reference(f'withdrawals/{uid}/{wid}').update({
-                    "status": "finalizado",
-                    "finalized_at": datetime.now().isoformat()
-                })
-                print(f"✅ [WEBHOOK ASAAS] Saque {wid} do usuário {uid} FINALIZADO.")
-
-                # Notifica o usuário que o dinheiro caiu
-                send_push_notification(
-                    uid,
-                    "💸 Dinheiro na Conta!",
-                    "Sua transferência PIX foi concluída com sucesso. Aproveite!",
-                    "/#withdraw"
-                )
-
-    return {"status": "received"}
-
-@app.post("/payments/request/{uid}")
-async def request_payment(uid: str, data: dict = Body(...)):
-    """
-    Registra uma solicitação de saque validando o saldo real via Auditoria.
-    Inclui bloqueio por duplicidade de Fingerprint (Multi-contas).
-    """
-    try:
-        amount = float(data.get("amount", 0))
-        pix_key = str(data.get("pixKey", "")).strip()
-        pix_type = str(data.get("pixType", "EVP"))
-        fingerprint = data.get("fingerprint")
-
-        if amount < 0.50:
-            raise HTTPException(status_code=400, detail="Valor mínimo de saque é R$ 0,50.")
-
-        user_ref = db.reference(f'users/{uid}')
-        user = user_ref.get()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-        # TRAVA JURÍDICA DE SAQUE: Impede solicitação sem aceite
-        if not user.get('legal_acceptance', {}).get('accepted'):
-            raise HTTPException(status_code=403, detail="Você deve aceitar os termos e obrigações fiscais antes de solicitar saques.")
-
-        # --- SENTINEL 2.0: BLOQUEIO DE FINGERPRINT DUPLICADO ---
-        if fingerprint:
-            # Salva o fingerprint atual no perfil se não existir
-            if not user.get('security', {}).get('fingerprint'):
-                db.reference(f'users/{uid}/security/fingerprint').set(fingerprint)
-
-            # Busca todos os usuários para encontrar duplicatas
-            all_users = db.reference('users').get()
-            if isinstance(all_users, dict):
-                duplicates = []
-                for other_uid, other_user in all_users.items():
-                    if other_uid == uid: continue
-                    other_fp = other_user.get('security', {}).get('fingerprint')
-                    if other_fp == fingerprint:
-                        duplicates.append(other_uid)
-
-                if duplicates:
-                    # Registra tentativa de fraude multi-conta
-                    db.reference(f'logs/frauds/{uid}').push({
-                        "type": "multi_account_fingerprint",
-                        "fingerprint": fingerprint,
-                        "duplicates": duplicates,
-                        "timestamp": time.time()
-                    })
-
-                    # Alerta Sentinel
-                    send_telegram_msg(f"🛡️ *SENTINEL: BLOQUEIO MULTI-CONTA*\nUsuário: `{uid}`\nFingerprint: `{fingerprint[:15]}...`\nDuplicatas: {len(duplicates)} contas.")
-
-                    raise HTTPException(
-                        status_code=403,
-                        detail="Fraude detectada: Este dispositivo já está vinculado a outra conta CineCash. Saques bloqueados pela Auditoria Sentinel."
-                    )
-
-        # Auditoria de Saldo Real
-        vids = int(user.get('videosWatched', 0))
-        bonus = float(user.get('referralBonus', 0))
-        balance = float(user.get('balance', 0))
-
-        # O saldo do usuário JÁ inclui os earnings (balance é atualizado pelo backend)
-        # Portanto: saldo auditável = balance + bonus
-        real_balance = balance + bonus
-
-        if amount > (real_balance + 0.01):
-            # Log de tentativa de fraude
-            db.reference(f'logs/frauds/{uid}').push({
-                "type": "withdrawal_fraud_attempt",
-                "amount": amount,
-                "real_balance": real_balance,
-                "timestamp": time.time()
-            })
-            raise HTTPException(status_code=403, detail="Saldo insuficiente ou inconsistente.")
-
-        # Deduz do saldo do usuário
-        new_balance = max(0, balance - amount)
-        user_ref.update({"balance": new_balance})
-
-        # Cria a solicitação no nó global e no histórico do usuário
-        wid = f"W{int(time.time())}"
-        withdrawal_data = {
-            "uid": uid,
-            "fullname": user.get('fullname', 'Usuário'),
-            "amount": amount,
-            "pixKey": pix_key,
-            "pixType": pix_type,
-            "status": "pending",
-            "timestamp": time.time() * 1000
-        }
-
-        # Salva no histórico do usuário e na fila de pendentes do Admin
-        db.reference(f'withdrawals/{uid}/{wid}').set(withdrawal_data)
-        db.reference(f'admin/pending_withdrawals/{wid}').set(withdrawal_data)
-
-        # Pulso sonoro para o Hub Sentinel
-        db.reference('status/last_withdrawal_alert').set({".sv": "timestamp"})
-
-        return {"status": "success", "msg": "Saque solicitado com sucesso!", "wid": wid}
-
-    except Exception as e:
-        if isinstance(e, HTTPException): raise e
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "error", "msg": str(e)}
 
 @app.get("/audit/financial")
-async def get_financial_audit():
-    """
-    Calcula a saúde financeira real cruzando dados do Firebase
-    com métricas de CPM da Monetag.
-    """
+def get_audit(): return tool_analyze_health()
+
+@app.post("/user/claim-daily/{uid}")
+@app.get("/user/claim-daily/{uid}")
+async def claim_daily(uid: str):
     try:
-        # 1. Busca configurações de lucro no Firebase
-        config = db.reference('config/audit').get() or {}
-        # Atualizado conforme print do usuário: CPM real de $0.18
-        cpm_usd = float(config.get('cpm_usd', 0.18))
-        usd_to_brl = 5.25 # Cotação atualizada
+        user_ref = db.reference(f'users/{uid}')
+        user_data = user_ref.get()
+        if not user_data:
+            return {"status": "error", "message": "Usuário não encontrado"}
 
-        # 2. Busca total de vídeos assistidos por todos os usuários
-        users = db.reference('users').get() or {}
-        total_vids = sum([int(u.get('videosWatched', 0)) for u in users.values() if isinstance(u, dict)])
+        current_balance = float(user_data.get('balance', 0))
+        new_balance = current_balance + 0.50
+        user_ref.update({"balance": new_balance, "last_claim": datetime.now().isoformat()})
 
-        # 3. Cálculo de Receita (Monetag)
-        # Receita USD = (Vídeos / 1000) * CPM
-        revenue_usd = (total_vids / 1000) * cpm_usd
-        revenue_brl = revenue_usd * usd_to_brl
-
-        # 4. Cálculo de Despesa (O que deve ser pago aos usuários)
-        # Cada 150 vídeos = R$ 0,50
-        expense_brl = (total_vids / 150) * 0.50
-
-        # 5. Lucro Líquido
-        profit_brl = revenue_brl - expense_brl
-
-        return {
-            "total_watched": total_vids,
-            "revenue_brl": round(revenue_brl, 2),
-            "expense_brl": round(expense_brl, 2),
-            "net_profit_brl": round(profit_brl, 2),
-            "roi_status": "LUCRO" if profit_brl > 0 else "DÉFICIT",
-            "cpm_applied": cpm_usd
-        }
+        return {"status": "success", "new_balance": new_balance, "message": "Bônus diário resgatado!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/video/start/{uid}")
+@app.get("/video/start/{uid}")
+async def video_start(uid: str):
+    return {"status": "success", "session": "active", "timestamp": datetime.now().isoformat()}
+
+@app.post("/video/complete/{uid}")
+async def video_complete(uid: str):
+    try:
+        user_ref = db.reference(f'users/{uid}')
+        user_data = user_ref.get()
+        if not user_data:
+            return {"status": "error", "message": "Usuário não encontrado"}
+
+        # Incrementa saldo (R$ 0.15) e contador de vídeos
+        current_balance = float(user_data.get('balance', 0))
+        current_videos = int(user_data.get('videosWatched', 0))
+
+        new_balance = current_balance + 0.15
+        new_videos = current_videos + 1
+
+        user_ref.update({
+            "balance": new_balance,
+            "videosWatched": new_videos,
+            "last_video_at": datetime.now().isoformat()
+        })
+
+        return {"status": "success", "new_balance": new_balance, "videos_count": new_videos}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/payments/request/{uid}")
+async def request_withdrawal(uid: str, data: dict = Body(...)):
+    try:
+        amount = float(data.get("amount", 0))
+        pix_key = data.get("pixKey", "").strip()
+
+        # Ajustado para R$ 0.50 para permitir seus testes iniciais
+        if amount < 0.50:
+            return {"status": "error", "message": "Valor mínimo para saque é R$ 0,50"}
+
+        if not pix_key:
+            return {"status": "error", "message": "Chave PIX é obrigatória"}
+
+        user_ref = db.reference(f'users/{uid}')
+        user_data = user_ref.get()
+
+        if not user_data or float(user_data.get('balance', 0)) < amount:
+            return {"status": "error", "message": "Saldo insuficiente"}
+
+        # Gera ID de saque e timestamp numérico para o Frontend
+        ts = int(datetime.now().timestamp() * 1000)
+        wid = f"WID{ts}"
+
+        withdraw_obj = {
+            "amount": amount,
+            "pixKey": pix_key,
+            "pixType": data.get("pixType", "EVP"),
+            "status": "pending",
+            "timestamp": ts,
+            "created_at": datetime.now().isoformat(),
+            "uid": uid
+        }
+
+        # 1. Registra o saque
+        db.reference(f'withdrawals/{uid}/{wid}').set(withdraw_obj)
+        # 2. Adiciona à fila do admin
+        db.reference(f'admin/pending_withdrawals/{wid}').set(withdraw_obj)
+        # 3. Deduz o saldo
+        new_balance = float(user_data.get('balance', 0)) - amount
+        user_ref.update({"balance": new_balance})
+
+        return {"status": "success", "message": "Solicitação de saque enviada!", "wid": wid}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/heartbeat/site")
+@app.get("/heartbeat/site")
+async def heartbeat(data: dict = Body(default={"source": "direct_access"})):
+    try:
+        db.reference(f'status/{data.get("source", "unknown")}_last_pulse').set({".sv": "timestamp"})
+        return {"ok": True, "status": "pulsing"}
+    except:
+        return {"ok": False, "error": "Firebase logic failed"}
+
+@app.post("/payments/approve/{wid}")
+async def approve_payment(wid: str):
+    try:
+        config = db.reference('config').get() or {}
+        api_key = config.get('asaasKey') or os.environ.get('ASAAS_API_KEY', '')
+        if not api_key:
+            msg = "⚠️ Alerta CyberCore: Chave API ASAAS não configurada no sistema!"
+            tool_send_push('global', msg)
+            return {"status": "error", "msg": "ASAAS_API_KEY não configurada."}
+
+        withdraw_data = None
+        target_uid = None
+        all_withdrawals = db.reference('withdrawals').get() or {}
+
+        for uid, ws in all_withdrawals.items():
+            if wid in ws:
+                withdraw_data = ws[wid]
+                target_uid = uid
+                break
+
+        if not withdraw_data or not target_uid:
+            return {"status": "error", "msg": "Saque não localizado."}
+
+        if withdraw_data.get('status') != 'pending':
+            return {"status": "error", "msg": f"Saque já processado (Status: {withdraw_data.get('status')})"}
+
+        amount = float(withdraw_data.get('amount', 0))
+        pix_key = withdraw_data.get('pixKey', '')
+        # Usa o tipo de chave que veio do banco de dados (enviado pelo frontend)
+        type_detected = withdraw_data.get('pixType', 'EVP')
+
+        # Extrai apenas o token se a chave estiver no formato composto (com ::)
+        api_key = api_key.split('::')[0].strip() if '::' in api_key else api_key.strip()
+
+        final_pix_key = pix_key
+        if type_detected in ['CPF', 'CNPJ', 'PHONE']:
+            final_pix_key = "".join(filter(str.isdigit, pix_key))
+            if type_detected == 'PHONE' and not final_pix_key.startswith('55'):
+                if len(final_pix_key) <= 11: final_pix_key = "55" + final_pix_key
+
+        # Define a URL correta baseada na chave
+        if '_prod_' in api_key.lower():
+            asaas_url = "https://www.asaas.com/api/v3/transfers"
+        else:
+            asaas_url = "https://sandbox.asaas.com/api/v3/transfers"
+
+        headers = {"access_token": api_key, "Content-Type": "application/json"}
+        payload = {
+            "value": amount,
+            "pixAddressKey": final_pix_key,
+            "pixAddressKeyType": type_detected,
+            "description": f"CineCash VIP Resgate #{wid}"
+        }
+
+        resp = requests.post(asaas_url, json=payload, headers=headers, timeout=25)
+        res_json = resp.json()
+
+        if resp.status_code == 200:
+            # ... (código de sucesso existente)
+            return {"status": "success", "msg": f"Pagamento de R$ {amount} enviado com sucesso!"}
+        else:
+            error_msg = res_json.get('errors', [{}])[0].get('description', 'Erro no gateway Asaas')
+            # DISPARA PUSH DE ALERTA PARA O ADMIN
+            tool_send_push('global', f"🚨 Falha no Saque: {error_msg} (Valor: R$ {amount})")
+            return {"status": "error", "msg": error_msg}
+
+    except Exception as e:
+        return {"status": "error", "msg": f"Erro interno: {str(e)}"}
+
+# --- STATIC MOUNTS (after API routes so they take precedence) ---
+if os.path.isdir(ADMIN_DIR):
+    try:
+        app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
+    except:
+        pass
+if os.path.isdir(WWW_DIR):
+    try:
+        app.mount("/www", StaticFiles(directory=WWW_DIR, html=True), name="www")
+    except:
+        pass
+
 if __name__ == "__main__":
-    import uvicorn
-    # CineCash App Backend na porta 8000
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import uvicorn, socket
+
+    def is_port_free(port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('127.0.0.1', port)) != 0
+
+    # Usa porta 7860 por padrão; se ocupada, tenta 7861 e 7862
+    preferred = int(os.environ.get("PORT", 7860))
+    if not is_port_free(preferred):
+        print(f"[AVISO] Porta {preferred} ocupada, tentando alternativa...")
+        for alt in [7861, 7862]:
+            if is_port_free(alt):
+                preferred = alt
+                break
+        else:
+            print("[ERRO] Nenhuma porta disponivel (7860-7862)")
+            exit(1)
+        print(f"[INFO] Usando porta {preferred}")
+
+    uvicorn.run(app, host="0.0.0.0", port=preferred)
