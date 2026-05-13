@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAodV-dw-p0UP7pqneDZaowOZLRmw6GVBA",
+    apiKey: "AIzaSyDBa-yJArg3bkz9ouwqlNmPXKj_pTsl_1E",
     authDomain: "playearn-b001b.firebaseapp.com",
     databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
     projectId: "playearn-b001b",
@@ -29,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
 // ── Cache com estratégia NETWORK-FIRST ──────────────────────────────────────
 // Sempre busca a versão mais recente na rede.
 // Só usa cache se estiver offline.
-const CACHE_NAME = 'cinecash-v9'; // ← versão bumped para limpar cache antigo
+const CACHE_NAME = 'cinecash-v10'; // ← versão bumped para limpar cache antigo
 
 self.addEventListener('install', e => {
     // Força o novo SW a assumir imediatamente, sem esperar fechar todas as abas

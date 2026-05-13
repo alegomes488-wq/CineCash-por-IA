@@ -367,10 +367,11 @@
                                 <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i>
                                 Chave PIX de Destino
                             </label>
-                            <input type="text" id="w-key" placeholder="Digite sua chave aqui..." style="font-weight: 600;" oninput="applyMask(this)">
+                            <input type="text" id="w-key" placeholder="Digite sua chave aqui..." style="font-weight: 600;" oninput="validatePixInput()">
+                            <div id="pix-status" style="font-size: 11px; margin-top: 6px; min-height: 18px; font-weight: 600;"></div>
                         </div>
 
-                        <button class="btn-primary" onclick="requestSaque()" style="margin-top: 15px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <button class="btn-primary" id="btn-request-saque" onclick="requestSaque()" disabled style="margin-top: 15px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 10px; opacity: 0.5; cursor: not-allowed;">
                             <i data-lucide="zap" style="width: 20px; height: 20px;"></i>
                             AUTORIZAR TRANSFERÊNCIA
                         </button>
@@ -540,12 +541,25 @@
         import { getMessaging, getToken } from "./firebase-messaging.js";
 
         const CONFIG = {
-            apiBase: 'https://desenvovimento-cybercore-ia.hf.space',
+            apiBase: window.location.origin,
             monetagId: '7654321'
         };
 
+        // --- SISTEMA DESPERTADOR (WAKE-UP) ---
+        async function wakeUpCyberCore() {
+            console.log("⚡ Acordando CyberCore IA...");
+            try {
+                // Tenta um ping simples para tirar o Space do 'Sleeping'
+                await fetch(CONFIG.apiBase + '/health', { mode: 'no-cors' });
+            } catch (e) {
+                console.log("Aguardando inicialização do núcleo...");
+            }
+        }
+        wakeUpCyberCore();
+        setInterval(wakeUpCyberCore, 60000); // Mantém acordado enquanto o usuário estiver no site
+
         const firebaseConfig = {
-            apiKey: "AIzaSyAodV-dw-p0UP7pqneDZaowOZLRmw6GVBA",
+            apiKey: "AIzaSyDBa-yJArg3bkz9ouwqlNmPXKj_pTsl_1E",
             authDomain: "playearn-b001b.firebaseapp.com",
             databaseURL: "https://playearn-b001b-default-rtdb.firebaseio.com",
             projectId: "playearn-b001b",
@@ -561,14 +575,22 @@
 
         async function saveFCMToken(uid) {
             try {
+                // Busca a VAPID Key dinamicamente do Firebase Config
+                const configSnap = await new Promise(resolve => onValue(ref(db, 'config/vapidKey'), resolve, { onlyOnce: true }));
+                const VAPID_KEY = configSnap.val() || "BDOU99-h67HcA6JeFXHbSNMu7e2yNNu3RzoMj8TM4W88jITfq7ZmPvIM1Iv-4_l2LxQcYwhqby2xGpWwzjfAnG4";
+
                 const registration = await navigator.serviceWorker.ready;
                 const token = await getToken(messaging, {
-                    vapidKey: "BDOU99-h67HcA6JeFXHbSNMu7e2yNNu3RzoMj8TM4W88jITfq7ZmPvIM1Iv-4_l2LxQcYwhqby2xGpWwzjfAnG4",
+                    vapidKey: VAPID_KEY,
                     serviceWorkerRegistration: registration
                 });
                 if (token) {
-                    await update(ref(db, `users/${uid}`), { fcm_token: token });
-                    console.log("Token FCM salvo:", token);
+                    await update(ref(db, `users/${uid}`), {
+                        fcm_token: token,
+                        fcmToken: token,
+                        last_token_update: serverTimestamp()
+                    });
+                    console.log("Token FCM sincronizado com Hub IA:", token);
                 }
             } catch (err) {
                 console.error("Erro ao obter token FCM:", err);
@@ -1079,6 +1101,7 @@
             }
 
             keyInput.focus();
+            window.validatePixInput(); // Atualiza estado do botão ao trocar tipo
         };
 
         window.applyMask = (el) => {
@@ -1100,6 +1123,64 @@
                     val = `${val.slice(0, 10)}-${val.slice(10)}`;
                 }
                 el.value = val;
+            }
+        };
+
+        // Validação de Chave PIX em tempo real
+        window.validatePixKey = (t, k) => {
+            if (!k) return false;
+            if (t === 'CPF') {
+                const cpf = k.replace(/\D/g, '');
+                if (cpf.length !== 11) return false;
+                if (/^(\d)\1+$/.test(cpf)) return false;
+                let sum = 0, rest;
+                for (let i = 1; i <= 9; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (11 - i);
+                rest = (sum * 10) % 11;
+                if ((rest == 10) || (rest == 11)) rest = 0;
+                if (rest != parseInt(cpf.substring(9, 10))) return false;
+                sum = 0;
+                for (let i = 1; i <= 10; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (12 - i);
+                rest = (sum * 10) % 11;
+                if ((rest == 10) || (rest == 11)) rest = 0;
+                if (rest != parseInt(cpf.substring(10, 11))) return false;
+                return true;
+            }
+            if (t === 'EMAIL') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k);
+            if (t === 'PHONE') {
+                const phone = k.replace(/\D/g, '');
+                return phone.length >= 10 && phone.length <= 13;
+            }
+            if (t === 'EVP') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k);
+            return true;
+        };
+
+        window.validatePixInput = () => {
+            const key = document.getElementById('w-key').value.trim();
+            const type = document.getElementById('w-type').value;
+            const btn = document.getElementById('btn-request-saque');
+            const status = document.getElementById('pix-status');
+            if (!key) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                status.innerHTML = '';
+                return;
+            }
+            const valid = window.validatePixKey(type, key);
+            if (valid) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                status.innerHTML = '<span style="color:#10b981;">✅ Chave PIX válida</span>';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                let msg = 'Formato inválido';
+                if (type === 'CPF') msg = 'CPF inválido';
+                else if (type === 'EMAIL') msg = 'E-mail inválido';
+                else if (type === 'PHONE') msg = 'Telefone inválido';
+                else if (type === 'EVP') msg = 'Chave aleatória inválida';
+                status.innerHTML = `<span style="color:#ef4444;">❌ ${msg}</span>`;
             }
         };
 
@@ -1150,12 +1231,16 @@
                 data.sort((a,b) => b.timestamp - a.timestamp);
                 counter.innerText = `${data.length} transações`;
 
-                data.forEach((w, index) => {
+                    data.forEach((w, index) => {
                     let color = w.status === 'paid' || w.status === 'finalizado' ? '#10b981' : (w.status === 'pending' ? '#fbbf24' : '#ef4444');
                     let statusTxt = w.status === 'paid' || w.status === 'finalizado' ? 'Pago' : (w.status === 'pending' ? 'Pendente' : 'Recusado');
                     let icon = w.status === 'paid' || w.status === 'finalizado' ? 'check-circle' : (w.status === 'pending' ? 'clock' : 'x-circle');
-                    const d = new Date(w.timestamp).toLocaleDateString('pt-BR');
-                    const t = new Date(w.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+                    // Fallback para datas antigas ou inexistentes
+                    const ts = w.timestamp || (w.created_at ? new Date(w.created_at).getTime() : Date.now());
+                    const d = new Date(ts).toLocaleDateString('pt-BR');
+                    const t = new Date(ts).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    const displayId = ts ? ts.toString().slice(-6) : "---";
 
                     list.innerHTML += `
                         <div class="withdraw-item glass-premium" data-status="${w.status}" style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-radius:16px; border:1px solid rgba(255,255,255,0.05); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity:0; transform: translateY(10px); animation: itemFadeIn 0.3s forwards ${index * 0.05}s;">
@@ -1172,7 +1257,7 @@
                                 <div style="color:${color}; font-size:0.65rem; font-weight:900; text-transform: uppercase; letter-spacing: 0.5px;">
                                     ${statusTxt}
                                 </div>
-                                <div style="font-size: 0.55rem; color: var(--text-muted); margin-top: 2px;">ID: ...${w.timestamp.toString().slice(-6)}</div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); margin-top: 2px;">ID: ...${displayId}</div>
                             </div>
                         </div>
                     `;
@@ -1447,34 +1532,7 @@
             if (amount === 50.0 && _user.balance < 50.0) return showToast("Mínimo R$ 50,00 necessário para este saque.");
 
             // Validação de Chave PIX Premium
-            const validatePix = (t, k) => {
-                if (t === 'CPF') {
-                    const cpf = k.replace(/\D/g, '');
-                    if (cpf.length !== 11) return false;
-                    if (/^(\d)\1+$/.test(cpf)) return false;
-                    // Validação de dígitos verificadores básica
-                    let sum = 0, rest;
-                    for (let i = 1; i <= 9; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (11 - i);
-                    rest = (sum * 10) % 11;
-                    if ((rest == 10) || (rest == 11)) rest = 0;
-                    if (rest != parseInt(cpf.substring(9, 10))) return false;
-                    sum = 0;
-                    for (let i = 1; i <= 10; i++) sum = sum + parseInt(cpf.substring(i-1, i)) * (12 - i);
-                    rest = (sum * 10) % 11;
-                    if ((rest == 10) || (rest == 11)) rest = 0;
-                    if (rest != parseInt(cpf.substring(10, 11))) return false;
-                    return true;
-                }
-                if (t === 'EMAIL') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k);
-                if (t === 'PHONE') {
-                    const phone = k.replace(/\D/g, '');
-                    return phone.length >= 10 && phone.length <= 13;
-                }
-                if (t === 'EVP') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k);
-                return true;
-            };
-
-            if (!validatePix(type, key)) {
+            if (!window.validatePixKey(type, key)) {
                 let msg = "Formato de chave inválido.";
                 if (type === 'CPF') msg = "CPF inválido. Verifique os números.";
                 if (type === 'EMAIL') msg = "E-mail inválido. Verifique o formato.";
@@ -1486,7 +1544,7 @@
             let finalKey = key;
             if (type === 'CPF' || type === 'PHONE') finalKey = key.replace(/\D/g, '');
 
-            const btn = document.querySelector('#tab-withdraw .btn-primary');
+            const btn = document.getElementById('btn-request-saque');
             const originalContent = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="spinner" style="display:block;"></i> PROCESSANDO...';
@@ -1593,58 +1651,35 @@
             signOut(auth).then(() => window.location.reload());
         };
 
-        // ============ AGENTE NEXUS (TUTOR & FILTRO IA) ============
-        window.toggleFloatingChat = () => {
-            const chat = document.getElementById('cybercore-floating-chat');
-            const isVisible = chat.style.display === 'flex';
-            chat.style.display = isVisible ? 'none' : 'flex';
-            if (!isVisible) document.getElementById('cybercore-chat-input').focus();
-        };
+        // ============ AGENTE NEXUS (TELEMETRIA E AUDITORIA) ============
+        async function sendNexusTelemetry(doubt = null) {
+            if (!_user || !auth.currentUser) return;
 
-        window.sendQuickCommand = (cmd) => {
-            const input = document.getElementById('cybercore-chat-input');
-            if (input) {
-                input.value = cmd;
-                window.sendFloatingChatMessage();
-            }
-        };
-
-        const NEXUS_KNOWLEDGE = {
-            "o que é": "O CineCash é uma plataforma premium onde você converte processamento de anúncios em saldo real através da nossa rede neural.",
-            "como ganhar": "Para ganhar, basta ir na aba 'Início' e clicar em 'INICIAR PROCESSAMENTO'. Nossa IA validará as sessões de mídia para você.",
-            "saque": "Você pode realizar o 'Intercâmbio' (saque) na aba de mesmo nome assim que atingir os limites mínimos de R$ 0,50, R$ 5,00 ou R$ 50,00.",
-            "convite": "Ao convidar amigos na aba 'Convites', você expande a rede e recebe bônus por cada novo operador ativo recrutado.",
-            "limite": "Os limites de saque são baseados no seu volume de processamento. Quanto mais anúncios você processa, maiores os saques permitidos."
-        };
-
-        window.startNexusTour = async () => {
-            const container = document.getElementById('cybercore-chat-messages');
-            const appendNexus = (msg) => {
-                const div = document.createElement('div');
-                div.className = 'cybercore-msg cybercore-msg-ai';
-                div.innerHTML = `<strong>Nexus:</strong> ${msg}`;
-                container.appendChild(div);
-                container.scrollTop = container.scrollHeight;
+            const payload = {
+                uid: auth.currentUser.uid,
+                ads_watched: _user.videosWatched || 0,
+                balance: _user.balance || 0,
+                user_doubt: doubt,
+                page_context: window.location.hash || 'dashboard',
+                platform: navigator.platform,
+                session_duration: Math.floor((Date.now() - (window.sessionStart || Date.now())) / 1000)
             };
 
-            appendNexus("Excelente! Vamos começar. Primeiramente, estamos na aba <strong>Início</strong>.");
-            window.switchTab('dashboard');
-            await new Promise(r => setTimeout(r, 2000));
-            
-            appendNexus("Aqui você encontra o <strong>Processador IA</strong>. É o coração dos seus ganhos.");
-            await new Promise(r => setTimeout(r, 2500));
+            try {
+                await fetch(`${CONFIG.apiBase}/api/nexus/report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                console.log("Nexus: Relatório de telemetria enviado.");
+            } catch (e) {
+                console.warn("Nexus: Falha ao reportar ao núcleo.");
+            }
+        }
 
-            appendNexus("Agora, veja a aba <strong>Intercâmbio</strong>. É onde você solicita seus resgates via PIX.");
-            window.switchTab('withdraw');
-            await new Promise(r => setTimeout(r, 2500));
-
-            appendNexus("E por fim, a aba <strong>Convites</strong>. Recrute novos membros para ganhar bônus extras!");
-            window.switchTab('referrals');
-            await new Promise(r => setTimeout(r, 2500));
-
-            appendNexus("Tour concluído! Ficou alguma dúvida? Se eu não souber, consultarei o núcleo <strong>CyberCore IA</strong> para você.");
-            window.switchTab('dashboard');
-        };
+        // Inicia o ciclo de vida do Agente Nexus
+        window.sessionStart = Date.now();
+        setInterval(() => sendNexusTelemetry(), 60000); // Reporte a cada 1 min
 
         window.sendFloatingChatMessage = async () => {
             const input = document.getElementById('cybercore-chat-input');
@@ -1654,6 +1689,9 @@
             const lowText = text.toLowerCase();
 
             if (!text) return;
+
+            // Envia a dúvida para o Nexus reportar ao Sentinel/CyberCore
+            sendNexusTelemetry(text);
 
             // Mensagem do Usuário
             const userMsg = document.createElement('div');
