@@ -1,8 +1,8 @@
 ---
 title: CineCash IA
 emoji: 🎬
-colorFrom: gold
-colorTo: teal
+colorFrom: yellow
+colorTo: blue
 sdk: docker
 pinned: false
 ---
