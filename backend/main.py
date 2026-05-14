@@ -309,8 +309,10 @@ TOOLS_DEFINITION = [
 async def ask_gemini(prompt: str, uid="admin_master"):
     try:
         config = db.reference('config').get() or {}
-        api_key = str(config.get('geminiKey', '')).strip()
-        if not api_key: return "Configure a geminiKey."
+        # Prioriza Variável de Ambiente para maior segurança no HF Spaces, fallback para Firebase
+        api_key = os.environ.get("GEMINI_API_KEY") or str(config.get('geminiKey', '')).strip()
+
+        if not api_key: return "Erro: GEMINI_API_KEY não configurada (nas Secrets do HF ou no Firebase)."
 
         history_ref = db.reference(f'ai_memory/{uid}')
         history = history_ref.get() or []
@@ -503,19 +505,8 @@ async def ai_chat(data: dict = Body(...)):
     return {"answer": answer}
 
 # --- SERVE STATIC FILES ---
-@app.get("/styles.css")
-async def serve_admin_css():
-    return FileResponse(os.path.join(ADMIN_DIR, "styles.css"))
-
-@app.get("/app.js")
-async def serve_admin_js():
-    return FileResponse(os.path.join(ADMIN_DIR, "app.js"))
-
-@app.get("/")
-async def home():
-    if os.path.exists(os.path.join(ADMIN_DIR, "index.html")):
-        return FileResponse(os.path.join(ADMIN_DIR, "index.html"))
-    return {"status": "CyberCore IA Online", "system": "Sentinel 2.0"}
+# As rotas estáticas manuais foram removidas em favor dos mounts automáticos.
+# O site de usuários (WWW) será servido na raiz (/) e o admin em (/admin).
 
 # --- API: MÉTRICAS EM TEMPO REAL ---
 @app.get("/api/metrics")
@@ -741,17 +732,22 @@ async def approve_payment(wid: str):
     except Exception as e:
         return {"status": "error", "msg": f"Erro interno: {str(e)}"}
 
-# --- STATIC MOUNTS (after API routes so they take precedence) ---
+# --- STATIC MOUNTS (Ordered for HF Spaces) ---
+# O mount do Admin deve vir antes do root para garantir prioridade na rota /admin
 if os.path.isdir(ADMIN_DIR):
     try:
         app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
-    except:
-        pass
+        print(f"[MOUNT] Admin Panel carregado de: {ADMIN_DIR}")
+    except Exception as e:
+        print(f"[MOUNT] Erro ao carregar Admin: {e}")
+
+# O mount da raiz (/) deve ser o último, servindo o site de usuários
 if os.path.isdir(WWW_DIR):
     try:
-        app.mount("/www", StaticFiles(directory=WWW_DIR, html=True), name="www")
-    except:
-        pass
+        app.mount("/", StaticFiles(directory=WWW_DIR, html=True), name="www")
+        print(f"[MOUNT] User Site (WWW) carregado de: {WWW_DIR}")
+    except Exception as e:
+        print(f"[MOUNT] Erro ao carregar WWW: {e}")
 
 if __name__ == "__main__":
     import uvicorn, socket
