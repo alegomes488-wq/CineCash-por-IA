@@ -732,22 +732,21 @@ async def approve_payment(wid: str):
     except Exception as e:
         return {"status": "error", "msg": f"Erro interno: {str(e)}"}
 
-# --- STATIC MOUNTS (Ordered for HF Spaces) ---
-# O mount do Admin deve vir antes do root para garantir prioridade na rota /admin
-if os.path.isdir(ADMIN_DIR):
-    try:
-        app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
-        print(f"[MOUNT] Admin Panel carregado de: {ADMIN_DIR}")
-    except Exception as e:
-        print(f"[MOUNT] Erro ao carregar Admin: {e}")
+# --- STATIC MOUNTS (Configuração para Opção B: Separados) ---
+HUB_MODE = os.environ.get("HUB_MODE", "USER") # Pode ser "USER" ou "ADMIN"
 
-# O mount da raiz (/) deve ser o último, servindo o site de usuários
-if os.path.isdir(WWW_DIR):
-    try:
+if HUB_MODE == "ADMIN":
+    # No Space CyberCore, o Admin é a raiz
+    if os.path.isdir(ADMIN_DIR):
+        app.mount("/", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
+        print("[MODO] CyberCore IA - Painel Admin na raiz")
+else:
+    # No Space CineCash, o Site é a raiz e o Admin é um caminho secreto (opcional)
+    if os.path.isdir(WWW_DIR):
         app.mount("/", StaticFiles(directory=WWW_DIR, html=True), name="www")
-        print(f"[MOUNT] User Site (WWW) carregado de: {WWW_DIR}")
-    except Exception as e:
-        print(f"[MOUNT] Erro ao carregar WWW: {e}")
+        print("[MODO] CineCash IA - Site na raiz")
+    if os.path.isdir(ADMIN_DIR):
+        app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
 
 if __name__ == "__main__":
     import uvicorn, socket
