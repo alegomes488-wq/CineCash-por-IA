@@ -390,24 +390,30 @@ async def oada_cycle():
 async def cybercore_audit_loop():
     while True:
         try:
-            db.reference('status/python_core_pulse').set({".sv": "timestamp"})
+            # Registra o pulso específico do modo (USER ou ADMIN)
+            node_name = f"pulse_{HUB_MODE.lower()}"
+            db.reference(f'status/{node_name}').set({".sv": "timestamp"})
 
-            # Sincroniza métricas e executa o Sentinel (Banimentos Automáticos)
-            tool_sync_monetag()
-            sentinel_report = tool_sentinel_enforcement()
+            if HUB_MODE == "ADMIN":
+                # Apenas o Admin executa as tarefas pesadas de auditoria e Sentinel
+                tool_sync_monetag()
+                sentinel_report = tool_sentinel_enforcement()
+                oada_result = await oada_cycle()
 
-            # Ciclo OADA (Decisões de ROI e CPM)
-            oada_result = await oada_cycle()
+                db.reference('status/active_strategies').update({
+                    "cybercore": {
+                        "name": "CyberCore OADA + Sentinel",
+                        "status": f"Modo: {oada_result['level'].upper()} | {sentinel_report}",
+                        "icon": "🛡️"
+                    }
+                })
+                print(f"[ADMIN] Loop OK: {sentinel_report}")
+            else:
+                # O modo USER apenas mantém o pulso ativo e limpa cache se necessário
+                print(f"[USER] CineCash IA Ativo e Pulsando...")
 
-            db.reference('status/active_strategies').update({
-                "cybercore": {
-                    "name": "CyberCore OADA + Sentinel",
-                    "status": f"Modo: {oada_result['level'].upper()} | {sentinel_report}",
-                    "icon": "🛡️"
-                }
-            })
-            print(f"Loop OK: {oada_result['level']} | {sentinel_report}")
-        except Exception as e: print(f"Erro Loop: {e}")
+        except Exception as e:
+            print(f"Erro Loop {HUB_MODE}: {e}")
         await asyncio.sleep(60)
 
 # --- INICIALIZAÇÃO DO APP ---
