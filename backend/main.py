@@ -746,6 +746,16 @@ async def approve_payment(wid: str):
 # --- STATIC MOUNTS (Configuração para Opção B: Separados) ---
 # HUB_MODE já definido no topo
 
+from fastapi.responses import JSONResponse, FileResponse
+
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    if request.url.path.startswith("/api/") or request.url.path.startswith("/ai/"):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+    if request.url.path == "/favicon.ico":
+        return JSONResponse(status_code=204, content=None)
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
 if HUB_MODE == "ADMIN":
     # No Space CyberCore, o Admin é a raiz
     if os.path.isdir(ADMIN_DIR):
