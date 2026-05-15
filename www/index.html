@@ -74,6 +74,7 @@
         setTimeout(() => {
             const s = document.getElementById('splash-screen');
             if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 500); }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }, 2000);
     </script>
     <div class="projector-glow"></div>
