@@ -542,6 +542,7 @@
 
         const CONFIG = {
             apiBase: 'https://desenvovimento-cinecash-ia.hf.space',
+            adminBase: 'https://desenvovimento-cybercore-ia.hf.space',
             monetagId: '7654321'
         };
 
@@ -549,11 +550,15 @@
         async function wakeUpCyberCore() {
             console.log("⚡ Acordando CyberCore IA...");
             try {
-                // Tenta um ping simples para tirar o Space do 'Sleeping'
-                await fetch(CONFIG.apiBase + '/health', { mode: 'no-cors' });
+                // Acorda o motor do Site e o motor do Auditor (Admin)
+                await Promise.all([
+                    fetch(CONFIG.apiBase + '/health', { mode: 'no-cors' }),
+                    fetch(CONFIG.adminBase + '/health', { mode: 'no-cors' })
+                ]);
             } catch (e) {
                 console.log("Aguardando inicialização do núcleo...");
             }
+        }
         }
         wakeUpCyberCore();
         setInterval(wakeUpCyberCore, 60000); // Mantém acordado enquanto o usuário estiver no site

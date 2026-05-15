@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia as pastas do projeto para dentro do container
 COPY backend/ /app/backend/
-COPY admin/ /app/admin/
 COPY www/ /app/www/
 
 # Define permissões globais (necessário para o ambiente HF Spaces)
