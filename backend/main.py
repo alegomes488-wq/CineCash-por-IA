@@ -52,6 +52,7 @@ else:
         print("ERRO: Credenciais Firebase não encontradas!")
 
 # --- CONSTANTES CYBERCORE ---
+HUB_MODE = os.environ.get("HUB_MODE", "USER")
 MEMORY_BASE = "cybercore/memory"
 COMMAND_BUS = "cybercore/commands"
 AGENT_STATUS = "cybercore/agents"
@@ -397,6 +398,7 @@ async def cybercore_audit_loop():
             if HUB_MODE == "ADMIN":
                 # Sincroniza o sinal que o site (WWW) espera para mostrar "ONLINE"
                 db.reference('status/auditor_last_pulse').set({".sv": "timestamp"})
+                print(f"[ADMIN] Pulso do Auditor enviado ao Firebase: {datetime.now().strftime('%H:%M:%S')}")
 
                 # Apenas o Admin executa as tarefas pesadas de auditoria e Sentinel
                 tool_sync_monetag()
@@ -417,7 +419,7 @@ async def cybercore_audit_loop():
 
         except Exception as e:
             print(f"Erro Loop {HUB_MODE}: {e}")
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
 # --- INICIALIZAÇÃO DO APP ---
 @asynccontextmanager
@@ -742,7 +744,7 @@ async def approve_payment(wid: str):
         return {"status": "error", "msg": f"Erro interno: {str(e)}"}
 
 # --- STATIC MOUNTS (Configuração para Opção B: Separados) ---
-HUB_MODE = os.environ.get("HUB_MODE", "USER") # Pode ser "USER" ou "ADMIN"
+# HUB_MODE já definido no topo
 
 if HUB_MODE == "ADMIN":
     # No Space CyberCore, o Admin é a raiz
