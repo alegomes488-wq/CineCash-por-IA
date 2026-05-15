@@ -16,8 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from collections import deque
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ADMIN_DIR = os.path.join(PROJECT_ROOT, "admin")
 WWW_DIR = os.path.join(PROJECT_ROOT, "www")
+ADMIN_DIR = os.path.join(WWW_DIR, "admin")
 
 # --- CONFIGURAÇÃO DE AMBIENTE ---
 os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -395,6 +395,9 @@ async def cybercore_audit_loop():
             db.reference(f'status/{node_name}').set({".sv": "timestamp"})
 
             if HUB_MODE == "ADMIN":
+                # Sincroniza o sinal que o site (WWW) espera para mostrar "ONLINE"
+                db.reference('status/auditor_last_pulse').set({".sv": "timestamp"})
+
                 # Apenas o Admin executa as tarefas pesadas de auditoria e Sentinel
                 tool_sync_monetag()
                 sentinel_report = tool_sentinel_enforcement()

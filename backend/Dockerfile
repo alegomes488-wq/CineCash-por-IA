@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 2. Copia a estrutura do projeto mantendo o contexto de módulos
 COPY backend/ /app/backend/
-COPY admin/ /app/admin/
 COPY www/ /app/www/
 
 # Permissões para logs e arquivos temporários
