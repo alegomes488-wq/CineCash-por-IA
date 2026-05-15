@@ -1482,13 +1482,24 @@
         };
 
         window.triggerStrategicAd = (isMenu = false) => {
-            // Controle de frequência para o Menu (A cada 2 cliques)
             if (isMenu) {
                 menuClickCount++;
-                if (menuClickCount % 2 !== 0) return; // Só dispara no 2º, 4º...
+                if (menuClickCount % 2 !== 0) return;
             }
 
-            // Evita disparar múltiplos anúncios se um já estiver carregando (Anti-spam/Lag)
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const banner = document.getElementById('monetag-banner');
+            if (!banner) return;
+
+            if (isMobile) {
+                banner.innerHTML = `<span style="color:var(--primary);font-weight:700;">ANÚNCIO CARREGADO — AGUARDE...</span>`;
+                setTimeout(() => {
+                    banner.innerHTML =
+                        `<i data-lucide="monitor-play" style="width:1.5rem;height:1.5rem;color:var(--muted-fg);opacity:0.3;margin:0 auto 10px;display:block;"></i><span>ANÚNCIO PREMIUM DISPONÍVEL</span>`;
+                }, 10000);
+                return;
+            }
+
             if (document.querySelector('script[data-ad-active="true"]')) return;
 
             const zonesAl5sm = ['10922287', '10902829', '10902828', '10828297'];
@@ -1507,10 +1518,10 @@
             }
             
             document.body.appendChild(s);
-            // Limpa o marcador após 10 segundos para permitir nova chamada controlada
+            const timeout = isMobile ? 20000 : 10000;
             setTimeout(() => {
                 if(s.parentNode) s.remove();
-            }, 10000);
+            }, timeout);
         };
 
         window.requestSaque = async () => {

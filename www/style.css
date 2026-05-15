@@ -1052,14 +1052,21 @@ p.subtitle {
 
 /* ─── Responsividade CineCash (Ajuste Universal) ─── */
 @media (max-width: 1024px) {
-    .stat-grid-premium {
+    .stat-grid-premium, .stat-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cybercore-chat-container {
+        width: calc(100% - 30px);
+        right: 15px;
+        height: 500px;
     }
 
     .navbar {
         margin: 15px 10px;
         padding: 8px 12px;
         border-radius: 16px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1072,8 +1079,14 @@ p.subtitle {
         padding: 80px 15px 120px;
     }
 
-    .stat-grid-premium {
+    .stat-grid-premium, .stat-grid {
         grid-template-columns: 1fr;
+    }
+
+    .cybercore-chat-container {
+        width: calc(100% - 30px);
+        right: 15px;
+        height: 450px;
     }
 
     .navbar {
@@ -1198,8 +1211,14 @@ p.subtitle {
         padding: 80px 15px 120px;
     }
 
-    .stat-grid-premium {
+    .stat-grid-premium, .stat-grid {
         grid-template-columns: 1fr;
+    }
+
+    .cybercore-chat-container {
+        width: calc(100% - 30px);
+        right: 15px;
+        height: 450px;
     }
 
     .navbar {
