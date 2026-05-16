@@ -1749,10 +1749,12 @@
 
             // 2. Filtro Nexus (Dúvidas Rápidas)
             let quickAnswer = null;
-            for (let key in NEXUS_KNOWLEDGE) {
-                if (lowText.includes(key)) {
-                    quickAnswer = NEXUS_KNOWLEDGE[key];
-                    break;
+            if (typeof NEXUS_KNOWLEDGE !== 'undefined') {
+                for (let key in NEXUS_KNOWLEDGE) {
+                    if (lowText.includes(key)) {
+                        quickAnswer = NEXUS_KNOWLEDGE[key];
+                        break;
+                    }
                 }
             }
 
