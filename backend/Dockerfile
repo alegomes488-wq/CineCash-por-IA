@@ -1,28 +1,44 @@
-# Usa uma imagem Python estável e leve
 FROM python:3.11-slim
 
-# Instala dependências de compilação
+# Instala dependências de sistema para Playwright e compilação
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxcb1 \
+    libxkbcommon0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    librandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Define o diretório de trabalho na raiz para evitar erros de importação
 WORKDIR /app
 
-# 1. Copia e instala requisitos (cache eficiente)
-COPY backend/requirements.txt .
+# Instala requisitos
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN playwright install chromium
+RUN playwright install-deps chromium
 
-# 2. Copia a estrutura do projeto mantendo o contexto de módulos
-COPY backend/ /app/backend/
-COPY www/ /app/www/
+# Copia apenas o conteúdo da pasta backend para a raiz /app do container
+COPY . .
 
-# Permissões para logs e arquivos temporários
 RUN chmod -R 777 /app
 
-# Porta padrão do Hugging Face Spaces
 EXPOSE 7860
 
-# Execução como módulo Python para garantir que 'backend' seja reconhecido no PATH
-CMD ["sh", "-c", "python3 -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-7860} --proxy-headers --forwarded-allow-ips='*'"]
+# Executa o main.py diretamente (Hugging Face padrão)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

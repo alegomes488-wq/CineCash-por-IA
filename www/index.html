@@ -1813,6 +1813,14 @@
             if(trigger) trigger.style.display = u ? 'flex' : 'none';
         });
 
+        window.toggleFloatingChat = () => {
+            const chat = document.getElementById('cybercore-floating-chat');
+            if (!chat) return;
+            const isOpen = chat.style.display === 'flex';
+            chat.style.display = isOpen ? 'none' : 'flex';
+            if (!isOpen) setTimeout(() => document.getElementById('cybercore-chat-input')?.focus(), 100);
+        };
+
         window.perguntarIA = async () => {
             const msg = document.getElementById('msg').value;
             if (!msg) return;
