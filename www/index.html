@@ -1766,17 +1766,13 @@
                 return;
             }
 
-            // 3. Delegação para CyberCore IA (Complexo)
+            // 3. Delegação para CyberCore IA via Worker Cloud (tempo real)
             try {
-                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> <i>Consultando núcleo CyberCore IA para resposta técnica...</i>`;
+                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> <i>Consultando núcleo CyberCore IA na nuvem...</i>`;
                 
-                const response = await fetch(`${CONFIG.apiBase}/ai/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text, uid: auth.currentUser?.uid || "guest" })
-                });
-                const data = await response.json();
-                let responseText = data.answer || "O núcleo CyberCore não retornou dados.";
+                const res = await fetch(`https://cybercore-api.alegomes488.workers.dev/chat?msg=${encodeURIComponent(text)}`);
+                const data = await res.json();
+                let responseText = data.resposta || "O núcleo CyberCore não retornou dados.";
                 
                 // --- INTERPRETADOR DE COMANDOS NEXUS ---
                 if (responseText.includes('[COMMAND:')) {
@@ -1785,7 +1781,6 @@
                     if (responseText.includes('NAVIGATE:inicio')) window.switchTab('dashboard');
                     if (responseText.includes('START_TOUR')) window.startNexusTour();
 
-                    // Remove os comandos do texto para não poluir a conversa
                     responseText = responseText.replace(/\[COMMAND:.*?\]/g, '').trim();
                 }
 
@@ -1796,7 +1791,7 @@
                 if (typeof lucide !== 'undefined') lucide.createIcons();
 
             } catch (e) {
-                document.getElementById(typingId).innerText = "⚠️ Nexus: Falha na conexão neural com CyberCore.";
+                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> ⚠️ Falha na conexão neural com CyberCore. Tente novamente.`;
                 if (chatContainer) chatContainer.classList.remove('cybercore-responding');
             }
         };
