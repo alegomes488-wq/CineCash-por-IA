@@ -1821,6 +1821,11 @@
             if (!isOpen) setTimeout(() => document.getElementById('cybercore-chat-input')?.focus(), 100);
         };
 
+        window.sendQuickCommand = (cmd) => {
+            const input = document.getElementById('cybercore-chat-input');
+            if (input) { input.value = cmd; window.sendFloatingChatMessage(); }
+        };
+
         window.perguntarIA = async () => {
             const msg = document.getElementById('msg').value;
             if (!msg) return;
