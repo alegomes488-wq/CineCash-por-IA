@@ -463,8 +463,19 @@
                         <span>Nenhum operador recrutado ainda.</span>
                     </div>
                 </div>
-            </div>
 
+            <!-- CHAT CYBERCORE VIA WORKER -->
+            <div id="cybercore-chat" style="background:rgba(10,10,15,0.9); border:1px solid rgba(124,58,237,0.4); border-radius:16px; padding:20px; margin-top:25px; backdrop-filter:blur(20px);">
+                <h2 style="color:var(--primary); margin-bottom:15px; font-size:1.1rem; display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="brain" style="width:20px;height:20px;"></i> CyberCore IA
+                </h2>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="text" id="msg" placeholder="Digite um comando..." style="flex:1; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; color:#fff; font-size:0.85rem;">
+                    <button onclick="perguntarIA()" style="background:linear-gradient(135deg,#7c3aed,#db2777); border:none; color:white; padding:12px 20px; border-radius:10px; font-weight:800; cursor:pointer; white-space:nowrap;">Enviar</button>
+                </div>
+                <div id="resposta" style="background:rgba(0,0,0,0.2); border-radius:10px; padding:15px; min-height:40px; color:rgba(255,255,255,0.8); font-size:0.85rem; line-height:1.5;"></div>
+            </div>
+            </div>
         </div>
     </div>
 
@@ -1801,6 +1812,20 @@
             const trigger = document.getElementById('cybercore-chat-trigger');
             if(trigger) trigger.style.display = u ? 'flex' : 'none';
         });
+
+        window.perguntarIA = async () => {
+            const msg = document.getElementById('msg').value;
+            if (!msg) return;
+            const respostaDiv = document.getElementById('resposta');
+            respostaDiv.innerHTML = `<span style="color:var(--primary);">🧠 Pensando...</span>`;
+            try {
+                const res = await fetch(`https://cybercore-api.alegomes488.workers.dev/chat?msg=${encodeURIComponent(msg)}`);
+                const dados = await res.json();
+                respostaDiv.innerHTML = `<strong style="color:var(--primary);">CyberCore:</strong> ${dados.resposta}`;
+            } catch (e) {
+                respostaDiv.innerHTML = `<span style="color:#ef4444;">Erro: não foi possível contactar a IA.</span>`;
+            }
+        };
     </script>
 </body>
 </html>
