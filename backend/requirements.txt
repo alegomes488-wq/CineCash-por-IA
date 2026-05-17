@@ -5,3 +5,4 @@ requests
 psutil
 python-multipart
 python-dotenv
+groq
