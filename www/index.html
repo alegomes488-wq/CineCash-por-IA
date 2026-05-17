@@ -463,18 +463,6 @@
                         <span>Nenhum operador recrutado ainda.</span>
                     </div>
                 </div>
-
-            <!-- CHAT CYBERCORE VIA WORKER -->
-            <div id="cybercore-chat" style="background:rgba(10,10,15,0.9); border:1px solid rgba(124,58,237,0.4); border-radius:16px; padding:20px; margin-top:25px; backdrop-filter:blur(20px);">
-                <h2 style="color:var(--primary); margin-bottom:15px; font-size:1.1rem; display:flex; align-items:center; gap:10px;">
-                    <i data-lucide="brain" style="width:20px;height:20px;"></i> CyberCore IA
-                </h2>
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <input type="text" id="msg" placeholder="Digite um comando..." style="flex:1; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; color:#fff; font-size:0.85rem;">
-                    <button onclick="perguntarIA()" style="background:linear-gradient(135deg,#7c3aed,#db2777); border:none; color:white; padding:12px 20px; border-radius:10px; font-weight:800; cursor:pointer; white-space:nowrap;">Enviar</button>
-                </div>
-                <div id="resposta" style="background:rgba(0,0,0,0.2); border-radius:10px; padding:15px; min-height:40px; color:rgba(255,255,255,0.8); font-size:0.85rem; line-height:1.5;"></div>
-            </div>
             </div>
         </div>
     </div>
@@ -517,13 +505,7 @@
             <button class="cybercore-chat-close" onclick="toggleFloatingChat()">×</button>
         </div>
         <div id="cybercore-chat-messages" class="cybercore-chat-body">
-            <div class="cybercore-msg cybercore-msg-ai">
-                Olá! Sou o <strong>Agente Nexus</strong>, seu tutor oficial CineCash. 
-                <br><br>
-                Estou aqui para guiar você pela plataforma e garantir que sua experiência com a IA <strong>CyberCore</strong> seja lucrativa. 
-                <br><br>
-                Deseja que eu te mostre como o sistema funciona?
-            </div>
+            <!-- Injetado via JS (addWelcomeMessage / restoreChatHistory) -->
         </div>
 
         <div class="cybercore-chat-suggestions">
@@ -534,6 +516,9 @@
 
         <div class="cybercore-chat-footer">
             <input type="text" id="cybercore-chat-input" placeholder="Comando Master..." autocomplete="off">
+            <button id="cybercore-chat-mic" onclick="startVoiceInput()" title="Comando de Voz" style="background:none; border:none; cursor:pointer; padding:8px; color:var(--primary);">
+                <i data-lucide="mic" style="width:18px; height:18px;"></i>
+            </button>
             <button id="cybercore-chat-send" onclick="sendFloatingChatMessage()">
                 <i data-lucide="send" style="width:18px; height:18px;"></i>
             </button>
@@ -553,9 +538,26 @@
         import { getMessaging, getToken } from "./firebase-messaging.js";
 
         const CONFIG = {
-            apiBase: 'https://desenvovimento-cinecash-ia.hf.space',
-            adminBase: 'https://desenvovimento-cybercore-ia.hf.space',
+            apiBase: (window.location.hostname.includes('cinecash.com.br') || window.location.hostname.includes('hf.space'))
+                     ? 'https://desenvolvimento-cinecash-ia.hf.space'
+                     : window.location.origin,
+            adminBase: 'https://desenvolvimento-cybercore-ia.hf.space',
+            workerBase: 'https://cybercore-api.alegomes488.workers.dev',
             monetagId: '7654321'
+        };
+
+        // Detecta se está em produção para rotear chat pelo Worker (Groq)
+        const IS_PRODUCTION_DOMAIN = window.location.hostname.includes('cinecash.com.br') || window.location.hostname.includes('hf.space');
+        const CHAT_API_BASE = IS_PRODUCTION_DOMAIN ? CONFIG.workerBase : CONFIG.apiBase;
+
+        const NEXUS_KNOWLEDGE = {
+            "sacar": "Para sacar, você precisa atingir o valor mínimo de R$ 0,50. Vá na aba 'Intercâmbio', insira sua chave PIX e solicite o resgate.",
+            "como sacar": "Para sacar, você precisa atingir o valor mínimo de R$ 0,50. Vá na aba 'Intercâmbio', insira sua chave PIX e solicite o resgate.",
+            "como funciona": "O CineCash utiliza o processamento da IA CyberCore para validar anúncios. Você assiste aos vídeos, nossa IA processa os dados e você recebe uma parte do lucro em saldo real.",
+            "me mostre o site": "Com certeza! Vou te mostrar o site. No topo você vê seu saldo, no meio o botão de processar anúncios e embaixo suas estatísticas de hoje.",
+            "indicacao": "Cada amigo que você convida e fica ativo rende R$ 0,50 de bônus direto no seu saldo!",
+            "dúvidas": "Eu sou o Nexus, seu guia. Posso te ajudar com saques, problemas técnicos ou te mostrar como ganhar mais. O que deseja saber?",
+            "tour": "Iniciando tour guiado... Observe os elementos destacados na sua tela."
         };
 
         // --- SISTEMA DESPERTADOR (WAKE-UP) ---
@@ -1375,60 +1377,71 @@
             });
         };
 
-        // ============ SISTEMA DE TUTORIAL CYBERCORE IA ============
-        window.startCyberCoreTutorial = async () => {
+        // ============ SISTEMA DE TUTORIAL AGENTE NEXUS ============
+        window.startNexusTour = async () => {
             const steps = [
                 { 
-                    msg: "Olá! Eu sou a CyberCore IA. Vou te mostrar como faturar aqui! 🚀", 
-                    action: () => switchTab('dashboard', document.querySelector('.nav-item')) 
+                    msg: "Olá! Eu sou o Agente Nexus. Vou te mostrar como faturar aqui! 🚀",
+                    action: () => window.switchTab('dashboard', document.querySelector('.nav-item'))
                 },
                 { 
-                    msg: "Aqui no Início, você usa minha rede neural para validar anúncios e ganhar saldo. 🎬", 
+                    msg: "Aqui no Início, você usa nossa rede neural para validar anúncios e ganhar saldo. 🎬",
                     action: () => {
                         const card = document.querySelector('.ai-card-premium');
-                        card.style.boxShadow = "0 0 40px var(--primary)";
-                        setTimeout(() => card.style.boxShadow = "none", 3000);
+                        if (card) {
+                            card.style.boxShadow = "0 0 40px var(--primary)";
+                            setTimeout(() => card.style.boxShadow = "none", 3000);
+                        }
                     } 
                 },
                 { 
                     msg: "No menu Intercâmbio, você solicita o saque via PIX. Escolha valores de R$ 0,50, 5,00 ou 50,00. 💰", 
-                    action: () => switchTab('withdraw', document.querySelectorAll('.nav-item')[1]) 
+                    action: () => window.switchTab('withdraw', document.querySelectorAll('.nav-item')[1])
                 },
                 { 
                     msg: "Em Convites, você ganha R$ 0,50 por cada amigo que ativar a conta no CineCash! 🎁", 
-                    action: () => switchTab('referrals', document.querySelectorAll('.nav-item')[2]) 
+                    action: () => window.switchTab('referrals', document.querySelectorAll('.nav-item')[2])
                 },
                 { 
                     msg: "Tutorial concluído! Agora você está pronto para lucrar. Alguma dúvida? 😊", 
-                    action: () => switchTab('dashboard', document.querySelector('.nav-item')) 
+                    action: () => window.switchTab('dashboard', document.querySelector('.nav-item'))
                 }
             ];
 
-            const chatContent = document.getElementById('chat-content');
+            const container = document.getElementById('cybercore-chat-messages');
+            if (!container) return;
+
             for (const step of steps) {
-                showTyping(true);
+                showTypingNexus(true);
                 await new Promise(r => setTimeout(r, 2000));
-                showTyping(false);
+                showTypingNexus(false);
                 step.action();
-                chatContent.innerHTML += `<div class="msg-ai">${step.msg}</div>`;
-                chatContent.scrollTop = chatContent.scrollHeight;
+
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'cybercore-msg cybercore-msg-ai';
+                aiMsg.innerHTML = `<strong>Nexus:</strong> ${step.msg}`;
+                container.appendChild(aiMsg);
+                container.scrollTop = container.scrollHeight;
+
                 await new Promise(r => setTimeout(r, 3500));
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         };
 
-        function showTyping(show) {
-            const chatContent = document.getElementById('chat-content');
-            let indicator = document.getElementById('cybercore-typing');
+        function showTypingNexus(show) {
+            const container = document.getElementById('cybercore-chat-messages');
+            if (!container) return;
+
+            let indicator = document.getElementById('nexus-typing-indicator');
             if (show) {
                 if (!indicator) {
                     indicator = document.createElement('div');
-                    indicator.id = 'cybercore-typing';
-                    indicator.className = 'typing-indicator';
-                    indicator.innerHTML = '<div class="typing-dot" style="background:var(--primary)"></div><div class="typing-dot" style="background:var(--primary)"></div><div class="typing-dot" style="background:var(--primary)"></div>';
-                    chatContent.appendChild(indicator);
+                    indicator.id = 'nexus-typing-indicator';
+                    indicator.className = 'cybercore-msg cybercore-msg-ai';
+                    indicator.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+                    container.appendChild(indicator);
                 }
-                chatContent.scrollTop = chatContent.scrollHeight;
+                container.scrollTop = container.scrollHeight;
             } else if (indicator) {
                 indicator.remove();
             }
@@ -1708,10 +1721,130 @@
         window.sessionStart = Date.now();
         setInterval(() => sendNexusTelemetry(), 60000); // Reporte a cada 1 min
 
+        // ==================== CHAT HISTORY (localStorage) ====================
+        const CHAT_STORAGE_KEY = 'nexus_chat_history';
+        let chatHistory = loadChatHistory();
+
+        function loadChatHistory() {
+            try {
+                const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+                return saved ? JSON.parse(saved) : [];
+            } catch { return []; }
+        }
+
+        function saveChatHistory() {
+            try {
+                localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory.slice(-50)));
+            } catch {}
+        }
+
+        function clearChatHistory() {
+            chatHistory = [];
+            saveChatHistory();
+            const container = document.getElementById('cybercore-chat-messages');
+            if (container) container.innerHTML = '';
+            addWelcomeMessage();
+        }
+
+        function addWelcomeMessage() {
+            const container = document.getElementById('cybercore-chat-messages');
+            if (!container) return;
+            const welcome = document.createElement('div');
+            welcome.className = 'cybercore-msg cybercore-msg-ai';
+            welcome.innerHTML = `Olá! Sou o <strong>Agente Nexus</strong>, seu tutor oficial CineCash. <br><br>Estou aqui para guiar você pela plataforma e garantir que sua experiência com a IA <strong>CyberCore</strong> seja lucrativa. <br><br>Deseja que eu te mostre como o sistema funciona?`;
+            container.appendChild(welcome);
+        }
+
+        function getTimestamp() {
+            const d = new Date();
+            return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        }
+
+        // ==================== MARKDOWN RENDERER (#2) ====================
+        function renderMarkdown(text) {
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            // code blocks
+            html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            // inline code
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // bold
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // italic
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            // unordered list
+            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            // numbered list
+            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+            // URLs
+            html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+            // newlines
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        // ==================== VOICE INPUT (#6) ====================
+        window.startVoiceInput = () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                addSystemMessage('⚠️ Comando de voz não suportado neste navegador.');
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            const micBtn = document.getElementById('cybercore-chat-mic');
+            if (micBtn) micBtn.style.color = '#ff4444';
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const input = document.getElementById('cybercore-chat-input');
+                if (input) { input.value = transcript; window.sendFloatingChatMessage(); }
+                if (micBtn) micBtn.style.color = '';
+            };
+            recognition.onerror = () => {
+                addSystemMessage('⚠️ Erro ao capturar áudio. Tente novamente.');
+                if (micBtn) micBtn.style.color = '';
+            };
+            recognition.onend = () => { if (micBtn) micBtn.style.color = ''; };
+            recognition.start();
+        };
+
+        function addSystemMessage(text) {
+            const container = document.getElementById('cybercore-chat-messages');
+            if (!container) return;
+            const msg = document.createElement('div');
+            msg.className = 'cybercore-msg cybercore-msg-ai';
+            msg.style.fontSize = '11px'; msg.style.opacity = '0.7';
+            msg.innerHTML = text;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ==================== DYNAMIC SUGGESTIONS (#4) ====================
+        function updateSuggestions(suggestions) {
+            const container = document.getElementById('cybercore-chat-suggestions');
+            if (!container) return;
+            container.innerHTML = '';
+            const allSuggestions = suggestions.length > 0
+                ? suggestions
+                : ['🚀 Iniciar Tour', '❓ Dúvidas', '💰 Como Sacar'];
+            allSuggestions.forEach(text => {
+                const btn = document.createElement('button');
+                btn.textContent = text;
+                btn.onclick = () => window.sendQuickCommand(text);
+                container.appendChild(btn);
+            });
+        }
+
+        // ==================== MAIN CHAT FUNCTION (#1 #2 #3 #4 #5 #7) ====================
         window.sendFloatingChatMessage = async () => {
             const input = document.getElementById('cybercore-chat-input');
             const container = document.getElementById('cybercore-chat-messages');
             const chatContainer = document.getElementById('cybercore-floating-chat');
+            const suggestionsContainer = document.getElementById('cybercore-chat-suggestions');
             const text = input.value.trim();
             const lowText = text.toLowerCase();
 
@@ -1720,22 +1853,27 @@
             // Envia a dúvida para o Nexus reportar ao Sentinel/CyberCore
             sendNexusTelemetry(text);
 
-            // Mensagem do Usuário
+            // --- Mensagem do Usuário (#3 timestamp) ---
+            const ts = getTimestamp();
             const userMsg = document.createElement('div');
             userMsg.className = 'cybercore-msg cybercore-msg-user';
-            userMsg.innerText = text;
+            userMsg.innerHTML = renderMarkdown(text) + `<span class="msg-ts">${ts}</span>`;
             container.appendChild(userMsg);
             input.value = '';
             container.scrollTop = container.scrollHeight;
 
+            // Salva no histórico (#7)
+            chatHistory.push({ role: 'user', content: text, ts });
+            saveChatHistory();
+
             if (chatContainer) chatContainer.classList.add('cybercore-responding');
 
-            // Thinking...
+            // --- Thinking / Typing (#5 refinado) ---
             const typingId = 'typing-' + Date.now();
             const typingMsg = document.createElement('div');
             typingMsg.className = 'cybercore-msg cybercore-msg-ai';
             typingMsg.id = typingId;
-            typingMsg.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+            typingMsg.innerHTML = `<div class="typing-indicator"><span class="typing-agent">Nexus</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
             container.appendChild(typingMsg);
             container.scrollTop = container.scrollHeight;
 
@@ -1744,6 +1882,8 @@
                 document.getElementById(typingId).remove();
                 window.startNexusTour();
                 if (chatContainer) chatContainer.classList.remove('cybercore-responding');
+                chatHistory.push({ role: 'assistant', content: '[Tour iniciado]', ts: getTimestamp() });
+                saveChatHistory();
                 return;
             }
 
@@ -1760,21 +1900,37 @@
 
             if (quickAnswer) {
                 setTimeout(() => {
-                    document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> ${quickAnswer}`;
+                    const el = document.getElementById(typingId);
+                    if (el) {
+                        el.innerHTML = `<strong>Nexus:</strong> ${renderMarkdown(quickAnswer)}<span class="msg-ts">${getTimestamp()}</span>`;
+                    }
                     if (chatContainer) chatContainer.classList.remove('cybercore-responding');
                     container.scrollTop = container.scrollHeight;
+                    chatHistory.push({ role: 'assistant', content: quickAnswer, ts: getTimestamp() });
+                    saveChatHistory();
+                    updateSuggestions(['💳 Ver Saldo', '📊 Meu Desempenho', '🎬 Assistir Vídeos']);
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 }, 800);
                 return;
             }
 
-            // 3. Delegação para CyberCore IA via Worker Cloud (tempo real)
+            // 3. Delegação para CyberCore IA (Tempo Real)
             try {
-                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> <i>Consultando núcleo CyberCore IA na nuvem...</i>`;
-                
-                const res = await fetch(`https://cybercore-api.alegomes488.workers.dev/chat?msg=${encodeURIComponent(text)}`);
-                const data = await res.json();
-                let responseText = data.resposta || "O núcleo CyberCore não retornou dados.";
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.innerHTML = `<div class="typing-indicator"><span class="typing-agent">Nexus</span><span style="font-size:11px;color:var(--text-muted);margin-left:6px;">consultando CyberCore...</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+
+                const response = await fetch(`${CHAT_API_BASE}/ai/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: text,
+                        uid: auth.currentUser?.uid || "guest",
+                        history: chatHistory.slice(-10)
+                    })
+                });
+
+                const data = await response.json();
+                let responseText = data.answer || "O núcleo CyberCore está processando outras requisições. Tente em instantes.";
                 
                 // --- INTERPRETADOR DE COMANDOS NEXUS ---
                 if (responseText.includes('[COMMAND:')) {
@@ -1782,32 +1938,68 @@
                     if (responseText.includes('NAVIGATE:convites')) window.switchTab('referrals');
                     if (responseText.includes('NAVIGATE:inicio')) window.switchTab('dashboard');
                     if (responseText.includes('START_TOUR')) window.startNexusTour();
-
                     responseText = responseText.replace(/\[COMMAND:.*?\]/g, '').trim();
                 }
 
                 const el = document.getElementById(typingId);
-                el.innerHTML = `<strong>Nexus:</strong> ${responseText}`;
+                if (el) {
+                    el.innerHTML = `<strong>Nexus:</strong> ${renderMarkdown(responseText)}<span class="msg-ts">${getTimestamp()}</span>`;
+                }
                 if (chatContainer) chatContainer.classList.remove('cybercore-responding');
                 container.scrollTop = container.scrollHeight;
+
+                // Salva no histórico (#7)
+                chatHistory.push({ role: 'assistant', content: responseText, ts: getTimestamp() });
+                saveChatHistory();
+
+                // Sugestões dinâmicas (#4)
+                const dynSuggestions = [];
+                if (responseText.toLowerCase().includes('saque') || responseText.toLowerCase().includes('pix')) dynSuggestions.push('💰 Quanto posso sacar?');
+                if (responseText.toLowerCase().includes('vídeo') || responseText.toLowerCase().includes('assistir')) dynSuggestions.push('🎬 Ver meus vídeos');
+                if (responseText.toLowerCase().includes('saldo') || responseText.toLowerCase().includes('ganho')) dynSuggestions.push('📊 Meu desempenho');
+                if (responseText.toLowerCase().includes('convidar') || responseText.toLowerCase().includes('indicação')) dynSuggestions.push('👥 Meus convites');
+                dynSuggestions.push('❓ Dúvidas', '🚀 Iniciar Tour');
+                updateSuggestions(dynSuggestions);
+
                 if (typeof lucide !== 'undefined') lucide.createIcons();
 
             } catch (e) {
-                document.getElementById(typingId).innerHTML = `<strong>Nexus:</strong> ⚠️ Falha na conexão neural com CyberCore. Tente novamente.`;
+                const el = document.getElementById(typingId);
+                if (el) el.innerHTML = `<strong>Nexus:</strong> ⚠️ Falha na conexão neural com CyberCore. Tente novamente.<span class="msg-ts">${getTimestamp()}</span>`;
                 if (chatContainer) chatContainer.classList.remove('cybercore-responding');
             }
         };
 
-        // Suporte ao Enter
+        // ==================== RESTORE HISTORY ON LOAD (#7) ====================
+        function restoreChatHistory() {
+            const container = document.getElementById('cybercore-chat-messages');
+            if (!container) return;
+            container.innerHTML = '';
+            if (chatHistory.length === 0) {
+                addWelcomeMessage();
+                return;
+            }
+            chatHistory.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `cybercore-msg cybercore-msg-${msg.role === 'user' ? 'user' : 'ai'}`;
+                div.innerHTML = (msg.role === 'user' ? '' : '<strong>Nexus:</strong> ') + renderMarkdown(msg.content) + `<span class="msg-ts">${msg.ts || ''}</span>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ==================== ENTER KEY SUPPORT ====================
         setTimeout(() => {
             document.getElementById('cybercore-chat-input')?.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') window.sendFloatingChatMessage();
             });
         }, 1000);
 
+        // ==================== AUTH STATE ====================
         onAuthStateChanged(auth, u => {
             const trigger = document.getElementById('cybercore-chat-trigger');
             if(trigger) trigger.style.display = u ? 'flex' : 'none';
+            if (u) restoreChatHistory();
         });
 
         window.toggleFloatingChat = () => {
@@ -1821,20 +2013,6 @@
         window.sendQuickCommand = (cmd) => {
             const input = document.getElementById('cybercore-chat-input');
             if (input) { input.value = cmd; window.sendFloatingChatMessage(); }
-        };
-
-        window.perguntarIA = async () => {
-            const msg = document.getElementById('msg').value;
-            if (!msg) return;
-            const respostaDiv = document.getElementById('resposta');
-            respostaDiv.innerHTML = `<span style="color:var(--primary);">🧠 Pensando...</span>`;
-            try {
-                const res = await fetch(`https://cybercore-api.alegomes488.workers.dev/chat?msg=${encodeURIComponent(msg)}`);
-                const dados = await res.json();
-                respostaDiv.innerHTML = `<strong style="color:var(--primary);">CyberCore:</strong> ${dados.resposta}`;
-            } catch (e) {
-                respostaDiv.innerHTML = `<span style="color:#ef4444;">Erro: não foi possível contactar a IA.</span>`;
-            }
         };
     </script>
 </body>

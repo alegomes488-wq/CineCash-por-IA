@@ -307,53 +307,108 @@ TOOLS_DEFINITION = [
     }
 ]
 
-async def ask_gemini(prompt: str, uid="admin_master"):
+# --- GROQ (Nuvem Gratuita, Prioridade 1) ---
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+if not GROQ_API_KEY:
     try:
+        groq_config = db.reference('config/groqKey').get()
+        if groq_config: GROQ_API_KEY = str(groq_config).strip()
+    except: pass
+if not GROQ_API_KEY:
+    try:
+        config_data = db.reference('config').get() or {}
+        GROQ_API_KEY = str(config_data.get('groqKey', '')).strip()
+    except: pass
+GROQ_AVAILABLE = bool(GROQ_API_KEY)
+GROQ_MODEL_MAP = {
+    "llama3:latest": "llama-3.3-70b-versatile",
+    "llama3:8b": "llama3-8b-8192",
+    "mixtral": "mixtral-8x7b-32768",
+    "gemma2": "gemma2-9b-it",
+}
+
+def groq_generate(prompt, model="llama3:latest"):
+    if not GROQ_AVAILABLE:
+        return None
+    try:
+        groq_model = GROQ_MODEL_MAP.get(model, "llama-3.3-70b-versatile")
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": groq_model,
+            "messages": [
+                {"role": "system", "content": "Você é o CyberCore IA Elite. Responda em PT-BR de forma técnica e autoritária."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1024,
+        }
+        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=30)
+        if resp.status_code == 200:
+            data = resp.json()
+            return data["choices"][0]["message"]["content"]
+        return None
+    except:
+        return None
+
+async def ask_ai(prompt: str, uid="admin_master"):
+    try:
+        # Prioridade 1: Groq (mais rápido, gratuito, sempre disponível)
+        groq_result = groq_generate(prompt)
+        if groq_result:
+            try:
+                history_ref = db.reference(f'ai_memory/{uid}')
+                history = history_ref.get() or []
+                history.append({"role": "user", "text": prompt})
+                history.append({"role": "model", "text": groq_result})
+                history_ref.set(history[-20:])
+            except:
+                pass
+            return groq_result
+
+        # Prioridade 2: Gemini (fallback)
         config = db.reference('config').get() or {}
-        # Prioriza Variável de Ambiente para maior segurança no HF Spaces, fallback para Firebase
         api_key = os.environ.get("GEMINI_API_KEY") or str(config.get('geminiKey', '')).strip()
 
-        if not api_key: return "Erro: GEMINI_API_KEY não configurada (nas Secrets do HF ou no Firebase)."
+        if api_key:
+            history_ref = db.reference(f'ai_memory/{uid}')
+            history = history_ref.get() or []
+            contents = [{"role": m["role"], "parts": [{"text": m["text"]}]} for m in history[-10:]]
+            contents.append({"role": "user", "parts": [{"text": prompt}]})
+            system_prompt = "Você é o CyberCore IA Elite. Use ferramentas para gerir o sistema CineCash. Responda em PT-BR de forma técnica e autoritária."
 
-        history_ref = db.reference(f'ai_memory/{uid}')
-        history = history_ref.get() or []
-        contents = [{"role": m["role"], "parts": [{"text": m["text"]}]} for m in history[-10:]]
-        contents.append({"role": "user", "parts": [{"text": prompt}]})
-        system_prompt = "Você é o CyberCore IA Elite. Use ferramentas para gerir o sistema CineCash. Responda em PT-BR de forma técnica e autoritária."
+            for model in ("gemini-2.0-flash", "gemini-1.5-flash"):
+                api_ver = "v1beta" if model == "gemini-2.0-flash" else "v1"
+                url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={api_key}"
+                payload = {"contents": contents, "tools": TOOLS_DEFINITION}
+                if api_ver == "v1beta": payload["systemInstruction"] = {"parts": [{"text": system_prompt}]}
 
-        for model in ("gemini-2.0-flash", "gemini-1.5-flash"):
-            api_ver = "v1beta" if model == "gemini-2.0-flash" else "v1"
-            url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={api_key}"
-            payload = {"contents": contents, "tools": TOOLS_DEFINITION}
-            if api_ver == "v1beta": payload["systemInstruction"] = {"parts": [{"text": system_prompt}]}
-
-            resp = requests.post(url, json=payload, timeout=60)
-            res_data = resp.json()
-            if resp.status_code == 200 and "candidates" in res_data:
-                part = res_data['candidates'][0]['content']['parts'][0]
-                if "functionCall" in part:
-                    call = part["functionCall"]
-                    f_name = call["name"]
-                    f_args = call.get("args", {})
-
-                    func = AVAILABLE_TOOLS[f_name]
-                    if asyncio.iscoroutinefunction(func):
-                        if f_name == "process_all_payments":
-                            result = await func(force=True)
+                resp = requests.post(url, json=payload, timeout=60)
+                res_data = resp.json()
+                if resp.status_code == 200 and "candidates" in res_data:
+                    part = res_data['candidates'][0]['content']['parts'][0]
+                    if "functionCall" in part:
+                        call = part["functionCall"]
+                        f_name = call["name"]
+                        f_args = call.get("args", {})
+                        func = AVAILABLE_TOOLS[f_name]
+                        if asyncio.iscoroutinefunction(func):
+                            result = await func(**f_args) if f_name != "process_all_payments" else await func(force=True)
                         else:
-                            result = await func(**f_args)
-                    else:
-                        result = func(**f_args)
+                            result = func(**f_args)
+                        return await ask_ai(f"Resultado {f_name}: {result}. Finalize sua resposta.", uid)
 
-                    return await ask_gemini(f"Resultado {f_name}: {result}. Finalize sua resposta.", uid)
+                    answer = part.get("text", "Comando processado.")
+                    history.append({"role": "user", "text": prompt})
+                    history.append({"role": "model", "text": answer})
+                    history_ref.set(history[-20:])
+                    return answer
 
-                answer = part.get("text", "Comando processado.")
-                history.append({"role": "user", "text": prompt})
-                history.append({"role": "model", "text": answer})
-                history_ref.set(history[-20:])
-                return answer
-        return f"Erro Gemini: {res_data.get('error',{}).get('message','fallback')}"
-    except Exception as e: return f"Erro Núcleo: {str(e)}"
+        return "Nenhum motor de IA disponível. Configure GROQ_API_KEY ou GEMINI_API_KEY."
+    except Exception as e:
+        return f"Erro Núcleo: {str(e)}"
 
 # --- OADA CYCLE ---
 
@@ -512,7 +567,10 @@ async def ai_recall(data: dict = Body(...)):
 
 @app.post("/ai/chat")
 async def ai_chat(data: dict = Body(...)):
-    answer = await ask_gemini(data.get("prompt", ""), data.get("uid", "admin_master"))
+    prompt = data.get("prompt", "")
+    uid = data.get("uid", "admin_master")
+    history = data.get("history", [])
+    answer = await ask_ai(prompt, uid)
     return {"answer": answer}
 
 # --- SERVE STATIC FILES ---
@@ -602,6 +660,23 @@ async def video_complete(uid: str):
 
         new_balance = current_balance + 0.15
         new_videos = current_videos + 1
+
+        # Promoção de Referência: Ao atingir 15 vídeos, o padrinho (sponsor) ganha +1 validReferral
+        if new_videos == 15:
+            sponsor_uid = user_data.get('referredBy')
+            if sponsor_uid:
+                sponsor_ref = db.reference(f'users/{sponsor_uid}')
+                sponsor_data = sponsor_ref.get()
+                if sponsor_data:
+                    current_valid = sponsor_data.get('validReferrals', 0)
+                    sponsor_ref.update({"validReferrals": current_valid + 1})
+                    # Log da bonificação
+                    db.reference('logs/referrals').push({
+                        "sponsor": sponsor_uid,
+                        "referral": uid,
+                        "action": "BONUS_CONVERTED",
+                        "timestamp": {".sv": "timestamp"}
+                    })
 
         user_ref.update({
             "balance": new_balance,
