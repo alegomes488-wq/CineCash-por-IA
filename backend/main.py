@@ -654,6 +654,16 @@ async def video_complete(uid: str):
         if not user_data:
             return {"status": "error", "message": "Usuário não encontrado"}
 
+        # --- SEGURANÇA: COOLDOWN DE VÍDEO (30 segundos) ---
+        last_video_at = user_data.get('last_video_at')
+        if last_video_at:
+            last_ts = datetime.fromisoformat(last_video_at)
+            diff = (datetime.now() - last_ts).total_seconds()
+            if diff < 28:  # 28s de margem para os 30s de frontend
+                risk = user_data.get('risk_score', 0) + 10
+                user_ref.update({"risk_score": risk})
+                return {"status": "error", "message": "Processamento muito rápido. Aguarde o tempo da IA."}
+
         # Incrementa saldo (R$ 0.15) e contador de vídeos
         current_balance = float(user_data.get('balance', 0))
         current_videos = int(user_data.get('videosWatched', 0))
@@ -694,6 +704,18 @@ async def request_withdrawal(uid: str, data: dict = Body(...)):
         amount = float(data.get("amount", 0))
         pix_key = data.get("pixKey", "").strip()
 
+        # --- SEGURANÇA: VALIDAÇÃO DE SALDO REAL ---
+        user_ref = db.reference(f'users/{uid}')
+        user_data = user_ref.get()
+
+        if not user_data:
+            return {"status": "error", "message": "Usuário não localizado."}
+
+        current_balance = float(user_data.get('balance', 0))
+
+        if current_balance < amount:
+            return {"status": "error", "message": f"Saldo insuficiente. Você tem R$ {current_balance:.2f}"}
+
         # Ajustado para R$ 0.50 para permitir seus testes iniciais
         if amount < 0.50:
             return {"status": "error", "message": "Valor mínimo para saque é R$ 0,50"}
@@ -701,11 +723,12 @@ async def request_withdrawal(uid: str, data: dict = Body(...)):
         if not pix_key:
             return {"status": "error", "message": "Chave PIX é obrigatória"}
 
-        user_ref = db.reference(f'users/{uid}')
-        user_data = user_ref.get()
-
-        if not user_data or float(user_data.get('balance', 0)) < amount:
-            return {"status": "error", "message": "Saldo insuficiente"}
+        # --- SEGURANÇA: COOLDOWN DE SAQUE (1 por hora) ---
+        last_withdraw = user_data.get('last_withdraw_at')
+        if last_withdraw:
+            lw_ts = datetime.fromisoformat(last_withdraw)
+            if (datetime.now() - lw_ts).total_seconds() < 3600:
+                 return {"status": "error", "message": "Limite de 1 resgate por hora. Proteção CyberCore."}
 
         # Gera ID de saque e timestamp numérico para o Frontend
         ts = int(datetime.now().timestamp() * 1000)
@@ -718,16 +741,20 @@ async def request_withdrawal(uid: str, data: dict = Body(...)):
             "status": "pending",
             "timestamp": ts,
             "created_at": datetime.now().isoformat(),
-            "uid": uid
+            "uid": uid,
+            "fingerprint": data.get("fingerprint", "unknown")
         }
 
         # 1. Registra o saque
         db.reference(f'withdrawals/{uid}/{wid}').set(withdraw_obj)
         # 2. Adiciona à fila do admin
         db.reference(f'admin/pending_withdrawals/{wid}').set(withdraw_obj)
-        # 3. Deduz o saldo
-        new_balance = float(user_data.get('balance', 0)) - amount
-        user_ref.update({"balance": new_balance})
+        # 3. Deduz o saldo e atualiza last_withdraw
+        new_balance = current_balance - amount
+        user_ref.update({
+            "balance": new_balance,
+            "last_withdraw_at": datetime.now().isoformat()
+        })
 
         return {"status": "success", "message": "Solicitação de saque enviada!", "wid": wid}
     except Exception as e:
